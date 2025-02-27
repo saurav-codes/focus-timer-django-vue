@@ -41,15 +41,15 @@ function handleDockItemClick(item) {
 const themeIcon = computed(() => isDark.value ? Sun : Moon)
 
 const routes = [
-  { path: '/kanban-planner', icon: SquareDashedKanban, label: 'Kanban' },
-  { path: '/cal-planner', icon: Calendar, label: 'Calendar' },
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
   {
     id: 'theme-toggle',
     label: 'Toggle Theme',
     action: toggleDark
-  }
+  },
+  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/cal-planner', icon: Calendar, label: 'Calendar' },
+  { path: '/kanban-planner', icon: SquareDashedKanban, label: 'Kanban' },
 ]
 
 const calculateMenuItemStyle = (index, isExpanded) => {
