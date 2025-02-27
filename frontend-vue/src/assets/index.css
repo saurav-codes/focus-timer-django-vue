@@ -1,0 +1,96 @@
+/* Base theme variables */
+:root {
+  /* Primary colors - Vibrant indigo blue with better gradient */
+  --color-primary: #4f46e5;
+  --color-primary-light: #6366f1;
+  --color-primary-dark: #4338ca;
+
+  /* Secondary accent - Teal for visual interest and contrast */
+  --color-secondary: #0d9488;
+  --color-secondary-light: #14b8a6;
+  --color-secondary-dark: #0f766e;
+
+  /* Neutral palette - Improved slate grays */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* Backgrounds */
+  --color-background: var(--color-neutral-50);
+  --color-background-secondary: var(--color-neutral-100);
+  --color-background-tertiary: var(--color-neutral-200);
+
+  /* Text colors */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-tertiary: var(--color-neutral-500);
+
+  /* Feedback colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Component specific */
+  --color-border: var(--color-neutral-200);
+  --color-input-background: var(--color-background);
+  --dock-background: var(--color-background-secondary);
+  --dock-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+  /* Animation */
+  --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark theme overrides */
+.dark {
+  /* Primary colors - Adjusted for dark mode visibility */
+  --color-primary: #818cf8;
+  --color-primary-light: #a5b4fc;
+  --color-primary-dark: #6366f1;
+
+  /* Secondary accent - Brightened for dark mode */
+  --color-secondary: #2dd4bf;
+  --color-secondary-light: #5eead4;
+  --color-secondary-dark: #14b8a6;
+
+  /* Backgrounds */
+  --color-background: var(--color-neutral-950);
+  --color-background-secondary: var(--color-neutral-900);
+  --color-background-tertiary: var(--color-neutral-800);
+
+  /* Text colors */
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-400);
+
+  /* Component specific */
+  --color-border: var(--color-neutral-800);
+  --color-input-background: var(--color-neutral-900);
+  --dock-background: var(--color-background-secondary);
+  --dock-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+
+  /* Feedback colors - Adjusted for dark mode */
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+
+}

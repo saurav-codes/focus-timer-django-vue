@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    // ...
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./frontend-vue/src/*"]
     }
-  },
-  "exclude": ["node_modules", "dist"]
+    // ...
+  }
 }

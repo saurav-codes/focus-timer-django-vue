@@ -1,0 +1,14 @@
+start every response with 🤖
+DO NOT DELETE COMMENTS
+PROCEED LIKE A SENIOR DEVELOPER
+dont delete irrelavant code
+Start by writing three reasoning paragraphs analyzing what the error might be. Do not jump to conclusions.
+
+tech stack:
+- django
+- vue.js 3
+
+always scan whole codebase recursively before generating response
+
+we are building a sunsama.com like productivity web app with django & Vue JS 3.
+the goal is to clone every feature of sunsama as it is.

@@ -1,21 +1,37 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import KanbanBoard from '../components/KanbanBoard.vue'
+import KanbanPlannerView from '../views/KanbanPlanner.vue'
+import CalendarPlannerView from '../views/CalendarPlanner.vue'
+import DashboardView from '@/views/Dashboard.vue'
+import SettingsView from '@/views/Settings.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '',
+      redirect: '/kanban-planner'
     },
     {
-      path: '/board',
-      name: 'kanban-board',
-      component: KanbanBoard,
+      path: '/kanban-planner',
+      name: 'kanban-planner-view',
+      component: KanbanPlannerView,
     },
-  ],
+    {
+      path: '/cal-planner',
+      name: 'cal-planner-view',
+      component: CalendarPlannerView,
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard-view',
+      component: DashboardView
+    },
+    {
+      path: '/settings',
+      name: 'settings-view',
+      component: SettingsView
+    }
+  ]
 })
 
 export default router

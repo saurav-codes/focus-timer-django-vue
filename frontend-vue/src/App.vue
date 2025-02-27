@@ -1,10 +1,11 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
+import FloatingDock from '@/components/ui/FloatingDock.vue'
 </script>
 
 <template>
-
-    <RouterLink to="/">Home</RouterLink> 
-
-  <RouterView />
+  <div class="app-container">
+    <RouterView />
+    <FloatingDock />
+  </div>
 </template>
