@@ -12,13 +12,23 @@ const x_icon = X
 const route = useRoute()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
+const closeTimeout = ref(null)
 
 const handleMouseEnter = () => {
+  // Clear any existing timeout when mouse enters
+  if (closeTimeout.value) {
+    clearTimeout(closeTimeout.value)
+    closeTimeout.value = null
+  }
   isExpanded.value = true
 }
 
 const handleMouseLeave = () => {
-  isExpanded.value = false
+  // Set a timeout to close the dock after 1 second
+  closeTimeout.value = setTimeout(() => {
+    isExpanded.value = false
+    closeTimeout.value = null
+  }, 200) // 1000ms = 1 second delay
 }
 
 function handleDockItemClick(item) {
