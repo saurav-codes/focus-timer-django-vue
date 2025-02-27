@@ -3,12 +3,11 @@
 import { ref, computed } from 'vue'
 import { useDark, useToggle } from "@vueuse/core";
 import { useRouter, useRoute } from 'vue-router'
-import { Menu, X, SquareDashedKanban, Calendar, LayoutDashboard, Settings, Sun, Moon } from 'lucide-vue-next'
+import { Layers, Layers2, SquareDashedKanban, Calendar, LayoutDashboard, Settings, Sun, Moon } from 'lucide-vue-next'
 
 const isExpanded = ref(false)
 const dockRef = ref(null)
 const router = useRouter()
-const x_icon = X
 const route = useRoute()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -76,10 +75,10 @@ const calculateMenuItemStyle = (index, isExpanded) => {
         @click="handleMouseEnter">
         <div class="toggle-inner">
           <div class="icon-container">
-            <Menu
+            <Layers
               v-if="!isExpanded"
               class="icon" />
-            <x_icon v-else class="icon" />
+            <Layers2 v-else class="icon" />
           </div>
         </div>
       </div>
