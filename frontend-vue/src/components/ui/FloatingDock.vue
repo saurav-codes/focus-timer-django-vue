@@ -32,10 +32,8 @@ const handleMouseLeave = () => {
 
 function handleDockItemClick(item) {
   if (item.action) {
-    console.log("dock item clicked with action - ", item.action)
     item.action();
   } else {
-    console.log("dock item clicked with path - ", item.path)
     router.push(item.path);
   }
 }
@@ -107,6 +105,7 @@ const calculateMenuItemStyle = (index, isExpanded) => {
 </template>
 
 <style scoped>
+/* Base dock positioning */
 .dock {
   position: fixed;
   bottom: 2rem;
@@ -119,14 +118,20 @@ const calculateMenuItemStyle = (index, isExpanded) => {
   width: 3rem;
 }
 
+/* Toggle button styles */
 .dock-toggle {
   position: relative;
   width: 3rem;
   height: 3rem;
   background-color: var(--dock-background);
-  border-radius: 50px;
+  border-radius: 50%;
   cursor: pointer;
   box-shadow: var(--dock-shadow);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Improved easing for more natural feel */
+}
+
+.dock-toggle:hover {
+  transform: scale(1.1);
 }
 
 .toggle-inner {
@@ -138,6 +143,7 @@ const calculateMenuItemStyle = (index, isExpanded) => {
   justify-content: center;
 }
 
+/* Icon styling */
 .icon-container {
   position: relative;
   width: 1.5rem;
@@ -147,8 +153,14 @@ const calculateMenuItemStyle = (index, isExpanded) => {
 .icon {
   position: absolute;
   inset: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
 }
 
+.dock-toggle:hover .icon {
+  transform: scale(1.15);
+}
+
+/* Menu container and items */
 .menu-container {
   position: relative;
   width: 3rem;
@@ -160,11 +172,18 @@ const calculateMenuItemStyle = (index, isExpanded) => {
   width: 3rem;
   height: 3rem;
   background-color: var(--dock-background);
-  border-radius: 9999px;
+  border-radius: 50%;
   box-shadow: var(--dock-shadow);
   cursor: pointer;
-  transition: all 300ms ease-in-out;
+  /* Separate transitions for different properties for better control */
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s ease,
+    translate 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
+/* Refined hover effect with slightly reduced scale for better usability */
+
 
 .menu-item-inner {
   display: flex;
@@ -177,9 +196,20 @@ const calculateMenuItemStyle = (index, isExpanded) => {
   width: 1.5rem;
   height: 1.5rem;
   color: var(--color-text-secondary);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
 }
 
+/* Slightly increase icon size on hover but not as extreme */
+.menu-item:hover .menu-icon {
+  transform: scale(1.2);
+}
+
+/* Active state styling */
 .menu-icon.active {
   color: var(--color-primary);
+}
+
+.menu-item.active {
+  background-color: var(--color-background-tertiary);
 }
 </style>
