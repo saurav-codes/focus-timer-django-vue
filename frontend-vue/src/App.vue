@@ -1,6 +1,6 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import FloatingDock from '@/components/ui/FloatingDock.vue'
+import FloatingDock from '@/components/FloatingDock.vue'
 </script>
 
 <template>
