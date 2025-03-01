@@ -141,7 +141,8 @@ const handleKeyDown = (event) => {
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   width: 300px;
-  min-height: 400px;
+  /* min-height: 400px; */
+  min-height: 90vh;
   display: flex;
   flex-direction: column;
   padding: 1rem;
