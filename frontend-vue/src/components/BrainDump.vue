@@ -1,7 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Plus, BrainCircuitIcon, BadgeCheck } from 'lucide-vue-next';
+import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import TaskCard from '@/components/TaskCard.vue';
+import { useUIStore } from '@/stores/uiStore';
+// Use the UI store instead of local state
+const uiStore = useUIStore();
 
 const tasks = ref([
   {
@@ -80,10 +83,34 @@ const completed_tasks_vs_total_tasks = computed(() => {
   return `${completedTasks} / ${totalTasks}`;
 });
 
+// Use the store's computed property and toggle function
+const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
+const toggleBrainDump = () => uiStore.toggleBrainDump();
+
+// Emit events for task movement
+const emit = defineEmits(['task-moved-to-column', 'task-added-from-column', 'reorder-tasks']);
+
+// Handle task being added from a column
+const addTaskFromColumn = (task) => {
+  tasks.value.push(task);
+};
+
+// Expose the method for parent components to call
+defineExpose({
+  addTaskFromColumn
+});
+
 </script>
 
 <template>
-  <div class="brain-dump-container">
+  <div class="brain-dump-container" :class="{ 'collapsed': isCollapsed }">
+    <!-- Brain Dump toggle button in a box -->
+    <div class="brain-dump-toggle-btn-wrapper" @click="toggleBrainDump">
+      <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
+        <component :is="isCollapsed ? ChevronRight : ChevronLeft" size="18" />
+      </button>
+    </div>
+
     <div class="header">
       <h2 class="title">
         <span class="icon">
@@ -135,6 +162,20 @@ const completed_tasks_vs_total_tasks = computed(() => {
   box-shadow: var(--shadow-sm);
   overflow-y: auto;
   padding: 1rem;
+  transition: width 0.1s ease-in-out;
+}
+
+.brain-dump-container.collapsed {
+  width: 0.1rem;
+  overflow: visible;
+}
+
+.brain-dump-container.collapsed .title,
+.brain-dump-container.collapsed .total-task,
+.brain-dump-container.collapsed .add-task,
+.brain-dump-container.collapsed .tasks-list,
+.brain-dump-container.collapsed .new-task-input {
+  display: none;
 }
 
 .header {
@@ -144,6 +185,40 @@ const completed_tasks_vs_total_tasks = computed(() => {
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.brain-dump-toggle-btn-wrapper {
+  position: absolute;
+  top: 50%;
+  right: -1.2rem;
+  background-color: var(--color-background-secondary, #1e1e2e);
+  border-radius: 50px;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brain-dump-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border 1s ease-in-out;
+}
+
+.brain-dump-toggle-btn:hover {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border, #313244);
+  border-radius: 50%;
 }
 
 .title {

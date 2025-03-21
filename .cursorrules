@@ -5,6 +5,7 @@ PROCEED LIKE A SENIOR DEVELOPER
 dont delete irrelavant code
 
 tech stack:
+
 - django
 - vue.js 3
 
@@ -15,3 +16,6 @@ the goal is to clone every feature of sunsama as it is.
 
 check the project architecture from docs/project-architecture.md
 always prefer VueUse library as it provides many useful composables
+use the best code practises.
+choose the most optimal solution for the problem.
+i am still beginner so if i trying to do something that doesn't seems a good way from either developer prespective or business prespective, then tell and dont write any code.

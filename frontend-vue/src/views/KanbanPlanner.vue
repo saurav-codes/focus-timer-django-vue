@@ -4,6 +4,18 @@ import { useDateFormat } from '@vueuse/core';
 import { ChevronRight } from 'lucide-vue-next';
 import BrainDumpVue from '@/components/BrainDump.vue';
 import KanbanColumn from '@/components/KanbanColumn.vue';
+import IntegrationSidebar from '@/components/sidebar/IntegrationSidebar.vue';
+
+// Capture scrollable container reference to handle scroll during drag
+const scrollContainerRef = ref(null);
+
+// Make this global so SlickList components can access it
+window.SCROLL_CONTAINER_REF = null;
+
+onMounted(() => {
+  // Store reference to the scrollable container for drag operations
+  window.SCROLL_CONTAINER_REF = scrollContainerRef.value;
+});
 
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
@@ -101,13 +113,56 @@ onMounted(() => {
     }, 2000); // Hide after 2 seconds (animation + a bit more time)
   }, 500);
 });
+
+// Create refs for each column to access their methods
+const brainDumpRef = ref(null);
+const columnRefs = {
+  yesterday: ref(null),
+  today: ref(null),
+  tomorrow: ref(null),
+  nextWeek: ref(null),
+  afterNextWeek: ref(null),
+  nextMonth: ref(null)
+};
+
+// Handle task moved from brain dump to a kanban column
+const handleTaskMovedToColumn = ({ task, columnId }) => {
+  console.log('Task moved from brain dump to column:', columnId, task);
+  columnRefs[columnId].value?.addTaskFromExternal(task);
+};
+
+// Handle task moved from a kanban column to brain dump
+const handleTaskMovedToBrainDump = (task) => {
+  console.log('Task moved to brain dump:', task);
+  brainDumpRef.value?.addTaskFromColumn(task);
+};
+
+// Handle task moved between kanban columns
+const handleTaskMovedBetweenColumns = ({ task, toColumnId }) => {
+  console.log('Task moved between columns:', toColumnId, task);
+  columnRefs[toColumnId].value?.addTaskFromExternal(task);
+};
+
+// Handle task reordering within a column
+const handleTaskReordering = ({ columnId, tasks, oldIndex, newIndex }) => {
+  console.log(`Tasks reordered in ${columnId}:`, { oldIndex, newIndex });
+  // Here you would typically update your backend/store with the new order
+  // For example, if using a store:
+  // store.dispatch('updateTaskOrder', { columnId, tasks, oldIndex, newIndex });
+
+  // Or if you need to make a backend call:
+  // api.updateTaskOrder(columnId, tasks);
+};
+
 </script>
 
 <template>
   <div class="kanban-planner">
-    <!-- Brain Dump will be fixed -->
     <div class="brain-dump-wrapper">
-      <BrainDumpVue />
+      <BrainDumpVue
+        ref="brainDumpRef"
+        @task-moved-to-column="handleTaskMovedToColumn"
+        @reorder-tasks="handleTaskReordering" />
 
       <!-- Scroll indicator -->
       <div v-if="showScrollIndicator" class="scroll-indicator">
@@ -115,39 +170,74 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Integration Sidebar (conditionally shown) -->
+    <IntegrationSidebar class="integration-sidebar-wrapper" />
+
     <!-- Scrollable columns container -->
-    <div class="kanban-columns-wrapper">
+    <div ref="scrollContainerRef" class="kanban-columns-wrapper">
       <div class="kanban-columns">
         <KanbanColumn
+          :ref="el => columnRefs.yesterday = el"
           title="Yesterday"
+          column-id="yesterday"
           :date="dates.yesterday"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
         <KanbanColumn
+          :ref="el => columnRefs.today = el"
           title="Today"
+          column-id="today"
           :date="dates.today"
+          :allow-add-task="true"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
         <KanbanColumn
+          :ref="el => columnRefs.tomorrow = el"
           title="Tomorrow"
+          column-id="tomorrow"
           :date="dates.tomorrow"
+          :allow-add-task="true"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
         <KanbanColumn
+          :ref="el => columnRefs.nextWeek = el"
           title="Next Week"
+          column-id="nextWeek"
           :date="dates.nextWeek"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
         <KanbanColumn
+          :ref="el => columnRefs.afterNextWeek = el"
           title="After Next Week"
+          column-id="afterNextWeek"
           :date="dates.afterNextWeek"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
         <KanbanColumn
+          :ref="el => columnRefs.nextMonth = el"
           title="Next Month"
+          column-id="nextMonth"
           :date="dates.nextMonth"
           @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask" />
+          @add-task="handleAddTask"
+          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
+          @task-moved-between-columns="handleTaskMovedBetweenColumns"
+          @reorder-tasks="handleTaskReordering" />
       </div>
     </div>
   </div>
@@ -158,6 +248,8 @@ onMounted(() => {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative;
+  /* Add this to position the toggle wrapper */
 }
 
 /* Fixed Brain Dump sidebar */
@@ -170,6 +262,7 @@ onMounted(() => {
   position: relative;
   /* Keep right shadow for depth */
   box-shadow: 4px 0 10px -3px rgba(0, 0, 0, 0.15);
+  transition: width 0.3s ease;
 }
 
 /* Scroll indicator styling */
@@ -194,9 +287,12 @@ onMounted(() => {
 
 /* Bouncing animation */
 @keyframes bounce-right {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(-50%) translateX(0);
   }
+
   50% {
     transform: translateY(-50%) translateX(5px);
   }
@@ -234,24 +330,15 @@ onMounted(() => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  min-width: min-content; /* Ensures columns don't shrink below their natural width */
+  min-width: min-content;
+  /* Ensures columns don't shrink below their natural width */
 }
 
-:deep(.kanban-column) {
-  /* Keep a subtle shadow for depth but not as pronounced */
-  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+.integration-sidebar-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
-:deep(.kanban-column:nth-child(1)),
-:deep(.kanban-column:nth-child(2)),
-:deep(.kanban-column:nth-child(3)),
-:deep(.kanban-column:nth-child(n+4)) {
-  transform: none;
-  z-index: auto;
-}
-
-:deep(.kanban-column:hover) {
-  transform: none;
-  z-index: auto;
-}
 </style>
+
