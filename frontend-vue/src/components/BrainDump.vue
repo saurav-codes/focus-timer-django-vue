@@ -46,13 +46,15 @@ const startAddingTask = () => {
 const addTask = () => {
   if (newTaskTitle.value.trim()) {
     // make an object and send this values to backend
-    tasks.value.push({
+    const newTask = {
       id: Date.now(),
       title: newTaskTitle.value,
       completed: false,
       duration: '0:30',
       tag: null
-    });
+    };
+    tasks.value.push(newTask);
+    emit('add-task', newTask);
     newTaskTitle.value = '';
   }
   isAddingTask.value = false;
@@ -89,7 +91,7 @@ const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
 const toggleBrainDump = () => uiStore.toggleBrainDump();
 
 // Emit events for task movement
-const emit = defineEmits(['task-moved-to-column', 'task-added-from-column', 'reorder-tasks']);
+const emit = defineEmits(['task-moved-to-column', 'task-added-from-column', 'reorder-tasks', 'add-task']);
 
 // Handle task being added from a column
 const addTaskFromColumn = (task) => {
@@ -98,7 +100,8 @@ const addTaskFromColumn = (task) => {
 
 // Expose the method for parent components to call
 defineExpose({
-  addTaskFromColumn
+  addTaskFromColumn,
+  startAddingTask
 });
 
 </script>

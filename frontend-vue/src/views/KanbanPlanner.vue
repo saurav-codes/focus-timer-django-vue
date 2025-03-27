@@ -1,21 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useDateFormat } from '@vueuse/core';
 import { ChevronRight } from 'lucide-vue-next';
 import BrainDumpVue from '@/components/BrainDump.vue';
 import KanbanColumn from '@/components/KanbanColumn.vue';
 import IntegrationSidebar from '@/components/sidebar/IntegrationSidebar.vue';
-
-// Capture scrollable container reference to handle scroll during drag
-const scrollContainerRef = ref(null);
-
-// Make this global so SlickList components can access it
-window.SCROLL_CONTAINER_REF = null;
-
-onMounted(() => {
-  // Store reference to the scrollable container for drag operations
-  window.SCROLL_CONTAINER_REF = scrollContainerRef.value;
-});
 
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
@@ -78,13 +67,26 @@ const handleAddTask = (task) => {
   // Here you would update your global state or make API calls
 };
 
-// Add this function for scroll animation when page load to indicate user can scroll to the right
+// Add event listener for keyboard shortcuts
+const handleKeyPress = (event) => {
+  // Only trigger if 'a' is pressed and no input/textarea is focused
+  if (
+    event.key === 'a' &&
+    !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) &&
+    !document.activeElement.isContentEditable
+  ) {
+    event.preventDefault(); // Prevent 'a' from being typed
+    brainDumpRef.value?.startAddingTask();
+  }
+};
+
+
 const animateScroll = () => {
   const container = document.querySelector('.kanban-columns-wrapper');
   if (!container) return;
 
   const originalScroll = container.scrollLeft;
-  const targetScroll = 100; // Scroll right by 100px
+  const targetScroll = 500; // Scroll right by 100px
 
   // Animate scroll right
   container.scrollTo({
@@ -103,6 +105,10 @@ const animateScroll = () => {
 
 // Run animation when component mounts and hide the indicator after animation
 onMounted(() => {
+  // Add event listener for keyboard shortcuts
+  document.addEventListener('keydown', handleKeyPress);
+  console.log("event listener added for keyboard shortcut a key");
+
   // Small delay to ensure content is rendered
   setTimeout(() => {
     animateScroll();
@@ -111,7 +117,13 @@ onMounted(() => {
     setTimeout(() => {
       showScrollIndicator.value = false;
     }, 2000); // Hide after 2 seconds (animation + a bit more time)
-  }, 500);
+  }, 100);
+});
+
+// Remove event listener when component unmounts
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyPress);
+  console.log("event listener removed for keyboard shortcut a key");
 });
 
 // Create refs for each column to access their methods
