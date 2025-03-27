@@ -9,6 +9,7 @@ import '@fontsource/jetbrains-mono/700.css';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { plugin as Slicksort } from 'vue-slicksort';
 import './assets/index.css'
 import App from './App.vue'
 import router from './router'
@@ -17,5 +18,6 @@ const app = createApp(App)
 
 app.use(router)
 app.use(createPinia())
+app.use(Slicksort)
 
 app.mount('#app')

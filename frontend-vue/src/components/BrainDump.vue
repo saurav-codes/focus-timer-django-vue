@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import TaskCard from '@/components/TaskCard.vue';
 import { useUIStore } from '@/stores/uiStore';
+import { SlickList, SlickItem } from 'vue-slicksort';
 // Use the UI store instead of local state
 const uiStore = useUIStore();
 
@@ -139,11 +140,15 @@ defineExpose({
     </div>
 
     <div class="tasks-list">
-      <TaskCard
-        v-for="task in tasks"
-        :key="task.id"
-        :task="task"
-        @toggle-completion="toggleTaskCompletion" />
+      <SlickList
+        v-model:list="tasks"
+        group="kanban-group">
+        <SlickItem v-for="(task, idx) in tasks" :key="task.id" :index="idx" :item="task">
+          <TaskCard
+            :task="task"
+            @toggle-completion="toggleTaskCompletion" />
+        </SlickItem>
+      </SlickList>
     </div>
   </div>
 </template>
