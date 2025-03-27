@@ -139,17 +139,13 @@ defineExpose({
         @blur="cancelAddTask">
     </div>
 
-    <div class="tasks-list">
-      <SlickList
-        v-model:list="tasks"
-        group="kanban-group">
+    <SlickList v-model:list="tasks" group="kanban-group">
+      <div class="tasks-list">
         <SlickItem v-for="(task, idx) in tasks" :key="task.id" :index="idx" :item="task">
-          <TaskCard
-            :task="task"
-            @toggle-completion="toggleTaskCompletion" />
+          <TaskCard :task="task" @toggle-completion="toggleTaskCompletion" />
         </SlickItem>
-      </SlickList>
-    </div>
+      </div>
+    </SlickList>
   </div>
 </template>
 
