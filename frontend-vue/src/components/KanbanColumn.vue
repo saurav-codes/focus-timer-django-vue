@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue';
 import { BadgeCheck, Plus } from 'lucide-vue-next';
 import TaskCard from '@/components/TaskCard.vue';
+import { SlickList, SlickItem } from 'vue-slicksort';
+
 
 const props = defineProps({
   date: {
@@ -126,11 +128,13 @@ const handleKeyDown = (event) => {
     </div>
 
     <div class="tasks-container">
-      <TaskCard
-        v-for="task in localTasks"
-        :key="task.id"
-        :task="task"
-        @toggle-completion="toggleTaskCompletion" />
+      <SlickList v-model:list="localTasks" group="kanban-group">
+        <div class="tasks-list">
+          <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
+            <TaskCard :task="task" @toggle-completion="toggleTaskCompletion" />
+          </SlickItem>
+        </div>
+      </SlickList>
     </div>
   </div>
 </template>

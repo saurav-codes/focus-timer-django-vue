@@ -258,7 +258,6 @@ const handleTaskReordering = ({ columnId, tasks, oldIndex, newIndex }) => {
   top: 0;
   left: 0;
   height: 100vh;
-  z-index: 10;
   position: relative;
   /* Keep right shadow for depth */
   box-shadow: 4px 0 10px -3px rgba(0, 0, 0, 0.15);
@@ -280,7 +279,6 @@ const handleTaskReordering = ({ columnId, tasks, oldIndex, newIndex }) => {
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-md);
-  z-index: 20;
   animation: bounce-right 1.5s infinite;
   opacity: 0.9;
 }

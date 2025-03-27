@@ -53,6 +53,7 @@ const toggleCompletion = () => {
   border: 1px solid var(--color-border);
   transition: background-color var(--transition-base);
   cursor: move;
+  user-select: none;
 }
 
 .task-item:hover {

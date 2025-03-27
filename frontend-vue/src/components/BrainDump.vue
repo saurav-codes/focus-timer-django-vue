@@ -149,7 +149,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style>
 .brain-dump-container {
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
