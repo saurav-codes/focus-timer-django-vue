@@ -1,6 +1,7 @@
 <script setup>
+import TaskEditModal from './TaskEditModal.vue';
 import { useTaskStore } from '../stores/taskstore';
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 
 const taskStore = useTaskStore();
 const props = defineProps({
@@ -24,16 +25,27 @@ const toggleCompletion = () => {
     taskStore.toggleCompletion(props.task.id);
   }
 };
+
+const isEditModalOpen = ref(false)
+const openEditModal = () => {
+  isEditModalOpen.value = true
+}
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+}
+
 </script>
 
 <template>
+  <TaskEditModal :task="localTask" :is-open="isEditModalOpen" @close-modal="closeEditModal" />
   <div
     class="task-item"
     :class="{ 'completed': localTask.is_completed }">
     <div v-if="showCheckbox" class="task-checkbox" @click="toggleCompletion">
       <div class="checkbox" :class="{ 'checked': localTask.is_completed }" />
     </div>
-    <div class="task-content">
+    <div class="task-content" @click="openEditModal">
       <div class="task-title">
         {{ localTask.title }}
       </div>
@@ -105,6 +117,7 @@ const toggleCompletion = () => {
 .task-content {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
 }
 
 .task-title {

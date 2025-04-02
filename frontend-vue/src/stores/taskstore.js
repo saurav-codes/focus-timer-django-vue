@@ -112,6 +112,18 @@ export const useTaskStore = defineStore('taskStore', {
       const { data } = await axios.post('http://localhost:8000/api/tasks/', task);
       return data;
     },
+    async deleteTask(taskId) {
+      await axios.delete(`http://localhost:8000/api/tasks/${taskId}/`);
+      // also remove from kanban
+      this.kanbanColumns.forEach((column) => {
+        column.tasks = column.tasks.filter((task) => task.id !== taskId);
+      });
+      // also remove from brain dump
+      this.brainDumpTasks = this.brainDumpTasks.filter((task) => task.id !== taskId);
+    },
+    async updateTask(task) {
+      await axios.put(`http://localhost:8000/api/tasks/${task.id}/`, task);
+    },
     async updateTasksOrder(tasks_array) {
       try {
         const data = {

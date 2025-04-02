@@ -62,7 +62,7 @@ class TaskApiView(APIView):
         use `toggle_task_completion` for toggling the completion status and this
         one for updating other fields.
         """
-        task = Task.objects.get(pk=pk)
+        task = get_object_or_404(Task, pk=pk)
         serializer = TaskSerializer(task, data=request.data)
         if serializer.is_valid():
             serializer.save()
