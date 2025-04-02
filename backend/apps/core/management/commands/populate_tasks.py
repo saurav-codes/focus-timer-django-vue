@@ -10,40 +10,113 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING("Deleted all existing tasks."))
 
         tasks_data = [
+            # Brain Dump Tasks
             {
-                "title": "Write project proposal",
-                "description": "Prepare an outline and draft for the new project proposal.",
-                "status": "todo",
+                "title": "Brainstorm new feature ideas",
+                "description": "Generate innovative feature ideas for the next quarter.",
+                "is_in_brain_dump": True,
+                "is_completed": False,
+                "tags": ["Planning", "Innovation"],
             },
             {
-                "title": "Review team code",
-                "description": "Go through the recent merge request and provide feedback.",
-                "status": "in_progress",
+                "title": "Research competitor analysis",
+                "description": "Analyze top 5 competitors and their feature sets.",
+                "is_in_brain_dump": True,
+                "is_completed": False,
+                "tags": ["Research", "Strategy"],
             },
             {
-                "title": "Attend stand-up meeting",
-                "description": "Discuss daily progress and any blockers in the morning meeting.",
-                "status": "todo",
+                "title": "Draft content calendar",
+                "description": "Plan content for social media and blog posts.",
+                "is_in_brain_dump": True,
+                "is_completed": False,
+                "tags": ["Marketing", "Planning"],
+            },
+
+            # Regular Tasks
+            {
+                "title": "Code review: Authentication module",
+                "description": "Review PR #123 for the new authentication system.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Development", "Security"],
             },
             {
-                "title": "Design UI mockups",
-                "description": "Create wireframes for the new dashboard feature.",
-                "status": "in_progress",
+                "title": "Update API documentation",
+                "description": "Add new endpoints and update existing documentation.",
+                "is_in_brain_dump": False,
+                "is_completed": True,
+                "tags": ["Documentation", "API"],
             },
             {
-                "title": "Fix login bug",
-                "description": "Resolve the issue with user authentication on mobile devices.",
-                "status": "done",
+                "title": "Weekly team meeting",
+                "description": "Discuss sprint progress and upcoming milestones.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Meeting", "Team"],
             },
             {
-                "title": "Update documentation",
-                "description": "Revise API endpoints and usage documentation.",
-                "status": "done",
+                "title": "Fix mobile responsiveness",
+                "description": "Address UI issues on smaller screens.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Bug", "UI"],
             },
             {
-                "title": "Plan sprint backlog",
-                "description": "Organize and prioritize tasks for the upcoming sprint.",
-                "status": "todo",
+                "title": "Implement dark mode",
+                "description": "Add dark mode theme support across all components.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Feature", "UI"],
+            },
+            {
+                "title": "Performance optimization",
+                "description": "Optimize database queries and frontend loading.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Performance", "Development"],
+            },
+            {
+                "title": "User feedback analysis",
+                "description": "Review and categorize recent user feedback.",
+                "is_in_brain_dump": False,
+                "is_completed": True,
+                "tags": ["Analysis", "User Experience"],
+            },
+            {
+                "title": "Security audit",
+                "description": "Conduct monthly security review and updates.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Security", "Maintenance"],
+            },
+            {
+                "title": "Create onboarding tutorial",
+                "description": "Design and implement user onboarding flow.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["UX", "Documentation"],
+            },
+            {
+                "title": "Update dependencies",
+                "description": "Update all project dependencies to latest versions.",
+                "is_in_brain_dump": False,
+                "is_completed": True,
+                "tags": ["Maintenance", "Development"],
+            },
+            {
+                "title": "Implement email notifications",
+                "description": "Add email notification system for task updates.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Feature", "Backend"],
+            },
+            {
+                "title": "Create monthly analytics report",
+                "description": "Generate and analyze monthly usage statistics.",
+                "is_in_brain_dump": False,
+                "is_completed": False,
+                "tags": ["Analytics", "Reporting"],
             },
         ]
 
@@ -52,11 +125,15 @@ class Command(BaseCommand):
             task = Task.objects.create(
                 title=data["title"],
                 description=data["description"],
-                status=data["status"],
+                is_in_brain_dump=data["is_in_brain_dump"],
+                is_completed=data["is_completed"],
                 order=idx
             )
+            # Add tags separately since TaggableManager needs to be handled after creation
+            task.tags.add(*data["tags"])
+
             self.stdout.write(self.style.SUCCESS(
-                f"Created task: {task.title} (Status: {task.status})"
+                f"Created task: {task.title} (Completed: {task.is_completed}, Brain Dump: {task.is_in_brain_dump})"
             ))
 
-        self.stdout.write(self.style.SUCCESS("Fake tasks have been populated successfully.")) 
+        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(tasks_data)} tasks!"))

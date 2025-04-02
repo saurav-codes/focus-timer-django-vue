@@ -1,114 +1,77 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
-import { useDateFormat } from '@vueuse/core';
+import { onMounted, ref, useTemplateRef, watch } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
-import BrainDumpVue from '@/components/BrainDump.vue';
-import KanbanColumn from '@/components/KanbanColumn.vue';
-import IntegrationSidebar from '@/components/sidebar/IntegrationSidebar.vue';
+import BrainDump from '../components/BrainDump.vue';
+import KanbanColumn from '../components/KanbanColumn.vue';
+import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
+import { useScroll, usePointer, useMouseInElement, useWindowSize } from '@vueuse/core';
+
+import { useTaskStore } from '../stores/taskstore';
 
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
+const taskStore = useTaskStore();
 
-const today = new Date();
+// need this reference to scroll the kanban columns wrapper when the page loads
+const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper');
+const scroll_data = useScroll(kanbanColumnsWrapper, {behavior: 'smooth'});
 
-// Use useDateFormat for consistent date formatting
-const formatDate = (date) => {
-  return useDateFormat(date, 'ddd, MMM D').value;
-};
+// const { x: mouse_x, pressure:mouse_pressure } = usePointer()
+const { x: mouse_x} = useMouseInElement(kanbanColumnsWrapper)
+const {pressure:mouse_pressure} = usePointer()
+const { width: window_width } = useWindowSize()
 
-// Create a new date object to avoid mutation issues
-const getTomorrow = () => {
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  return tomorrow;
-};
+function _scroll_threshold() {
+  // mouse x/total window width x 100
+  const scrolled_percent = (mouse_x/window_width)*100
+    if (scrolled_percent > 5) {
+      return 600 ? _mouse_near_left_edge() : 200
+    } else if (scrolled_percent >10) {
+      return 500 ? _mouse_near_left_edge() : 400
+    } else if (scrolled_percent > 20 ) {
+      return 400 ? _mouse_near_left_edge() : 500
+    } else if ( scrolled_percent > 30 ) {
+      return 300  ? _mouse_near_left_edge() : 600
+    } else return 200
+}
 
-const getYesterday = () => {
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  return yesterday;
-};
+function _mouse_near_right_edge() {
+  const right_edge = window_width.value - 100;
+  return mouse_x.value > right_edge;
+}
 
-// Add functions for additional date columns
-const getNextWeek = () => {
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
-  return nextWeek;
-};
+function _mouse_near_left_edge() {
+  const left_edge = 100;
+  return mouse_x.value < left_edge;
+}
 
-const getAfterNextWeek = () => {
-  const afterNextWeek = new Date(today);
-  afterNextWeek.setDate(today.getDate() + 14);
-  return afterNextWeek;
-};
+function _should_scroll_right() {
+  return _mouse_near_right_edge() && mouse_pressure.value >= 0.5;
+}
 
-const getNextMonth = () => {
-  const nextMonth = new Date(today);
-  nextMonth.setMonth(today.getMonth() + 1);
-  return nextMonth;
-};
+function _should_scroll_left() {
+  return _mouse_near_left_edge() && mouse_pressure.value >= 0.5;
+}
 
-const dates = {
-  yesterday: formatDate(getYesterday()),
-  today: formatDate(today),
-  tomorrow: formatDate(getTomorrow()),
-  nextWeek: formatDate(getNextWeek()),
-  afterNextWeek: formatDate(getAfterNextWeek()),
-  nextMonth: formatDate(getNextMonth()),
-};
-
-const handleTaskCompletion = (data) => {
-  console.log('Task completion toggled:', data);
-  // Here you would update your global state or make API calls
-};
-
-const handleAddTask = (task) => {
-  console.log('New task added:', task);
-  // Here you would update your global state or make API calls
-};
-
-// Add event listener for keyboard shortcuts
-const handleKeyPress = (event) => {
-  // Only trigger if 'a' is pressed and no input/textarea is focused
-  if (
-    event.key === 'a' &&
-    !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) &&
-    !document.activeElement.isContentEditable
-  ) {
-    event.preventDefault(); // Prevent 'a' from being typed
-    brainDumpRef.value?.startAddingTask();
+watch(mouse_x, (new_mouse_x) => {
+  if (_should_scroll_right()) {
+    scroll_data.x.value += _scroll_threshold();
   }
-};
-
+  if (_should_scroll_left()) {
+    scroll_data.x.value -= _scroll_threshold();
+  }
+});
 
 const animateScroll = () => {
-  const container = document.querySelector('.kanban-columns-wrapper');
-  if (!container) return;
-
-  const originalScroll = container.scrollLeft;
-  const targetScroll = 500; // Scroll right by 100px
-
-  // Animate scroll right
-  container.scrollTo({
-    left: targetScroll,
-    behavior: 'smooth'
-  });
-
-  // After 1 second, scroll back
+  // scroll to right by 500
+  scroll_data.x.value = 500;
   setTimeout(() => {
-    container.scrollTo({
-      left: originalScroll,
-      behavior: 'smooth'
-    });
+    scroll_data.x.value = 0;
   }, 1000);
-};
+}
 
 // Run animation when component mounts and hide the indicator after animation
 onMounted(() => {
-  // Add event listener for keyboard shortcuts
-  document.addEventListener('keydown', handleKeyPress);
-  console.log("event listener added for keyboard shortcut a key");
-
   // Small delay to ensure content is rendered
   setTimeout(() => {
     animateScroll();
@@ -118,140 +81,37 @@ onMounted(() => {
       showScrollIndicator.value = false;
     }, 2000); // Hide after 2 seconds (animation + a bit more time)
   }, 100);
+
+  // Fetch tasks when component mounts
+  taskStore.fetchTasks();
 });
-
-// Remove event listener when component unmounts
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyPress);
-  console.log("event listener removed for keyboard shortcut a key");
-});
-
-// Create refs for each column to access their methods
-const brainDumpRef = ref(null);
-const columnRefs = {
-  yesterday: ref(null),
-  today: ref(null),
-  tomorrow: ref(null),
-  nextWeek: ref(null),
-  afterNextWeek: ref(null),
-  nextMonth: ref(null)
-};
-
-// Handle task moved from brain dump to a kanban column
-const handleTaskMovedToColumn = ({ task, columnId }) => {
-  console.log('Task moved from brain dump to column:', columnId, task);
-  columnRefs[columnId].value?.addTaskFromExternal(task);
-};
-
-// Handle task moved from a kanban column to brain dump
-const handleTaskMovedToBrainDump = (task) => {
-  console.log('Task moved to brain dump:', task);
-  brainDumpRef.value?.addTaskFromColumn(task);
-};
-
-// Handle task moved between kanban columns
-const handleTaskMovedBetweenColumns = ({ task, toColumnId }) => {
-  console.log('Task moved between columns:', toColumnId, task);
-  columnRefs[toColumnId].value?.addTaskFromExternal(task);
-};
-
-// Handle task reordering within a column
-const handleTaskReordering = ({ columnId, tasks, oldIndex, newIndex }) => {
-  console.log(`Tasks reordered in ${columnId}:`, { oldIndex, newIndex });
-  // Here you would typically update your backend/store with the new order
-  // For example, if using a store:
-  // store.dispatch('updateTaskOrder', { columnId, tasks, oldIndex, newIndex });
-
-  // Or if you need to make a backend call:
-  // api.updateTaskOrder(columnId, tasks);
-};
 
 </script>
 
 <template>
-  <div class="kanban-planner">
+  <div ref="kanbanPlanner" class="kanban-planner">
     <div class="brain-dump-wrapper">
-      <BrainDumpVue
-        ref="brainDumpRef"
-        @task-moved-to-column="handleTaskMovedToColumn"
-        @reorder-tasks="handleTaskReordering" />
-
+      <BrainDump />
       <!-- Scroll indicator -->
       <div v-if="showScrollIndicator" class="scroll-indicator">
         <ChevronRight size="24" />
       </div>
     </div>
 
-    <!-- Integration Sidebar (conditionally shown) -->
-    <IntegrationSidebar class="integration-sidebar-wrapper" />
-
     <!-- Scrollable columns container -->
-    <div ref="scrollContainerRef" class="kanban-columns-wrapper">
+    <div ref="kanbanColumnsWrapper" class="kanban-columns-wrapper">
       <div class="kanban-columns">
-        <KanbanColumn
-          :ref="el => columnRefs.yesterday = el"
-          title="Yesterday"
-          column-id="yesterday"
-          :date="dates.yesterday"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
-        <KanbanColumn
-          :ref="el => columnRefs.today = el"
-          title="Today"
-          column-id="today"
-          :date="dates.today"
-          :allow-add-task="true"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
-        <KanbanColumn
-          :ref="el => columnRefs.tomorrow = el"
-          title="Tomorrow"
-          column-id="tomorrow"
-          :date="dates.tomorrow"
-          :allow-add-task="true"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
-        <KanbanColumn
-          :ref="el => columnRefs.nextWeek = el"
-          title="Next Week"
-          column-id="nextWeek"
-          :date="dates.nextWeek"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
-        <KanbanColumn
-          :ref="el => columnRefs.afterNextWeek = el"
-          title="After Next Week"
-          column-id="afterNextWeek"
-          :date="dates.afterNextWeek"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
-        <KanbanColumn
-          :ref="el => columnRefs.nextMonth = el"
-          title="Next Month"
-          column-id="nextMonth"
-          :date="dates.nextMonth"
-          @toggle-completion="handleTaskCompletion"
-          @add-task="handleAddTask"
-          @task-moved-to-brain-dump="handleTaskMovedToBrainDump"
-          @task-moved-between-columns="handleTaskMovedBetweenColumns"
-          @reorder-tasks="handleTaskReordering" />
+        <div v-for="column in taskStore.kanbanColumns" :key="column.title">
+          <KanbanColumn
+            :date-string="column.dateString"
+            :title="column.title"
+            :tasks="column.tasks" />
+        </div>
       </div>
     </div>
+
+    <!-- Integration Sidebar (conditionally shown) -->
+    <IntegrationSidebar class="integration-sidebar-wrapper" />
   </div>
 </template>
 
@@ -261,7 +121,6 @@ const handleTaskReordering = ({ columnId, tasks, oldIndex, newIndex }) => {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  /* Add this to position the toggle wrapper */
 }
 
 /* Fixed Brain Dump sidebar */

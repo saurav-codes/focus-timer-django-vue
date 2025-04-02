@@ -51,6 +51,10 @@ INSTALLED_APPS = [
 THIRD_PARTY_APPS = [
     'djoser',
     'rest_framework',
+    "taggit",
+    "django_filters",
+    "crispy_forms",
+    "crispy_bootstrap4",
 ]
 
 LOCAL_APPS = [
@@ -101,6 +105,13 @@ DATABASES = {
     }
 }
 
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -145,3 +156,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = env('ALLOWED_ORIGINS', cast=list)
 print(CORS_ALLOWED_ORIGINS)
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+CRISPY_TEMPLATE_PACK = "bootstrap4"

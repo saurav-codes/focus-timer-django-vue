@@ -1,69 +1,127 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { useDateFormat } from '@vueuse/core';
+
+const today = new Date();
+
+// Use useDateFormat for consistent date formatting
+const formatDate = (date) => {
+  return useDateFormat(date, 'ddd, MMM D').value;
+};
+
+// Create a new date object to avoid mutation issues
+const getTomorrow = () => {
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  return tomorrow;
+};
+
+const getYesterday = () => {
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  return yesterday;
+};
+
+// Add functions for additional date columns
+const getNextWeek = () => {
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+  return nextWeek;
+};
+
+const getAfterNextWeek = () => {
+  const afterNextWeek = new Date(today);
+  afterNextWeek.setDate(today.getDate() + 14);
+  return afterNextWeek;
+};
+
+const getNextMonth = () => {
+  const nextMonth = new Date(today);
+  nextMonth.setMonth(today.getMonth() + 1);
+  return nextMonth;
+};
 
 export const useTaskStore = defineStore('taskStore', {
   state: () => ({
-    // Define three date-based columns:
-    // - Yesterday, Today, and Tomorrow.
-    columns: [
+    kanbanColumns: [
       {
-        date: new Date(new Date().setDate(new Date().getDate() - 1)), // Yesterday
         tasks: [],
+        date: getYesterday(),
+        dateString: formatDate(getYesterday()),
+        title: "Yesterday",
       },
       {
-        date: new Date(), // Today
         tasks: [],
+        date: today,
+        dateString: formatDate(today),
+        title: "Today",
       },
       {
-        date: new Date(new Date().setDate(new Date().getDate() + 1)), // Tomorrow
         tasks: [],
+        date: getTomorrow(),
+        dateString: formatDate(getTomorrow()),
+        title: "Tomorrow",
+      },
+      {
+        tasks: [],
+        date: getNextWeek(),
+        dateString: formatDate(getNextWeek()),
+        title: "Next Week",
+      },
+      {
+        tasks: [],
+        date: getAfterNextWeek(),
+        dateString: formatDate(getAfterNextWeek()),
+        title: "After Next Week",
+      },
+      {
+        tasks: [],
+        date: getNextMonth(),
+        dateString: formatDate(getNextMonth()),
+        title: "Next Month",
       },
     ],
+    brainDumpTasks: [],
   }),
   actions: {
     async fetchTasks() {
-      try {
+      try{
         const { data } = await axios.get('http://localhost:8000/api/tasks/');
-        console.log("Fetched tasks from API:", data); // Debug log
-
-        this.columns.forEach((column) => {
-          const targetDateStr = column.date.toDateString();
-          // console.log(`Processing column ${index}, date: ${targetDateStr}`); // Debug log
-
+        this.kanbanColumns.forEach((column) => {
           const filteredTasks = data.filter((task) => {
             const taskDate = new Date(task.created_at);
-            const matches = taskDate.toDateString() === targetDateStr;
-            // console.log(`Task ${task.id} date: ${taskDate.toDateString()}, matches: ${matches}`); // Debug log
-            return matches;
+            const taskDateString = taskDate.toDateString();
+            const is_not_in_brain_dump = task.is_in_brain_dump === false;
+            return taskDateString === column.date.toDateString() && is_not_in_brain_dump;
           });
-
           // Use direct assignment to ensure reactivity
+          // TODO: possible bug here because we aren't doing deep copy of the array
           column.tasks = [...filteredTasks];
-          // console.log("updated tasks data with - ", column.tasks)
-          // console.log(`Column ${index} tasks updated, length: ${column.tasks.length}`); // Debug log
+        });
+        this.brainDumpTasks = data.filter((task) => {
+          return task.is_in_brain_dump;
         });
       } catch (error) {
         console.error('Error fetching tasks:', error);
-      }
+      };
     },
-    async updateTaskStatus(task, newStatus) {
+    async toggleCompletion(taskId) {
+      await axios.post(`http://localhost:8000/api/tasks/${taskId}/toggle_completion/`);
+    },
+    async createTask(task) {
+      const { data } = await axios.post('http://localhost:8000/api/tasks/', task);
+      return data;
+    },
+    async updateTasksOrder(tasks_array) {
       try {
-        await axios.patch(`http://localhost:8000/api/tasks/${task.id}/`, { status: newStatus });
-        // Optionally update the task's local status.
-        task.status = newStatus;
+        const data = {
+          "tasks": tasks_array,
+          "action": "update_order"
+        };
+        await axios.put('http://localhost:8000/api/tasks/', data);
       } catch (error) {
-        console.error('Error updating task:', error);
+        console.error('Error updating tasks order:', error);
       }
-    },
-    reorderColumnTasksOnBackend(columnIndex, newTasks) {
-      // Replace the existing tasks for this column with the new ordering.
-      this.columns[columnIndex].tasks = newTasks;
-      // TODO: Optionally send a request to the backend to persist the new order.
-    },
-    // TODO: add a task to a column
-    addTaskToColumn(columnIndex, task) {
-      this.columns[columnIndex].tasks.push(task);
-      // send a request to the backend to persist the new task
     },
   },
 });

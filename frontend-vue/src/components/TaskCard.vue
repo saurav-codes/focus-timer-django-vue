@@ -1,5 +1,8 @@
 <script setup>
+import { useTaskStore } from '../stores/taskstore';
+import { computed } from 'vue';
 
+const taskStore = useTaskStore();
 const props = defineProps({
   task: {
     type: Object,
@@ -8,14 +11,17 @@ const props = defineProps({
   showCheckbox: {
     type: Boolean,
     default: true
-  }
+  },
 });
 
-const emit = defineEmits(['toggle-completion']);
+const localTask = computed(() => {
+  return props.task;
+});
 
 const toggleCompletion = () => {
   if (props.showCheckbox) {
-    emit('toggle-completion', props.task.id);
+    localTask.value.is_completed = !localTask.value.is_completed;
+    taskStore.toggleCompletion(props.task.id);
   }
 };
 </script>
@@ -23,22 +29,22 @@ const toggleCompletion = () => {
 <template>
   <div
     class="task-item"
-    :class="{ 'completed': task.completed }">
+    :class="{ 'completed': localTask.is_completed }">
     <div v-if="showCheckbox" class="task-checkbox" @click="toggleCompletion">
-      <div class="checkbox" :class="{ 'checked': task.completed }" />
+      <div class="checkbox" :class="{ 'checked': localTask.is_completed }" />
     </div>
     <div class="task-content">
       <div class="task-title">
-        {{ task.title }}
+        {{ localTask.title }}
       </div>
       <div class="task-meta">
-        <span v-if="task.tag" class="task-tag" :class="`tag-${task.tag.color}`">
-          {{ task.tag.name }}
+        <span v-if="localTask.tag" class="task-tag" :class="`tag-${localTask.tag.color}`">
+          {{ localTask.tag.name }}
         </span>
       </div>
     </div>
     <div class="task-duration">
-      {{ task.duration }}
+      {{ localTask.duration }}
     </div>
   </div>
 </template>

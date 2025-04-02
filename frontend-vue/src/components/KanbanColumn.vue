@@ -1,12 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { BadgeCheck, Plus } from 'lucide-vue-next';
-import TaskCard from '@/components/TaskCard.vue';
+import { computed, ref, watch } from 'vue';
+import { BadgeCheck } from 'lucide-vue-next';
+import TaskCard from './TaskCard.vue';
 import { SlickList, SlickItem } from 'vue-slicksort';
+import { useTaskStore } from '../stores/taskstore';
 
+const taskStore = useTaskStore();
 
 const props = defineProps({
-  date: {
+  dateString: {
     type: String,
     required: true
   },
@@ -18,86 +20,25 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  allowAddTask: {
-    type: Boolean,
-    default: false
-  },
   columnWidth: {
     type: String,
     default: '300px'
-  }
+  },
 });
 
-const emit = defineEmits(['toggle-completion', 'add-task']);
+// Initialize with empty array
+const localTasks = ref([]);
 
-const localTasks = ref(props.tasks.length ? props.tasks : [
-  {
-    id: 1,
-    title: 'Design system implementation',
-    completed: false,
-    duration: '2:00',
-    tag: { name: 'Design', color: 'purple' }
-  },
-  {
-    id: 2,
-    title: 'API Integration for tasks',
-    completed: false,
-    duration: '3:00',
-    tag: { name: 'Development', color: 'blue' }
-  }
-]);
-
-const newTaskTitle = ref('');
-const isAddingTask = ref(false);
+// Watch for changes to props.tasks and update localTasks
+watch(() => props.tasks, (newTasks) => {
+  // Create a deep copy of the tasks to avoid reference issues
+  localTasks.value = JSON.parse(JSON.stringify(newTasks));
+}, { immediate: true }); // immediate: true makes it run on component mount
 
 const completedTasksCount = computed(() => {
   return localTasks.value.filter(task => task.completed).length;
 });
 
-const toggleTaskCompletion = (taskId) => {
-  const task = localTasks.value.find(t => t.id === taskId);
-  if (task) {
-    task.completed = !task.completed;
-    emit('toggle-completion', { taskId, completed: task.completed });
-  }
-};
-
-const startAddingTask = () => {
-  isAddingTask.value = true;
-  setTimeout(() => {
-    document.getElementById(`new-task-input-${props.title}`)?.focus();
-  }, 0);
-};
-
-const addTask = () => {
-  if (newTaskTitle.value.trim()) {
-    const newTask = {
-      id: Date.now(),
-      title: newTaskTitle.value,
-      completed: false,
-      duration: '0:30',
-      tag: null
-    };
-
-    localTasks.value.push(newTask);
-    emit('add-task', newTask);
-    newTaskTitle.value = '';
-  }
-  isAddingTask.value = false;
-};
-
-const cancelAddTask = () => {
-  newTaskTitle.value = '';
-  isAddingTask.value = false;
-};
-
-const handleKeyDown = (event) => {
-  if (event.key === 'Enter') {
-    addTask();
-  } else if (event.key === 'Escape') {
-    cancelAddTask();
-  }
-};
 </script>
 
 <template>
@@ -105,35 +46,24 @@ const handleKeyDown = (event) => {
     <div class="column-header">
       <div class="title-section">
         <h3>{{ title }}</h3>
-        <span class="date">{{ date }}</span>
+        <span class="date">{{ dateString }}</span>
       </div>
       <div class="stats">
         <BadgeCheck class="small-icon" size="14" />
         <span>{{ completedTasksCount }} / {{ localTasks.length }}</span>
       </div>
     </div>
-
-    <div v-if="allowAddTask && !isAddingTask" class="add-task" @click="startAddingTask">
-      <Plus size="16" class="plus-icon" />
-      <span>Add a task</span>
-    </div>
-
-    <div v-if="allowAddTask && isAddingTask" class="new-task-input">
-      <input
-        :id="`new-task-input-${title}`"
-        v-model="newTaskTitle"
-        placeholder="What needs to be done?"
-        @keydown="handleKeyDown"
-        @blur="cancelAddTask">
-    </div>
-
     <div class="tasks-container">
-      <SlickList v-model:list="localTasks" group="kanban-group">
-        <div class="tasks-list">
-          <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
-            <TaskCard :task="task" @toggle-completion="toggleTaskCompletion" />
-          </SlickItem>
-        </div>
+      <SlickList
+        v-model:list="localTasks"
+        :distance="5"
+        class="tasks-list"
+        group="kanban-group"
+        :accept="['brain-dump-group']"
+        @update:list="taskStore.updateTasksOrder">
+        <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
+          <TaskCard :task="task" />
+        </SlickItem>
       </SlickList>
     </div>
   </div>
@@ -145,8 +75,8 @@ const handleKeyDown = (event) => {
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   width: 300px;
-  /* min-height: 400px; */
   min-height: 90vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -196,6 +126,8 @@ const handleKeyDown = (event) => {
   flex-direction: column;
   gap: 0.5rem;
   flex-grow: 1;
+  height: 100%;
+  overflow-y: scroll;
 }
 
 .add-task {

@@ -1,35 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import TaskCard from '@/components/TaskCard.vue';
-import { useUIStore } from '@/stores/uiStore';
+import TaskCard from './TaskCard.vue';
+import { useUIStore } from '../stores/uiStore';
+import { useTaskStore } from '../stores/taskstore';
 import { SlickList, SlickItem } from 'vue-slicksort';
-// Use the UI store instead of local state
-const uiStore = useUIStore();
 
-const tasks = ref([
-  {
-    id: 1,
-    title: 'Q3 Goal Planning',
-    completed: false,
-    duration: '1:00',
-    tag: { name: 'Admin', color: 'purple' }
-  },
-  {
-    id: 2,
-    title: 'Invoice Creation - Mobile optimization',
-    completed: false,
-    duration: '2:00',
-    tag: { name: 'AloaPay', color: 'blue' }
-  },
-  {
-    id: 3,
-    title: 'Invoice Updating - Mobile Optimization',
-    completed: false,
-    duration: '1:30',
-    tag: { name: 'AloaPay', color: 'blue' }
-  }
-]);
+const uiStore = useUIStore();
+const taskStore = useTaskStore();
 
 const newTaskTitle = ref('');
 const isAddingTask = ref(false);
@@ -43,7 +21,7 @@ const startAddingTask = () => {
   }, 0);
 };
 
-const addTask = () => {
+const addTask = async () => {
   if (newTaskTitle.value.trim()) {
     // make an object and send this values to backend
     const newTask = {
@@ -51,13 +29,15 @@ const addTask = () => {
       title: newTaskTitle.value,
       completed: false,
       duration: '0:30',
-      tag: null
+      is_in_brain_dump: true,
     };
-    tasks.value.push(newTask);
-    emit('add-task', newTask);
+    // add the new task to the top of the list
+    taskStore.brainDumpTasks.unshift(newTask);
     newTaskTitle.value = '';
+    const data = await taskStore.createTask(newTask);
+    // since we are doing optimistic update, we need to update the id of the task
+    taskStore.brainDumpTasks[0].id = data.id;
   }
-  isAddingTask.value = false;
 };
 
 const cancelAddTask = () => {
@@ -73,16 +53,31 @@ const handleKeyDown = (event) => {
   }
 };
 
-const toggleTaskCompletion = (taskId) => {
-  const task = tasks.value.find(t => t.id === taskId);
-  if (task) {
-    task.completed = !task.completed;
+// Add event listener for keyboard shortcuts
+const handleKeyPress = (event) => {
+  // Only trigger if 'a' is pressed and no input/textarea is focused
+  if (
+    event.key === 'a' &&
+    !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) &&
+    !document.activeElement.isContentEditable
+  ) {
+    event.preventDefault(); // Prevent 'a' from being typed
+    startAddingTask();
   }
 };
 
+onMounted(() => {
+  // Add event listener for keyboard shortcuts
+  document.addEventListener('keydown', handleKeyPress);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyPress);
+});
+
 const completed_tasks_vs_total_tasks = computed(() => {
-  const completedTasks = tasks.value.filter(task => task.completed).length;
-  const totalTasks = tasks.value.length;
+  const completedTasks = taskStore.brainDumpTasks.filter(task => task.completed).length;
+  const totalTasks = taskStore.brainDumpTasks.length;
   return `${completedTasks} / ${totalTasks}`;
 });
 
@@ -90,19 +85,9 @@ const completed_tasks_vs_total_tasks = computed(() => {
 const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
 const toggleBrainDump = () => uiStore.toggleBrainDump();
 
-// Emit events for task movement
-const emit = defineEmits(['task-moved-to-column', 'task-added-from-column', 'reorder-tasks', 'add-task']);
-
-// Handle task being added from a column
-const addTaskFromColumn = (task) => {
-  tasks.value.push(task);
-};
-
-// Expose the method for parent components to call
-defineExpose({
-  addTaskFromColumn,
-  startAddingTask
-});
+const handleSortRemove = ({ oldIndex }) => {
+  console.log("handleSortRemove", oldIndex);
+}
 
 </script>
 
@@ -142,12 +127,17 @@ defineExpose({
         @blur="cancelAddTask">
     </div>
 
-    <SlickList v-model:list="tasks" group="kanban-group">
-      <div class="tasks-list">
-        <SlickItem v-for="(task, idx) in tasks" :key="task.id" :index="idx" :item="task">
-          <TaskCard :task="task" @toggle-completion="toggleTaskCompletion" />
-        </SlickItem>
-      </div>
+    <SlickList
+      v-model:list="taskStore.brainDumpTasks"
+      :distance="5"
+      group="brain-dump-group"
+      class="tasks-list"
+      :accept="['kanban-group']"
+      @sort-remove="handleSortRemove"
+      @update:list="taskStore.updateTasksOrder">
+      <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
+        <TaskCard :task="task" />
+      </SlickItem>
     </SlickList>
   </div>
 </template>
@@ -156,7 +146,7 @@ defineExpose({
 .brain-dump-container {
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
-  height: 100vh;
+  height: 92vh;
   width: 280px;
   position: sticky;
   top: 0;
@@ -299,5 +289,6 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow-y: scroll;
 }
 </style>
