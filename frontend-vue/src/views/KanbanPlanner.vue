@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted, ref, useTemplateRef, watch } from 'vue';
+import { onMounted, ref, useTemplateRef, watch, onUnmounted } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
-import { useScroll, usePointer, useMouseInElement, useWindowSize } from '@vueuse/core';
+import { useScroll, usePointer, useMouseInElement, useWindowSize, useRafFn } from '@vueuse/core';
 
 import { useTaskStore } from '../stores/taskstore';
 
@@ -16,34 +16,17 @@ const taskStore = useTaskStore();
 const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper');
 const scroll_data = useScroll(kanbanColumnsWrapper, {behavior: 'smooth'});
 
-// const { x: mouse_x, pressure:mouse_pressure } = usePointer()
 const { x: mouse_x} = useMouseInElement(kanbanColumnsWrapper)
 const {pressure:mouse_pressure} = usePointer()
 const { width: window_width } = useWindowSize()
 
-function _scroll_threshold() {
-  // mouse x/total window width x 100
-  const scrolled_percent = (mouse_x/window_width)*100
-    if (scrolled_percent > 5) {
-      return _mouse_near_left_edge() ? 600 : 200
-    } else if (scrolled_percent >10) {
-      return _mouse_near_left_edge() ? 500 : 400
-    } else if (scrolled_percent > 20 ) {
-      return _mouse_near_left_edge() ? 400 : 500
-    } else if ( scrolled_percent > 30 ) {
-      return _mouse_near_left_edge() ? 300 : 600
-    } else {
-      return 200
-    }
-}
-
 function _mouse_near_right_edge() {
-  const right_edge = window_width.value - 100;
+  const right_edge = window_width.value - 150;
   return mouse_x.value > right_edge;
 }
 
 function _mouse_near_left_edge() {
-  const left_edge = 100;
+  const left_edge = 400;
   return mouse_x.value < left_edge;
 }
 
@@ -55,14 +38,28 @@ function _should_scroll_left() {
   return _mouse_near_left_edge() && mouse_pressure.value >= 0.5;
 }
 
-watch(mouse_x, (new_mouse_x) => {
+// Setup your conditions
+const { pause, resume } = useRafFn(() => {
   if (_should_scroll_right()) {
-    scroll_data.x.value += _scroll_threshold();
+    scroll_data.x.value += 500;
+  } else if (_should_scroll_left()) {
+    scroll_data.x.value -= 500;
   }
-  if (_should_scroll_left()) {
-    scroll_data.x.value -= _scroll_threshold();
+})
+
+// Start/stop based on mouse position
+watch([mouse_x, mouse_pressure], () => {
+  if (_should_scroll_right() || _should_scroll_left()) {
+    resume()
+  } else {
+    pause()
   }
-});
+})
+
+// Clean up
+onUnmounted(() => {
+  pause()
+})
 
 const animateScroll = () => {
   // scroll to right by 500
