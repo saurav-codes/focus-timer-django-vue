@@ -92,14 +92,13 @@ const handleSortRemove = ({ oldIndex }) => {
 </script>
 
 <template>
+  <!-- Brain Dump toggle button in a box -->
+  <div class="brain-dump-toggle-btn-wrapper" @click="toggleBrainDump">
+    <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
+      <component :is="isCollapsed ? ChevronRight : ChevronLeft" size="18" />
+    </button>
+  </div>
   <div class="brain-dump-container" :class="{ 'collapsed': isCollapsed }">
-    <!-- Brain Dump toggle button in a box -->
-    <div class="brain-dump-toggle-btn-wrapper" @click="toggleBrainDump">
-      <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
-        <component :is="isCollapsed ? ChevronRight : ChevronLeft" size="18" />
-      </button>
-    </div>
-
     <div class="header">
       <h2 class="title">
         <span class="icon">
@@ -142,7 +141,7 @@ const handleSortRemove = ({ oldIndex }) => {
   </div>
 </template>
 
-<style>
+<style scoped>
 .brain-dump-container {
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
@@ -193,6 +192,7 @@ const handleSortRemove = ({ oldIndex }) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2;
 }
 
 .brain-dump-toggle-btn {
@@ -283,12 +283,5 @@ const handleSortRemove = ({ oldIndex }) => {
 .new-task-input input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow-y: scroll;
 }
 </style>
