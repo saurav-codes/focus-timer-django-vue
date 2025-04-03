@@ -12,6 +12,10 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     start_at = models.DateTimeField(blank=True, null=True)
     end_at = models.DateTimeField(blank=True, null=True)
+    # timezone info will be fetched based on where user is logged in from
+    # so we can fetch this info from user's browser
+    # we may need to handle it differently if user is let's say travelling
+    # because he will add the task in diff timezones.
     timezone = TimeZoneField(blank=True, null=True)
     tags = TaggableManager(blank=True)
 
