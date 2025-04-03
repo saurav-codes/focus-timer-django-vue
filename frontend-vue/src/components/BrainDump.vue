@@ -9,6 +9,8 @@ import { SlickList, SlickItem } from 'vue-slicksort';
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
 
+// Add state for controlling the scroll indicator visibility
+const showScrollIndicator = ref(true);
 const newTaskTitle = ref('');
 const isAddingTask = ref(false);
 
@@ -69,6 +71,11 @@ const handleKeyPress = (event) => {
 onMounted(() => {
   // Add event listener for keyboard shortcuts
   document.addEventListener('keydown', handleKeyPress);
+
+  // Hide the indicator after the animation completes
+  setTimeout(() => {
+    showScrollIndicator.value = false;
+  }, 2000); // Hide after 2 seconds (animation + a bit more time)
 });
 
 onUnmounted(() => {
@@ -85,10 +92,6 @@ const completed_tasks_vs_total_tasks = computed(() => {
 const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
 const toggleBrainDump = () => uiStore.toggleBrainDump();
 
-const handleSortRemove = ({ oldIndex }) => {
-  console.log("handleSortRemove", oldIndex);
-}
-
 </script>
 
 <template>
@@ -97,6 +100,11 @@ const handleSortRemove = ({ oldIndex }) => {
     <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
       <component :is="isCollapsed ? ChevronRight : ChevronLeft" size="18" />
     </button>
+  </div>
+  <!-- Scroll indicator -->
+  <div v-if="showScrollIndicator" class="scroll-indicator" @click="toggleBrainDump">
+    <ChevronRight v-if="isCollapsed" size="24" />
+    <ChevronLeft v-else size="24" />
   </div>
   <div class="brain-dump-container" :class="{ 'collapsed': isCollapsed }">
     <div class="header">
@@ -118,21 +126,12 @@ const handleSortRemove = ({ oldIndex }) => {
     </div>
 
     <div v-else class="new-task-input">
-      <input
-        id="new-task-input"
-        v-model="newTaskTitle"
-        placeholder="What needs to be done?"
-        @keydown="handleKeyDown"
+      <input id="new-task-input" v-model="newTaskTitle" placeholder="What needs to be done?" @keydown="handleKeyDown"
         @blur="cancelAddTask">
     </div>
 
-    <SlickList
-      v-model:list="taskStore.brainDumpTasks"
-      :distance="5"
-      group="brain-dump-group"
-      class="tasks-list"
-      :accept="['kanban-group']"
-      @sort-remove="handleSortRemove"
+    <SlickList v-model:list="taskStore.brainDumpTasks" :distance="5" group="brain-dump-group" class="tasks-list"
+      :accept="['kanban-group']" @sort-insert="taskStore.taskDroppedToBrainDump"
       @update:list="taskStore.updateTasksOrder">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
         <TaskCard :task="task" />
@@ -253,6 +252,41 @@ const handleSortRemove = ({ oldIndex }) => {
   transition: background-color var(--transition-base);
   margin-bottom: 1rem;
   font-size: var(--font-size-sm);
+}
+
+
+/* Scroll indicator styling */
+.scroll-indicator {
+  position: absolute;
+  right: -1.1rem;
+  top: 52.5%;
+  transform: translateY(-50%);
+  background-color: var(--color-background);
+  color: var(--color-primary);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  animation: bounce-right 1.5s infinite;
+  opacity: 0.9;
+  z-index: 3;
+  cursor: pointer;
+}
+
+/* Bouncing animation */
+@keyframes bounce-right {
+
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0);
+  }
+
+  50% {
+    transform: translateY(-50%) translateX(5px);
+  }
 }
 
 .add-task:hover {

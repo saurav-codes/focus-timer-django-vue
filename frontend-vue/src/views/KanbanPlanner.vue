@@ -1,6 +1,5 @@
 <script setup>
-import { onMounted, ref, useTemplateRef, watch, onUnmounted } from 'vue';
-import { ChevronRight } from 'lucide-vue-next';
+import { onMounted, useTemplateRef, watch, onUnmounted } from 'vue';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
@@ -8,8 +7,6 @@ import { useScroll, usePointer, useMouseInElement, useWindowSize, useRafFn } fro
 
 import { useTaskStore } from '../stores/taskstore';
 
-// Add state for controlling the scroll indicator visibility
-const showScrollIndicator = ref(true);
 const taskStore = useTaskStore();
 
 // need this reference to scroll the kanban columns wrapper when the page loads
@@ -74,11 +71,6 @@ onMounted(() => {
   // Small delay to ensure content is rendered
   setTimeout(() => {
     animateScroll();
-
-    // Hide the indicator after the animation completes
-    setTimeout(() => {
-      showScrollIndicator.value = false;
-    }, 2000); // Hide after 2 seconds (animation + a bit more time)
   }, 100);
 
   // Fetch tasks when component mounts
@@ -91,10 +83,7 @@ onMounted(() => {
   <div ref="kanbanPlanner" class="kanban-planner">
     <div class="brain-dump-wrapper">
       <BrainDump />
-      <!-- Scroll indicator -->
-      <div v-if="showScrollIndicator" class="scroll-indicator">
-        <ChevronRight size="24" />
-      </div>
+
     </div>
 
     <!-- Scrollable columns container -->
@@ -132,38 +121,6 @@ onMounted(() => {
   /* Keep right shadow for depth */
   box-shadow: 4px 0 10px -3px rgba(0, 0, 0, 0.15);
   transition: width 0.3s ease;
-}
-
-/* Scroll indicator styling */
-.scroll-indicator {
-  position: absolute;
-  right: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: var(--color-background);
-  color: var(--color-primary);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
-  animation: bounce-right 1.5s infinite;
-  opacity: 0.9;
-}
-
-/* Bouncing animation */
-@keyframes bounce-right {
-
-  0%,
-  100% {
-    transform: translateY(-50%) translateX(0);
-  }
-
-  50% {
-    transform: translateY(-50%) translateX(5px);
-  }
 }
 
 /* Scrollable columns container */

@@ -12,6 +12,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  dateObj: {
+    type: Date,
+    required:true
+  },
   title: {
     type: String,
     required: true
@@ -39,6 +43,11 @@ const completedTasksCount = computed(() => {
   return localTasks.value.filter(task => task.completed).length;
 });
 
+function handleTaskDroppedToKanban ( {value }) {
+  console.log("value: ", value)
+  taskStore.taskDroppedToKanban(value, props.dateObj.toISOString())
+}
+
 </script>
 
 <template>
@@ -60,6 +69,7 @@ const completedTasksCount = computed(() => {
         class="tasks-list"
         group="kanban-group"
         :accept="['brain-dump-group']"
+        @sort-insert="handleTaskDroppedToKanban"
         @update:list="taskStore.updateTasksOrder">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
           <TaskCard :task="task" />
