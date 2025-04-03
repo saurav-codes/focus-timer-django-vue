@@ -25,14 +25,16 @@ function _scroll_threshold() {
   // mouse x/total window width x 100
   const scrolled_percent = (mouse_x/window_width)*100
     if (scrolled_percent > 5) {
-      return 600 ? _mouse_near_left_edge() : 200
+      return _mouse_near_left_edge() ? 600 : 200
     } else if (scrolled_percent >10) {
-      return 500 ? _mouse_near_left_edge() : 400
+      return _mouse_near_left_edge() ? 500 : 400
     } else if (scrolled_percent > 20 ) {
-      return 400 ? _mouse_near_left_edge() : 500
+      return _mouse_near_left_edge() ? 400 : 500
     } else if ( scrolled_percent > 30 ) {
-      return 300  ? _mouse_near_left_edge() : 600
-    } else return 200
+      return _mouse_near_left_edge() ? 300 : 600
+    } else {
+      return 200
+    }
 }
 
 function _mouse_near_right_edge() {
