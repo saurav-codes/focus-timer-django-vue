@@ -83,7 +83,7 @@ onUnmounted(() => {
 });
 
 const completed_tasks_vs_total_tasks = computed(() => {
-  const completedTasks = taskStore.brainDumpTasks.filter(task => task.completed).length;
+  const completedTasks = taskStore.brainDumpTasks.filter(task => task.is_completed).length;
   const totalTasks = taskStore.brainDumpTasks.length;
   return `${completedTasks} / ${totalTasks}`;
 });

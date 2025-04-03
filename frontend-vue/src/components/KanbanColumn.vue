@@ -40,7 +40,7 @@ watch(() => props.tasks, (newTasks) => {
 }, { immediate: true }); // immediate: true makes it run on component mount
 
 const completedTasksCount = computed(() => {
-  return localTasks.value.filter(task => task.completed).length;
+  return localTasks.value.filter(task => task.is_completed).length;
 });
 
 function handleTaskDroppedToKanban ( {value }) {
