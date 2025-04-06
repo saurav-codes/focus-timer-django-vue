@@ -13,25 +13,24 @@ const formatDate = (date) => {
 const createDateColumn = (date, title = null) => {
   // Generate column title based on relative date if not provided
   if (!title) {
-    const dateObj = new Date(date);
-    const todayObj = new Date(today);
+    const colDateObj = new Date(date);
 
-    if (dateObj.toDateString() === todayObj.toDateString()) {
+    if (colDateObj.toDateString() === today.toDateString()) {
       title = "Today";
     } else {
-      const yesterday = new Date(todayObj);
-      yesterday.setDate(todayObj.getDate() - 1);
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
 
-      const tomorrow = new Date(todayObj);
-      tomorrow.setDate(todayObj.getDate() + 1);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
 
-      if (dateObj.toDateString() === yesterday.toDateString()) {
+      if (colDateObj.toDateString() === yesterday.toDateString()) {
         title = "Yesterday";
-      } else if (dateObj.toDateString() === tomorrow.toDateString()) {
+      } else if (colDateObj.toDateString() === tomorrow.toDateString()) {
         title = "Tomorrow";
       } else {
         // Use date as title for other days
-        title = formatDate(dateObj);
+        title = formatDate(colDateObj);
       }
     }
   }
