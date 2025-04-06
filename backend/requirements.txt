@@ -10,3 +10,4 @@ django-timezone-field
 djlint
 ruff
 django-taggit
+pytz
