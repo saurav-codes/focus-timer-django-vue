@@ -66,6 +66,11 @@ function handleTaskDeleted(taskId) {
   taskStore.updateTaskOrder(localTasks.value);
 }
 
+function handleTaskUpdated(updatedTask) {
+  // update the task in the localTasks
+  localTasks.value = localTasks.value.map(task => task.id === updatedTask.id ? updatedTask : task);
+}
+
 </script>
 
 <template>
@@ -90,7 +95,7 @@ function handleTaskDeleted(taskId) {
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
-          <TaskCard :task="task" @task-deleted="handleTaskDeleted" />
+          <TaskCard :task="task" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
         </SlickItem>
       </SlickList>
     </div>

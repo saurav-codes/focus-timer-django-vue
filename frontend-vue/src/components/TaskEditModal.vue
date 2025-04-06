@@ -18,7 +18,7 @@ const props = defineProps({
 });
 
 const taskStore = useTaskStore();
-const emit = defineEmits(["closeModal", "task-deleted"])
+const emit = defineEmits(["closeModal", "task-deleted", "task-updated"])
 
 // Create a copy of the task to edit
 const editedTask = ref({ ...props.task });
@@ -72,6 +72,7 @@ const saveTask = async () => {
   isSaving.value = true;
   try {
     await taskStore.updateTask(editedTask.value);
+    emit("task-updated", editedTask.value);
   } catch (error) {
     console.error('Error updating task:', error);
   } finally {

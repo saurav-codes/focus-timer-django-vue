@@ -101,6 +101,19 @@ const completed_tasks_vs_total_tasks = computed(() => {
 const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
 const toggleBrainDump = () => uiStore.toggleBrainDump();
 
+const handleTaskDeleted = (taskId) => {
+  // remove the task from the store
+  taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter(task => task.id !== taskId);
+  // update the order of the tasks in this column
+  taskStore.updateTaskOrder(taskStore.brainDumpTasks);
+}
+
+const handleTaskUpdated = (updatedTask) => {
+  // update the task in the store
+  taskStore.brainDumpTasks = taskStore.brainDumpTasks.map(task => task.id === updatedTask.id ? updatedTask : task);
+}
+
+
 </script>
 
 <template>
@@ -135,15 +148,24 @@ const toggleBrainDump = () => uiStore.toggleBrainDump();
     </div>
 
     <div v-else class="new-task-input">
-      <input id="new-task-input" v-model="newTaskTitle" placeholder="What needs to be done?" @keydown="handleKeyDown"
+      <input
+        id="new-task-input"
+        v-model="newTaskTitle"
+        placeholder="What needs to be done?"
+        @keydown="handleKeyDown"
         @blur="cancelAddTask">
     </div>
 
-    <SlickList v-model:list="taskStore.brainDumpTasks" :distance="5" group="brain-dump-group" class="tasks-list"
-      :accept="['kanban-group']" @sort-insert="taskStore.taskDroppedToBrainDump"
+    <SlickList
+      v-model:list="taskStore.brainDumpTasks"
+      :distance="5"
+      group="brain-dump-group"
+      class="tasks-list"
+      :accept="['kanban-group']"
+      @sort-insert="taskStore.taskDroppedToBrainDump"
       @update:list="handleTaskOrderUpdate">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
-        <TaskCard :task="task" />
+        <TaskCard :task="task" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
       </SlickItem>
     </SlickList>
   </div>

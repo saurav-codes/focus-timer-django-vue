@@ -4,7 +4,7 @@ import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, defineEmits } from 'vue';
 import { Trash2 } from 'lucide-vue-next';
 
-const emit = defineEmits(['task-deleted']);
+const emit = defineEmits(['task-deleted', 'task-updated']);
 const taskStore = useTaskStore();
 const props = defineProps({
   task: {
@@ -77,10 +77,20 @@ const deleteTask = () => {
   }
 };
 
+const handleTaskUpdated = (updatedTask) => {
+  // update the task in the localTask
+  emit('task-updated', updatedTask);
+}
+
 </script>
 
 <template>
-  <TaskEditModal :task="localTask" :is-open="isEditModalOpen" @close-modal="closeEditModal" @task-deleted="handleTaskDeleted" />
+  <TaskEditModal
+    :task="localTask"
+    :is-open="isEditModalOpen"
+    @close-modal="closeEditModal"
+    @task-updated="handleTaskUpdated"
+    @task-deleted="handleTaskDeleted" />
   <div
     class="task-item"
     :class="{ 'completed': localTask.is_completed }"
