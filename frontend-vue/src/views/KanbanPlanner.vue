@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, useTemplateRef, watch, onUnmounted } from 'vue';
+import { onMounted, useTemplateRef, watch, onUnmounted, ref } from 'vue';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
@@ -17,36 +17,47 @@ const { x: mouse_x} = useMouseInElement(kanbanColumnsWrapper)
 const {pressure:mouse_pressure} = usePointer()
 const { width: window_width } = useWindowSize()
 
-function _mouse_near_right_edge() {
-  const right_edge = window_width.value - 150;
-  return mouse_x.value > right_edge;
-}
-
-function _mouse_near_left_edge() {
-  const left_edge = 400;
-  return mouse_x.value < left_edge;
-}
+// Track if we're near the right edge to load more columns
+const isNearRightEdge = ref(false);
 
 function _should_scroll_right() {
-  return _mouse_near_right_edge() && mouse_pressure.value >= 0.5;
+  const right_edge = window_width.value - 150;
+  const _mouse_near_right_edge = mouse_x.value > right_edge;
+  return _mouse_near_right_edge && mouse_pressure.value >= 0.5;
 }
 
-function _should_scroll_left() {
-  return _mouse_near_left_edge() && mouse_pressure.value >= 0.5;
-}
-
-// Setup your conditions
+// Setup scroll conditions
 const { pause, resume } = useRafFn(() => {
   if (_should_scroll_right()) {
     scroll_data.x.value += 500;
-  } else if (_should_scroll_left()) {
-    scroll_data.x.value -= 500;
   }
-})
+});
+
+// Load more columns when near right edge
+const checkScrollPosition = () => {
+  if (!kanbanColumnsWrapper.value) return;
+
+  // Calculate if we're near the right edge
+  const { scrollLeft, scrollWidth, clientWidth } = kanbanColumnsWrapper.value;
+  const scrollThreshold = 300; // Pixel threshold before the end to trigger loading more columns
+
+  if (scrollWidth - (scrollLeft + clientWidth) < scrollThreshold) {
+    // We're near the right edge, load more columns if not already loading
+    if (!isNearRightEdge.value) {
+      isNearRightEdge.value = true;
+      taskStore.addMoreColumns(3);
+
+      // Reset the flag after a delay to prevent multiple loads
+      setTimeout(() => {
+        isNearRightEdge.value = false;
+      }, 1000);
+    }
+  }
+};
 
 // Start/stop based on mouse position
 watch([mouse_x, mouse_pressure], () => {
-  if (_should_scroll_right() || _should_scroll_left()) {
+  if (_should_scroll_right()) {
     resume()
   } else {
     pause()
@@ -62,7 +73,7 @@ const animateScroll = () => {
   // scroll to right by 500
   scroll_data.x.value = 500;
   setTimeout(() => {
-    scroll_data.x.value = 0;
+    scroll_data.x.value = 310;
   }, 1000);
 }
 
@@ -75,6 +86,18 @@ onMounted(() => {
 
   // Fetch tasks when component mounts
   taskStore.fetchTasks();
+
+  // Add scroll event listener to detect end of scroll for infinite loading
+  if (kanbanColumnsWrapper.value) {
+    kanbanColumnsWrapper.value.addEventListener('scroll', checkScrollPosition);
+  }
+});
+
+// Clean up event listener when component is unmounted
+onUnmounted(() => {
+  if (kanbanColumnsWrapper.value) {
+    kanbanColumnsWrapper.value.removeEventListener('scroll', checkScrollPosition);
+  }
 });
 
 </script>
@@ -83,16 +106,16 @@ onMounted(() => {
   <div ref="kanbanPlanner" class="kanban-planner">
     <div class="brain-dump-wrapper">
       <BrainDump />
-
     </div>
 
     <!-- Scrollable columns container -->
     <div ref="kanbanColumnsWrapper" class="kanban-columns-wrapper">
       <div class="kanban-columns">
-        <div v-for="column in taskStore.kanbanColumns" :key="column.title">
+        <div v-for="column in taskStore.kanbanColumns" :key="column.title + column.dateString">
           <KanbanColumn
             :date-string="column.dateString"
             :title="column.title"
+            :dateObj="column.date"
             :tasks="column.tasks" />
         </div>
       </div>
