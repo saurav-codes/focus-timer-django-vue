@@ -4,7 +4,7 @@ import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
 import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue';
-import { useScroll, usePointer, useMouseInElement, useWindowSize, useRafFn } from '@vueuse/core';
+import { useScroll } from '@vueuse/core';
 
 import { useTaskStore } from '../stores/taskstore';
 import { useUIStore } from '../stores/uiStore';
@@ -16,26 +16,8 @@ const uiStore = useUIStore();
 const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper');
 const scroll_data = useScroll(kanbanColumnsWrapper, {behavior: 'smooth'});
 
-const { x: mouse_x} = useMouseInElement(kanbanColumnsWrapper)
-const {pressure:mouse_pressure} = usePointer()
-const { width: window_width } = useWindowSize()
-
 // Track if we're near the right edge to load more columns
 const isNearRightEdge = ref(false);
-
-function _should_scroll_right() {
-  const right_edge = window_width.value - 150;
-  const _mouse_near_right_edge = mouse_x.value > right_edge;
-  return _mouse_near_right_edge && mouse_pressure.value >= 0.5;
-}
-
-// Setup scroll conditions
-const { pause, resume } = useRafFn(() => {
-  if (_should_scroll_right()) {
-    scroll_data.x.value += 500;
-  }
-});
-
 // Load more columns when near right edge
 const checkScrollPosition = async () => {
   if (!kanbanColumnsWrapper.value) return;
@@ -63,20 +45,6 @@ const checkScrollPosition = async () => {
     }
   }
 };
-
-// Start/stop based on mouse position
-watch([mouse_x, mouse_pressure], () => {
-  if (_should_scroll_right()) {
-    resume()
-  } else {
-    pause()
-  }
-})
-
-// Clean up
-onUnmounted(() => {
-  pause()
-})
 
 const animateScroll = () => {
   // scroll to right by 500
