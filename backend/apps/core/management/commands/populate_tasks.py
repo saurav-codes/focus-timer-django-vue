@@ -133,7 +133,7 @@ class Command(BaseCommand):
                 column_date=data["column_date"],
             )
             # Add tags separately since TaggableManager needs to be handled after creation
-            task.tags.add(*data["tags"])
+            task.tags.add(",".join(data["tags"]))
 
             self.stdout.write(self.style.SUCCESS(
                 f"Created task: {task.title}"
