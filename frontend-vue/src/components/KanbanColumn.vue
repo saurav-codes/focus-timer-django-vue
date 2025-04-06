@@ -44,14 +44,8 @@ const completedTasksCount = computed(() => {
 });
 
 function handleTaskDroppedToKanban ( { value }) {
-  // This function is called when a task is dropped into the kanban column
-  // TODO: extract the time of task from `value` and set it to the task
-  // but use the date from the kanban column props
-  value.start_at = props.dateObj.toISOString()
-  value.end_at = props.dateObj.toISOString()
-  value.is_in_brain_dump = false
+  value.column_date = props.dateObj.toISOString()
   console.log("task value before update", value)
-  // we also need to reorder the task since order is changed after dropping
   taskStore.updateTask(value);
 }
 
@@ -59,7 +53,9 @@ function handleTaskOrderUpdate (new_tasks_array) {
   // Update the order of the tasks in the store
   setTimeout(() => {
     taskStore.updateTaskOrder(new_tasks_array);
-  }, 2000);  // 2 second delay is just to make sure that task update operation is done
+  }, 2000);
+  // 2 second delay is just to make sure that task update
+  // operation is done before saving the new order of tasks in that column
 }
 
 </script>

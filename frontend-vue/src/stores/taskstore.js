@@ -69,17 +69,18 @@ export const useTaskStore = defineStore('taskStore', {
         const { data } = await axios.get('http://localhost:8000/api/tasks/');
         this.kanbanColumns.forEach((column) => {
           const filteredTasks = data.filter((task) => {
-            const taskDate = new Date(task.start_at || task.created_at);
-            const taskDateString = taskDate.toDateString();
-            const is_not_in_brain_dump = task.is_in_brain_dump === false;
-            return taskDateString === column.date.toDateString() && is_not_in_brain_dump;
+            if (task.column_date) {
+              const taskDate = new Date(task.column_date);
+              const taskDateString = taskDate.toDateString();
+              return taskDateString === column.date.toDateString();
+            }
           });
           // Use direct assignment to ensure reactivity
           // TODO: possible bug here because we aren't doing deep copy of the array
           column.tasks = [...filteredTasks];
         });
         this.brainDumpTasks = data.filter((task) => {
-          return task.is_in_brain_dump;
+          return !task.column_date;
         });
         return data; // Return the data for chaining
       } catch (error) {
@@ -115,7 +116,7 @@ export const useTaskStore = defineStore('taskStore', {
       return data
     },
     async taskDroppedToBrainDump({value}) {
-      value.is_in_brain_dump = true;
+      value.column_date = null;
       await this.updateTask(value);
     },
     async updateTaskOrder(tasks_array) {

@@ -31,7 +31,6 @@ const addTask = async () => {
       title: newTaskTitle.value,
       is_completed: false,
       duration: '0:30',
-      is_in_brain_dump: true,
       order: 0,
     };
     // add the new task to the top of the list
