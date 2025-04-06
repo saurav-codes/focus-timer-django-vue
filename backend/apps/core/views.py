@@ -17,7 +17,7 @@ class TasksApiView(APIView):
         """
         Get all tasks
         """
-        tasks = Task.objects.all().order_by('order', '-id')
+        tasks = Task.objects.all()
         # above we sorted task by order & of same order then sort by id
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
