@@ -29,9 +29,10 @@ const addTask = async () => {
     const newTask = {
       id: Date.now(),
       title: newTaskTitle.value,
-      completed: false,
+      is_completed: false,
       duration: '0:30',
       is_in_brain_dump: true,
+      order: 0,
     };
     // add the new task to the top of the list
     taskStore.brainDumpTasks.unshift(newTask);
@@ -39,7 +40,16 @@ const addTask = async () => {
     const data = await taskStore.createTask(newTask);
     // since we are doing optimistic update, we need to update the id of the task
     taskStore.brainDumpTasks[0].id = data.id;
+    // update the order of the tasks in this column
+    taskStore.updateTaskOrder(taskStore.brainDumpTasks);
   }
+};
+
+const handleTaskOrderUpdate = (new_tasks_array) => {
+  // Update the order of the tasks in the store
+  setTimeout(() => {
+    taskStore.updateTaskOrder(new_tasks_array);
+  }, 2000);  // 2 second delay is just to make sure that task update operation is done
 };
 
 const cancelAddTask = () => {
@@ -132,7 +142,7 @@ const toggleBrainDump = () => uiStore.toggleBrainDump();
 
     <SlickList v-model:list="taskStore.brainDumpTasks" :distance="5" group="brain-dump-group" class="tasks-list"
       :accept="['kanban-group']" @sort-insert="taskStore.taskDroppedToBrainDump"
-      @update:list="taskStore.updateTasksOrder">
+      @update:list="handleTaskOrderUpdate">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
         <TaskCard :task="task" />
       </SlickItem>
