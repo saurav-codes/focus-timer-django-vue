@@ -37,7 +37,8 @@ const localTasks = ref([]);
 watch(() => props.tasks, (newTasks) => {
   // Create a deep copy of the tasks to avoid reference issues
   localTasks.value = JSON.parse(JSON.stringify(newTasks));
-}, { immediate: true }); // immediate: true makes it run on component mount
+}, { immediate: true, deep: true }); // immediate: true makes it run on component mount
+// deep:true means watch the tasks array deeply
 
 const completedTasksCount = computed(() => {
   return localTasks.value.filter(task => task.is_completed).length;
