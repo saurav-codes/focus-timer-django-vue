@@ -41,11 +41,12 @@ const closeEditModal = () => {
   <TaskEditModal :task="localTask" :is-open="isEditModalOpen" @close-modal="closeEditModal" />
   <div
     class="task-item"
-    :class="{ 'completed': localTask.is_completed }">
-    <div v-if="showCheckbox" class="task-checkbox" @click="toggleCompletion">
+    :class="{ 'completed': localTask.is_completed }"
+    @click="openEditModal">
+    <div v-if="showCheckbox" class="task-checkbox" @click.stop="toggleCompletion">
       <div class="checkbox" :class="{ 'checked': localTask.is_completed }" />
     </div>
-    <div class="task-content" @click="openEditModal">
+    <div class="task-content">
       <div class="task-title">
         {{ localTask.title }}
       </div>
