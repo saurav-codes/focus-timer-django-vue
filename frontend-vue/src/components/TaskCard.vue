@@ -248,8 +248,8 @@ const deleteTask = () => {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   background-color: var(--color-danger, #ef4444);
   color: white;
