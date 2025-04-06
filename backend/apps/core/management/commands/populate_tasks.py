@@ -121,13 +121,12 @@ class Command(BaseCommand):
         ]
 
         # Insert sample tasks into the database
-        for idx, data in enumerate(tasks_data):
+        for data in tasks_data:
             task = Task.objects.create(
                 title=data["title"],
                 description=data["description"],
                 is_in_brain_dump=data["is_in_brain_dump"],
                 is_completed=data["is_completed"],
-                order=idx
             )
             # Add tags separately since TaggableManager needs to be handled after creation
             task.tags.add(*data["tags"])
