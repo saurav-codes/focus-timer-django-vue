@@ -154,25 +154,18 @@ onUnmounted(() => {
               id="task-duration"
               v-model="task_start_at"
               type="datetime-local"
-              class="form-input"/>
+              class="form-input">
             <input
               id="task-duration"
               v-model="task_end_at"
               type="datetime-local"
-              class="form-input"/>
+              class="form-input">
           </div>
 
           <div class="form-group">
             <label class="checkbox-container">
               <input v-model="editedTask.is_completed" type="checkbox">
               <span class="label-text">Completed</span>
-            </label>
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-container">
-              <input v-model="editedTask.is_in_brain_dump" type="checkbox">
-              <span class="label-text">Keep in Brain Dump</span>
             </label>
           </div>
 
