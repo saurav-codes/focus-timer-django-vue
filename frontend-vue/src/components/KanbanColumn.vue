@@ -59,6 +59,13 @@ function handleTaskOrderUpdate (new_tasks_array) {
   // operation is done before saving the new order of tasks in that column
 }
 
+function handleTaskDeleted(taskId) {
+  // remove task from localTasks because we already handling the DB update in the store
+  localTasks.value = localTasks.value.filter(task => task.id !== taskId);
+  // now reorder the tasks since the task was deleted and the order is not updated in the store
+  taskStore.updateTaskOrder(localTasks.value);
+}
+
 </script>
 
 <template>
@@ -83,7 +90,7 @@ function handleTaskOrderUpdate (new_tasks_array) {
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
-          <TaskCard :task="task" />
+          <TaskCard :task="task" @task-deleted="handleTaskDeleted" />
         </SlickItem>
       </SlickList>
     </div>

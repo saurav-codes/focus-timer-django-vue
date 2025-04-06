@@ -112,35 +112,6 @@ export const useTaskStore = defineStore('taskStore', {
     },
     async updateTask(task) {
       const {data} = await axios.put(`http://localhost:8000/api/tasks/${task.id}/`, task);
-
-      // find the task in the kanbanColumns array or the brainDumpTasks array and update the task
-      let taskFound = false;
-
-      // Search in kanban columns
-      for (const column of this.kanbanColumns) {
-        const taskIndex = column.tasks.findIndex(t => t.id === data.id);
-        if (taskIndex !== -1) {
-          column.tasks[taskIndex] = { ...data };
-          console.log("task found in kanban columns and updated");
-          taskFound = true;
-          break;
-        }
-      }
-
-      // If not found in columns, search in brain dump
-      if (!taskFound) {
-        const brainDumpIndex = this.brainDumpTasks.findIndex(t => t.id === data.id);
-        if (brainDumpIndex !== -1) {
-          this.brainDumpTasks[brainDumpIndex] = { ...data };
-          console.log("task found in brain dump and updated");
-          taskFound = true;
-        }
-      }
-
-      if (!taskFound) {
-        console.log("hell no.. task not found in kanban columns or brain dump, something is wrong");
-      }
-
       return data;
     },
     async taskDroppedToBrainDump({value}) {

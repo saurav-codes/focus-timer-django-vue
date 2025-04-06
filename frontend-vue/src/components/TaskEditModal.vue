@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, defineEmits } from 'vue';
 import { useTaskStore } from '../stores/taskstore';
 import { X, Save, Trash2 } from 'lucide-vue-next';
 import { useTimeAgo, useDateFormat } from '@vueuse/core';
@@ -18,7 +18,7 @@ const props = defineProps({
 });
 
 const taskStore = useTaskStore();
-const emit = defineEmits(["closeModal"])
+const emit = defineEmits(["closeModal", "task-deleted"])
 
 // Create a copy of the task to edit
 const editedTask = ref({ ...props.task });
@@ -86,6 +86,7 @@ const deleteTask = async () => {
   if (confirm('Are you sure you want to delete this task?')) {
     try {
       await taskStore.deleteTask(editedTask.value.id);
+      emit("task-deleted", editedTask.value.id);
       closeModal()
     } catch (error) {
       console.error('Error deleting task:', error);
