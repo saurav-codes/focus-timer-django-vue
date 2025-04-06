@@ -65,7 +65,7 @@ export const useTaskStore = defineStore('taskStore', {
   }),
   actions: {
     async fetchTasks() {
-      try{
+      try {
         const { data } = await axios.get('http://localhost:8000/api/tasks/');
         this.kanbanColumns.forEach((column) => {
           const filteredTasks = data.filter((task) => {
@@ -81,20 +81,23 @@ export const useTaskStore = defineStore('taskStore', {
         this.brainDumpTasks = data.filter((task) => {
           return task.is_in_brain_dump;
         });
+        return data; // Return the data for chaining
       } catch (error) {
         console.error('Error fetching tasks:', error);
-      };
+        throw error; // Rethrow to allow error handling by caller
+      }
     },
 
     // Add more date columns for infinite scroll
-    addMoreColumns(count = 3) {
+    async addMoreColumns(count = 3) {
       for (let i = 0; i < count; i++) {
         const nextDate = addDays(this.lastDate, 1);
         this.kanbanColumns.push(createDateColumn(nextDate));
         this.lastDate = nextDate;
       }
       // After adding columns, fetch tasks for the new columns
-      this.fetchTasks();
+      // Return the promise so the caller knows when it's done
+      return await this.fetchTasks();
     },
 
     async toggleCompletion(taskId) {

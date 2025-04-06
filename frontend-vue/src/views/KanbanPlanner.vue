@@ -3,11 +3,14 @@ import { onMounted, useTemplateRef, watch, onUnmounted, ref } from 'vue';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
+import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue';
 import { useScroll, usePointer, useMouseInElement, useWindowSize, useRafFn } from '@vueuse/core';
 
 import { useTaskStore } from '../stores/taskstore';
+import { useUIStore } from '../stores/uiStore';
 
 const taskStore = useTaskStore();
+const uiStore = useUIStore();
 
 // need this reference to scroll the kanban columns wrapper when the page loads
 const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper');
@@ -34,7 +37,7 @@ const { pause, resume } = useRafFn(() => {
 });
 
 // Load more columns when near right edge
-const checkScrollPosition = () => {
+const checkScrollPosition = async () => {
   if (!kanbanColumnsWrapper.value) return;
 
   // Calculate if we're near the right edge
@@ -43,14 +46,20 @@ const checkScrollPosition = () => {
 
   if (scrollWidth - (scrollLeft + clientWidth) < scrollThreshold) {
     // We're near the right edge, load more columns if not already loading
-    if (!isNearRightEdge.value) {
+    if (!isNearRightEdge.value && !uiStore.isLoadingMoreColumns) {
       isNearRightEdge.value = true;
-      taskStore.addMoreColumns(3);
+      uiStore.setLoadingMoreColumns(true);
 
-      // Reset the flag after a delay to prevent multiple loads
-      setTimeout(() => {
+      try {
+        // Wait for the columns to be added and tasks to be fetched
+        await taskStore.addMoreColumns(3);
+      } catch (error) {
+        console.error('Error loading more columns:', error);
+      } finally {
+        // Always reset loading state after completion (success or error)
+        uiStore.setLoadingMoreColumns(false);
         isNearRightEdge.value = false;
-      }, 1000);
+      }
     }
   }
 };
@@ -115,9 +124,12 @@ onUnmounted(() => {
           <KanbanColumn
             :date-string="column.dateString"
             :title="column.title"
-            :dateObj="column.date"
+            :date-obj="column.date"
             :tasks="column.tasks" />
         </div>
+
+        <!-- Loading skeleton to show when loading more columns -->
+        <LoadingColumnsSkeleton v-if="uiStore.isLoadingMoreColumns" />
       </div>
     </div>
 
@@ -187,6 +199,5 @@ onUnmounted(() => {
   top: 0;
   right: 0;
 }
-
 </style>
 
