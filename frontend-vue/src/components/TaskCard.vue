@@ -19,6 +19,30 @@ const localTask = computed(() => {
   return props.task;
 });
 
+const tags = computed(() => {
+  if (localTask.value.tags) {
+    if (Array.isArray(localTask.value.tags)) {
+      return localTask.value.tags.flatMap(tag => {
+        if (typeof tag === 'string' && tag.includes(',')) {
+          return tag.split(',');
+        }
+        return tag;
+      });
+    }
+  }
+  return [];
+});
+
+// Generate consistent tag colors based on tag name
+const getTagColor = (tagName) => {
+  const colors = ['purple', 'blue', 'green', 'red', 'yellow', 'indigo', 'orange', 'pink'];
+  // Simple hash function to generate a consistent index for each tag
+  const hash = tagName.split('').reduce((acc, char) => {
+    return acc + char.charCodeAt(0);
+  }, 0);
+  return colors[hash % colors.length];
+};
+
 const toggleCompletion = () => {
   if (props.showCheckbox) {
     localTask.value.is_completed = !localTask.value.is_completed;
@@ -50,9 +74,13 @@ const closeEditModal = () => {
       <div class="task-title">
         {{ localTask.title }}
       </div>
-      <div class="task-meta">
-        <span v-if="localTask.tag" class="task-tag" :class="`tag-${localTask.tag.color}`">
-          {{ localTask.tag.name }}
+      <div v-if="tags.length" class="task-meta">
+        <span
+          v-for="(tag, index) in tags"
+          :key="index"
+          class="task-tag"
+          :class="`tag-${getTagColor(tag)}`">
+          {{ tag }}
         </span>
       </div>
     </div>
@@ -162,5 +190,29 @@ const closeEditModal = () => {
 
 .tag-blue {
   background-color: #3b82f6;
+}
+
+.tag-green {
+  background-color: #10b981;
+}
+
+.tag-red {
+  background-color: #ef4444;
+}
+
+.tag-yellow {
+  background-color: #f59e0b;
+}
+
+.tag-indigo {
+  background-color: #6366f1;
+}
+
+.tag-orange {
+  background-color: #f97316;
+}
+
+.tag-pink {
+  background-color: #ec4899;
 }
 </style>
