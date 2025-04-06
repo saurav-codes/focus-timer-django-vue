@@ -2,9 +2,8 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useTaskStore } from '../stores/taskstore';
 import { X, Save, Trash2 } from 'lucide-vue-next';
-import { useTimeAgo } from '@vueuse/core';
+import { useTimeAgo, useDateFormat } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
-
 
 
 const props = defineProps({
@@ -29,6 +28,33 @@ watch(() => props.task, (newTask) => {
   editedTask.value = { ...newTask };
 }, { deep: true });
 
+const task_start_at = computed({
+  get: () => {
+    if (editedTask.value.start_at) {
+      return useDateFormat(editedTask.value.start_at, 'YYYY-MM-DD HH:mm:ss').value;
+    }
+    return "";
+  },
+  set: (value) => {
+    console.log("setting start_at", value);
+    const start_at_iso_string = new Date(value).toISOString();
+    editedTask.value.start_at = start_at_iso_string;
+  }
+});
+
+const task_end_at = computed({
+  get: () => {
+    if (editedTask.value.end_at) {
+      return useDateFormat(editedTask.value.end_at, 'YYYY-MM-DD HH:mm:ss').value;
+    }
+    return "";
+  },
+  set: (value) => {
+    console.log("setting end_at", value);
+    const end_at_iso_string = new Date(value).toISOString();
+    editedTask.value.end_at= end_at_iso_string;
+  }
+});
 
 // Format the created_at date
 const timeAgo = computed(() => {
@@ -50,6 +76,7 @@ const saveTask = async () => {
     console.error('Error updating task:', error);
   } finally {
     isSaving.value = false;
+    closeModal();
   }
 };
 
@@ -125,10 +152,14 @@ onUnmounted(() => {
           <div class="form-group">
             <input
               id="task-duration"
-              v-model="editedTask.duration"
-              type="text"
-              class="form-input"
-              placeholder="0:30">
+              v-model="task_start_at"
+              type="datetime-local"
+              class="form-input"/>
+            <input
+              id="task-duration"
+              v-model="task_end_at"
+              type="datetime-local"
+              class="form-input"/>
           </div>
 
           <div class="form-group">
