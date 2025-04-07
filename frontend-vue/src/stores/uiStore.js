@@ -7,6 +7,8 @@ export const useUIStore = defineStore('ui', () => {
   const isBrainDumpCollapsed = useLocalStorage('brain-dump-collapsed', false);
   const isIntegrationSidebarVisible = useLocalStorage('integration-sidebar-visible', false);
   const activeIntegration = useLocalStorage('active-integration', 'calendar');
+  const isFilterSidebarVisible = useLocalStorage('filter-sidebar-visible', false);
+
 
   // Loading state for infinite scrolling
   const isLoadingMoreColumns = ref(false);
@@ -14,6 +16,10 @@ export const useUIStore = defineStore('ui', () => {
   // Toggle functions
   function toggleBrainDump() {
     isBrainDumpCollapsed.value = !isBrainDumpCollapsed.value;
+  }
+
+  function toggleFilterSidebar() {
+    isFilterSidebarVisible.value = !isFilterSidebarVisible.value;
   }
 
   function toggleIntegrationSidebar() {
@@ -33,9 +39,11 @@ export const useUIStore = defineStore('ui', () => {
     isIntegrationSidebarVisible,
     activeIntegration,
     isLoadingMoreColumns,
+    isFilterSidebarVisible,
     toggleBrainDump,
     toggleIntegrationSidebar,
     setActiveIntegration,
-    setLoadingMoreColumns
+    setLoadingMoreColumns,
+    toggleFilterSidebar
   };
 });

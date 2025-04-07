@@ -1,10 +1,12 @@
 <script setup>
-import { onMounted, useTemplateRef, watch, onUnmounted, ref } from 'vue';
+import { onMounted, useTemplateRef, onUnmounted, ref } from 'vue';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
 import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue';
+import FilterSidebar from '../components/sidebar/FilterSidebar.vue';
 import { useScroll } from '@vueuse/core';
+
 
 import { useTaskStore } from '../stores/taskstore';
 import { useUIStore } from '../stores/uiStore';
@@ -103,6 +105,9 @@ onUnmounted(() => {
 
     <!-- Integration Sidebar (conditionally shown) -->
     <IntegrationSidebar class="integration-sidebar-wrapper" />
+
+    <!-- Filter Sidebar (conditionally shown) -->
+    <FilterSidebar />
   </div>
 </template>
 

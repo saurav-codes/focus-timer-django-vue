@@ -50,6 +50,22 @@ const addDays = (date, days) => {
   return newDate;
 };
 
+// Add a helper function to format duration
+const formatDurationForAPI = (duration) => {
+  if (!duration) return null;
+
+  // If already in ISO format, return as is
+  if (duration.includes('P') && duration.includes('T')) {
+    return duration;
+  }
+
+  // Parse HH:MM format
+  const [hours, minutes] = duration.split(':').map(Number);
+
+  // Convert to ISO 8601 duration format
+  return `PT${hours}H${minutes}M`;
+};
+
 export const useTaskStore = defineStore('taskStore', {
   state: () => ({
     kanbanColumns: [
@@ -61,11 +77,40 @@ export const useTaskStore = defineStore('taskStore', {
     ],
     brainDumpTasks: [],
     lastDate: addDays(today, 2), // Track the last date we've added
+    // Add filter-related state
+    projects: [],
+    tags: [],
+    selectedProjects: [],
+    selectedTags: [],
+    isLoading: false,
   }),
   actions: {
-    async fetchTasks() {
+    async fetchTasks(filters = {}) {
       try {
-        const { data } = await axios.get('http://localhost:8000/api/tasks/');
+        this.isLoading = true;
+
+        // Create query parameters from filters
+        const params = new URLSearchParams();
+
+        if (this.selectedProjects.length > 0) {
+          params.append('project', this.selectedProjects[0]);
+        }
+
+        if (this.selectedTags.length > 0) {
+          this.selectedTags.forEach(tag => {
+            params.append('tags', tag);
+          });
+        }
+
+        const { data } = await axios.get(`http://localhost:8000/api/tasks/?${params}`);
+
+        // Reset task arrays
+        this.kanbanColumns.forEach(column => {
+          column.tasks = [];
+        });
+        this.brainDumpTasks = [];
+
+        // Distribute tasks to columns
         this.kanbanColumns.forEach((column) => {
           const filteredTasks = data.filter((task) => {
             if (task.column_date) {
@@ -73,19 +118,62 @@ export const useTaskStore = defineStore('taskStore', {
               const taskDateString = taskDate.toDateString();
               return taskDateString === column.date.toDateString();
             }
+            return false;
           });
           // Use direct assignment to ensure reactivity
           // TODO: possible bug here because we aren't doing deep copy of the array
           column.tasks = [...filteredTasks];
         });
+
         this.brainDumpTasks = data.filter((task) => {
           return !task.column_date;
         });
-        return data; // Return the data for chaining
+
+        this.isLoading = false;
+        return data;
       } catch (error) {
         console.error('Error fetching tasks:', error);
-        throw error; // Rethrow to allow error handling by caller
+        this.isLoading = false;
+        throw error;
       }
+    },
+
+    async fetchProjects() {
+      try {
+        const { data } = await axios.get('http://localhost:8000/api/projects/');
+        this.projects = data;
+        return data;
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
+    },
+
+    async fetchTags() {
+      try {
+        const { data } = await axios.get('http://localhost:8000/api/tags/');
+        this.tags = data;
+        return data;
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        throw error;
+      }
+    },
+
+    setSelectedProjects(projects) {
+      this.selectedProjects = projects;
+      this.fetchTasks();
+    },
+
+    setSelectedTags(tags) {
+      this.selectedTags = tags;
+      this.fetchTasks();
+    },
+
+    clearFilters() {
+      this.selectedProjects = [];
+      this.selectedTags = [];
+      this.fetchTasks();
     },
 
     // Add more date columns for infinite scroll
@@ -103,21 +191,38 @@ export const useTaskStore = defineStore('taskStore', {
     async toggleCompletion(taskId) {
       await axios.post(`http://localhost:8000/api/tasks/${taskId}/toggle_completion/`);
     },
+
     async createTask(task) {
-      const { data } = await axios.post('http://localhost:8000/api/tasks/', task);
+      // Format duration before sending to API
+      const taskWithFormattedDuration = {
+        ...task,
+        duration: formatDurationForAPI(task.duration)
+      };
+
+      const { data } = await axios.post('http://localhost:8000/api/tasks/', taskWithFormattedDuration);
       return data;
     },
+
     async deleteTask(taskId) {
       await axios.delete(`http://localhost:8000/api/tasks/${taskId}/`);
     },
+
     async updateTask(task) {
-      const {data} = await axios.put(`http://localhost:8000/api/tasks/${task.id}/`, task);
+      // Format duration before sending to API
+      const taskWithFormattedDuration = {
+        ...task,
+        duration: formatDurationForAPI(task.duration)
+      };
+
+      const {data} = await axios.put(`http://localhost:8000/api/tasks/${task.id}/`, taskWithFormattedDuration);
       return data;
     },
+
     async taskDroppedToBrainDump({value}) {
       value.column_date = null;
       await this.updateTask(value);
     },
+
     async updateTaskOrder(tasks_array) {
       this.reInitializeOrder(tasks_array);
       try {
@@ -130,6 +235,7 @@ export const useTaskStore = defineStore('taskStore', {
         console.error('Error updating tasks order:', error);
       }
     },
+
     reInitializeOrder (tasks_array) {
       // reinitialize order based on their existing order
       tasks_array.forEach((task, index) => {

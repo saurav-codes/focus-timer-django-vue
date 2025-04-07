@@ -2,7 +2,7 @@
 import TaskEditModal from './TaskEditModal.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, defineEmits } from 'vue';
-import { Trash2 } from 'lucide-vue-next';
+import { Trash2, Clock } from 'lucide-vue-next';
 
 const emit = defineEmits(['task-deleted', 'task-updated']);
 const taskStore = useTaskStore();
@@ -78,7 +78,7 @@ const deleteTask = () => {
 };
 
 const handleTaskUpdated = (updatedTask) => {
-  // update the task in the localTask
+  // just emit the event to parent so kanban column can update the task card
   emit('task-updated', updatedTask);
 }
 
@@ -113,6 +113,7 @@ const handleTaskUpdated = (updatedTask) => {
       </div>
     </div>
     <div class="task-duration">
+      <Clock v-if="localTask.duration" size="14" />
       {{ localTask.duration }}
     </div>
 
@@ -215,6 +216,9 @@ const handleTaskUpdated = (updatedTask) => {
 }
 
 .task-duration {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   white-space: nowrap;
@@ -258,11 +262,10 @@ const handleTaskUpdated = (updatedTask) => {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background-color: var(--color-danger, #ef4444);
-  color: white;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--color-danger, #ef4444);
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;

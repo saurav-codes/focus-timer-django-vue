@@ -1,5 +1,17 @@
 from django.db import models
 from taggit.managers import TaggableManager
+from django.utils.functional import cached_property
+from django.utils.duration import _get_duration_components
+
+
+
+class Project(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
 
 
 class Task(models.Model):
@@ -8,6 +20,7 @@ class Task(models.Model):
     order = models.PositiveSmallIntegerField(default=0)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    duration = models.DurationField(blank=True, null=True)
     # column_date is used for tracking the location of task in the kanban board column
     column_date = models.DateTimeField(blank=True, null=True)
     # start_at, end_at are used for calendar events
@@ -18,9 +31,22 @@ class Task(models.Model):
     # we may need to handle it differently if user is let's say travelling
     # because he will add the task in diff timezones.
     tags = TaggableManager(blank=True)
+    project = models.ForeignKey(Project, related_name='tasks', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.title
 
     class Meta:
         ordering = ['order']
+
+    @cached_property
+    def get_duration_display(self):
+        if self.duration:
+            _, hours, minutes, _, _= _get_duration_components(self.duration)
+            final_str = ""
+            if hours > 0:
+                final_str += f"{hours}h "
+            if minutes > 0:
+                final_str += f"{minutes}m"
+            return final_str.strip()
+        return None

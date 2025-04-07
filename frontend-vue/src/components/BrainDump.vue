@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter } from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
@@ -30,7 +30,7 @@ const addTask = async () => {
       id: Date.now(),
       title: newTaskTitle.value,
       is_completed: false,
-      duration: '0:30',
+      duration: '0:30', // This will be parsed as a DurationField in Django
       order: 0,
     };
     // add the new task to the top of the list
@@ -130,12 +130,18 @@ const handleTaskUpdated = (updatedTask) => {
   </div>
   <div class="brain-dump-container" :class="{ 'collapsed': isCollapsed }">
     <div class="header">
-      <h2 class="title">
-        <span class="icon">
-          <BrainCircuitIcon size="18" />
-        </span>
-        Brain Dump
-      </h2>
+      <div class="header-top">
+        <h2 class="title">
+          <span class="icon">
+            <BrainCircuitIcon size="18" />
+          </span>
+          Brain Dump
+        </h2>
+        <!-- Update the filter toggle button -->
+        <button class="filter-toggle-btn" title="Filter tasks" @click.stop="uiStore.toggleFilterSidebar">
+          <Filter size="16" />
+        </button>
+      </div>
       <div class="total-task">
         <BadgeCheck class="small-icon" size="14" />
         <span>{{ completed_tasks_vs_total_tasks }}</span>
@@ -348,5 +354,30 @@ const handleTaskUpdated = (updatedTask) => {
 .new-task-input input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.filter-toggle-btn {
+  background-color: var(--color-background-secondary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.filter-toggle-btn:hover {
+  background-color: var(--color-background-tertiary);
+  color: var(--color-text-secondary);
 }
 </style>

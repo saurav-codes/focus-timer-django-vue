@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { BadgeCheck } from 'lucide-vue-next';
+import { BadgeCheck, Clock } from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import { useTaskStore } from '../stores/taskstore';
@@ -44,6 +44,30 @@ const completedTasksCount = computed(() => {
   return localTasks.value.filter(task => task.is_completed).length;
 });
 
+// Calculate total duration of all tasks in this column
+const totalDuration = computed(() => {
+  let totalMinutes = 0;
+
+  localTasks.value.forEach(task => {
+    if (task.duration) {
+      const [hours, minutes] = task.duration.split(':').map(Number);
+      totalMinutes += (hours * 60) + minutes;
+    }
+  });
+
+  // Format the duration nicely
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (hours === 0) {
+    return mins > 0 ? `${mins}min` : '0min';
+  } else if (mins === 0) {
+    return `${hours}hr`;
+  } else {
+    return `${hours}hr ${mins}min`;
+  }
+});
+
 function handleTaskDroppedToKanban ( { value }) {
   value.column_date = props.dateObj.toISOString()
   console.log("task value before update", value)
@@ -68,6 +92,8 @@ function handleTaskDeleted(taskId) {
 
 function handleTaskUpdated(updatedTask) {
   // update the task in the localTasks
+  // and this will trigger any changes to the task card also
+  // since we are watching the task in taskcard.vue
   localTasks.value = localTasks.value.map(task => task.id === updatedTask.id ? updatedTask : task);
 }
 
@@ -80,9 +106,15 @@ function handleTaskUpdated(updatedTask) {
         <h3>{{ title }}</h3>
         <span class="date">{{ dateString }}</span>
       </div>
-      <div class="stats">
-        <BadgeCheck class="small-icon" size="14" />
-        <span>{{ completedTasksCount }} / {{ localTasks.length }}</span>
+      <div class="stats-container">
+        <div class="stats">
+          <BadgeCheck class="small-icon" size="14" />
+          <span>{{ completedTasksCount }} / {{ localTasks.length }}</span>
+        </div>
+        <div class="duration-stats">
+          <Clock class="small-icon" size="14" />
+          <span>{{ totalDuration }}</span>
+        </div>
       </div>
     </div>
     <div class="tasks-container">
@@ -142,7 +174,14 @@ function handleTaskUpdated(updatedTask) {
   color: var(--color-text-tertiary);
 }
 
-.stats {
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: flex-end;
+}
+
+.stats, .duration-stats {
   display: flex;
   align-items: center;
   gap: 0.25rem;
