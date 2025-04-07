@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted, defineEmits } from 'vue';
 import { useTaskStore } from '../stores/taskstore';
-import { X, Save, Trash2 } from 'lucide-vue-next';
-import { useTimeAgo, useDateFormat } from '@vueuse/core';
+import { X, Trash2 } from 'lucide-vue-next';
+import { useTimeAgo, useDateFormat} from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
 
 
@@ -64,20 +64,15 @@ const timeAgo = computed(() => {
   return '';
 });
 
-const isSaving = ref(false);
 const isDeleting = ref(false);
 
 const saveTask = async () => {
-  if (isSaving.value) return;
-  isSaving.value = true;
   try {
     await taskStore.updateTask(editedTask.value);
+    // emit event for parent to update the task card
     emit("task-updated", editedTask.value);
   } catch (error) {
     console.error('Error updating task:', error);
-  } finally {
-    isSaving.value = false;
-    closeModal();
   }
 };
 
@@ -136,37 +131,41 @@ onUnmounted(() => {
           <div class="form-group">
             <input
               id="task-title"
-              v-model="editedTask.title"
+              v-model.lazy="editedTask.title"
               type="text"
               class="form-input"
-              placeholder="Task title">
+              placeholder="Task title"
+              @blur="saveTask">
           </div>
 
           <div class="form-group">
             <textarea
               id="task-description"
-              v-model="editedTask.description"
+              v-model.lazy="editedTask.description"
               class="form-textarea"
               placeholder="Add details about this task..."
-              rows="4" />
+              rows="4"
+              @blur="saveTask" />
           </div>
 
           <div class="form-group">
             <input
               id="task-duration"
-              v-model="task_start_at"
+              v-model.lazy="task_start_at"
               type="datetime-local"
-              class="form-input">
+              class="form-input"
+              @blur="saveTask">
             <input
               id="task-duration"
-              v-model="task_end_at"
+              v-model.lazy="task_end_at"
               type="datetime-local"
-              class="form-input">
+              class="form-input"
+              @blur="saveTask">
           </div>
 
           <div class="form-group">
             <label class="checkbox-container">
-              <input v-model="editedTask.is_completed" type="checkbox">
+              <input v-model.lazy="editedTask.is_completed" type="checkbox" @change="saveTask">
               <span class="label-text">Completed</span>
             </label>
           </div>
@@ -181,12 +180,6 @@ onUnmounted(() => {
             <Trash2 v-if="!isDeleting" size="16" />
             <VueSpinner v-if="isDeleting" />
             <span>Delete</span>
-          </button>
-
-          <button class="save-button" @click="saveTask">
-            <Save v-if="!isSaving" size="16" />
-            <VueSpinner v-if="isSaving" />
-            <span>Save</span>
           </button>
         </div>
       </div>
