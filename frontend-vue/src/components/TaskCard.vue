@@ -2,7 +2,7 @@
 import TaskEditModal from './TaskEditModal.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, defineEmits } from 'vue';
-import { Trash2, Clock } from 'lucide-vue-next';
+import { Clock } from 'lucide-vue-next';
 
 const emit = defineEmits(['task-deleted', 'task-updated']);
 const taskStore = useTaskStore();
@@ -69,14 +69,6 @@ const handleTaskDeleted = (taskId) => {
   emit('task-deleted', taskId);
 }
 
-const deleteTask = () => {
-  // delete the task using hover delete button
-  if (confirm('Are you sure you want to delete this task?')) {
-    taskStore.deleteTask(props.task.id);
-    emit('task-deleted', props.task.id);
-  }
-};
-
 const handleTaskUpdated = (updatedTask) => {
   // just emit the event to parent so kanban column can update the task card
   emit('task-updated', updatedTask);
@@ -116,14 +108,6 @@ const handleTaskUpdated = (updatedTask) => {
       <Clock v-if="localTask.duration" size="14" />
       {{ localTask.duration }}
     </div>
-
-    <!-- Delete button that shows on hover -->
-    <button
-      class="delete-button"
-      aria-label="Delete task"
-      @click.stop="deleteTask">
-      <Trash2 size="16" />
-    </button>
   </div>
 </template>
 
@@ -138,7 +122,6 @@ const handleTaskUpdated = (updatedTask) => {
   transition: background-color var(--transition-base);
   cursor: move;
   user-select: none;
-  position: relative; /* Add this for absolute positioning of delete button */
 }
 
 .task-item:hover {
@@ -257,37 +240,4 @@ const handleTaskUpdated = (updatedTask) => {
   background-color: #ec4899;
 }
 
-/* Delete button styling */
-.delete-button {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 1.6rem;
-  height: 1.6rem;
-  color: var(--color-danger, #ef4444);
-  background: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.task-item:hover .delete-button {
-  opacity: 0.85;
-  transform: scale(1);
-}
-
-.delete-button:hover {
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-.delete-button:focus {
-  outline: 2px solid var(--color-primary);
-  opacity: 1;
-}
 </style>
