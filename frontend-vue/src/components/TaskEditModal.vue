@@ -79,16 +79,13 @@ const saveTask = async () => {
 const deleteTask = async () => {
   if (isDeleting.value) return;
   isDeleting.value = true;
-  if (confirm('Are you sure you want to delete this task?')) {
-    try {
-      await taskStore.deleteTask(editedTask.value.id);
-      emit("task-deleted", editedTask.value.id);
-      closeModal()
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    } finally {
-      isDeleting.value = false;
-    }
+  try {
+    emit("task-deleted", editedTask.value.id);
+    closeModal()
+  } catch (error) {
+    console.error('Error deleting task:', error);
+  } finally {
+    isDeleting.value = false;
   }
 };
 
