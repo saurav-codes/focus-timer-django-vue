@@ -1,11 +1,13 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { BadgeCheck, Clock } from 'lucide-vue-next';
+import { computed, ref, watch, useTemplateRef } from 'vue';
+import { BadgeCheck, Clock} from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import { useTaskStore } from '../stores/taskstore';
+import Snackbar from './Snackbar.vue';
 
 const taskStore = useTaskStore();
+const snackbarRef = useTemplateRef('snackbarRef');
 
 const props = defineProps({
   dateString: {
@@ -83,11 +85,34 @@ function handleTaskOrderUpdate (new_tasks_array) {
   // operation is done before saving the new order of tasks in that column
 }
 
+function restoreTask(deletedTask, localTasks) {
+      // Restore the task
+      console.log("restoring task", deletedTask)
+      localTasks.value.push(deletedTask);
+      // // Update the order
+      taskStore.updateTaskOrder(localTasks.value);
+      console.log("task restored successfully")
+}
+
+function deleteTask(deletedTask) {
+      console.log("deleting task backend", deletedTask)
+      taskStore.deleteTask(deletedTask.id);
+      console.log("task deleted successfully")
+    }
+
 function handleTaskDeleted(taskId) {
+  // let's store the deleted task in a variable to put it back if the user undoes the deletion
+  const deletedTask = localTasks.value.find(task => task.id === taskId);
   // remove task from localTasks because we already handling the DB update in the store
   localTasks.value = localTasks.value.filter(task => task.id !== taskId);
   // now reorder the tasks since the task was deleted and the order is not updated in the store
   taskStore.updateTaskOrder(localTasks.value);
+  snackbarRef.value.addSnackbarItem(
+    'Task deleted',
+    'undo',
+    () => restoreTask(deletedTask, localTasks),
+    () => deleteTask(deletedTask)
+  )
 }
 
 function handleTaskUpdated(updatedTask) {
@@ -95,11 +120,13 @@ function handleTaskUpdated(updatedTask) {
   // and this will trigger any changes to the task card also
   // since we are watching the task in taskcard.vue
   localTasks.value = localTasks.value.map(task => task.id === updatedTask.id ? updatedTask : task);
+
 }
 
 </script>
 
 <template>
+  <Snackbar ref="snackbarRef" />
   <div class="kanban-column" :style="{ width: columnWidth }">
     <div class="column-header">
       <div class="title-section">

@@ -1,13 +1,15 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, useTemplateRef } from 'vue';
 import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter } from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
 import { SlickList, SlickItem } from 'vue-slicksort';
+import Snackbar from './Snackbar.vue';
 
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
+const braindumpSnackbarRef = useTemplateRef('braindumpSnackbarRef');
 
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
@@ -101,22 +103,46 @@ const completed_tasks_vs_total_tasks = computed(() => {
 const isCollapsed = computed(() => uiStore.isBrainDumpCollapsed);
 const toggleBrainDump = () => uiStore.toggleBrainDump();
 
-const handleTaskDeleted = (taskId) => {
-  // remove the task from the store
-  taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter(task => task.id !== taskId);
-  // update the order of the tasks in this column
+
+function restoreTask(deletedTask) {
+  // Restore the task
+  console.log("restoring task", deletedTask)
+  taskStore.brainDumpTasks.push(deletedTask);
+  // Update the order
   taskStore.updateTaskOrder(taskStore.brainDumpTasks);
+  console.log("task restored successfully")
 }
 
-const handleTaskUpdated = (updatedTask) => {
+function deleteTask(deletedTask) {
+  console.log("deleting task backend", deletedTask)
+  taskStore.deleteTask(deletedTask.id);
+  console.log("task deleted successfully")
+}
+
+function handleTaskDeleted(taskId) {
+  // let's store the deleted task in a variable to put it back if the user undoes the deletion
+  const deletedTask = taskStore.brainDumpTasks.find(task => task.id === taskId);
+  // remove task from braindumpTasks because we already handling the DB update in the store
+  taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter(task => task.id !== taskId);
+  // now reorder the tasks since the task was deleted and the order is not updated in the store
+  taskStore.updateTaskOrder(taskStore.brainDumpTasks);
+  braindumpSnackbarRef.value.addSnackbarItem(
+    'Task deleted',
+    'undo',
+    () => restoreTask(deletedTask),
+    () => deleteTask(deletedTask)
+  )
+}
+
+function handleTaskUpdated(updatedTask) {
   // update the task in the store
   taskStore.brainDumpTasks = taskStore.brainDumpTasks.map(task => task.id === updatedTask.id ? updatedTask : task);
 }
 
-
 </script>
 
 <template>
+  <Snackbar ref="braindumpSnackbarRef" />
   <!-- Brain Dump toggle button in a box -->
   <div class="brain-dump-toggle-btn-wrapper" @click="toggleBrainDump">
     <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
