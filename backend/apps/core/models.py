@@ -20,7 +20,7 @@ class Task(models.Model):
     order = models.PositiveSmallIntegerField(default=0)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    duration = models.DurationField(blank=True, null=True)
+    planned_duration = models.DurationField(blank=True, null=True)
     # column_date is used for tracking the location of task in the kanban board column
     column_date = models.DateTimeField(blank=True, null=True)
     # start_at, end_at are used for calendar events
@@ -40,9 +40,9 @@ class Task(models.Model):
         ordering = ['order']
 
     @cached_property
-    def get_duration_display(self):
-        if self.duration:
-            _, hours, minutes, _, _= _get_duration_components(self.duration)
+    def get_planned_duration_display(self):
+        if self.planned_duration:
+            _, hours, minutes, _, _= _get_duration_components(self.planned_duration)
             final_str = ""
             if hours > 0:
                 final_str += f"{hours}h "

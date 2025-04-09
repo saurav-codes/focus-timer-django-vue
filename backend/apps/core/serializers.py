@@ -6,14 +6,14 @@ from taggit.serializers import (TagListSerializerField,
 
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField()
-    duration = serializers.SerializerMethodField()
+    planned_duration_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
         fields = '__all__'
 
-    def get_duration(self, obj):
-        return obj.get_duration_display
+    def get_planned_duration_display(self, obj):
+        return obj.get_planned_duration_display
 
 
 

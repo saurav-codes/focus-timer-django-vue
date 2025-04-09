@@ -1,8 +1,10 @@
 <script setup>
 import TaskEditModal from './TaskEditModal.vue';
+import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, defineEmits } from 'vue';
 import { Clock } from 'lucide-vue-next';
+import {useFloating } from '@floating-ui/vue';
 
 const emit = defineEmits(['task-deleted', 'task-updated']);
 const taskStore = useTaskStore();
@@ -16,6 +18,13 @@ const props = defineProps({
     default: true
   },
 });
+
+const durationFloatingReference = ref(null);
+const floatingComponent = ref(null);
+const { floatingStyles} = useFloating(
+  durationFloatingReference,
+  floatingComponent,
+);
 
 const localTask = computed(() => {
   return props.task;
@@ -74,6 +83,46 @@ const handleTaskUpdated = (updatedTask) => {
   emit('task-updated', updatedTask);
 }
 
+// ----- Time Dropdown Popup integration -----
+const isTimePopupOpen = ref(false);
+// Set default hours/minutes parsed out of the current duration_display
+const timePopupHours = ref(0);
+const timePopupMinutes = ref(0);
+
+// Helper: parse a string like "1h 30m" into numbers
+const parseDurationDisplay = (str) => {
+  let hrs = 0, mins = 0;
+  if (str) {
+    const hourMatch = str.match(/(\d+)h/);
+    const minMatch = str.match(/(\d+)m/);
+    if (hourMatch) hrs = parseInt(hourMatch[1], 10);
+    if (minMatch) mins = parseInt(minMatch[1], 10);
+  }
+  return { hrs, mins };
+};
+
+const openTimeDropdown = () => {
+  // Parse current duration if available
+  const { hrs, mins } = parseDurationDisplay(localTask.value.planned_duration_display);
+  timePopupHours.value = hrs;
+  timePopupMinutes.value = mins;
+  isTimePopupOpen.value = true;
+};
+
+const onTimePopupSave = ({ hours, minutes, formatted }) => {
+  // Update localTask duration. Here we update the raw duration (e.g. "1:30")
+  // and the display text. You might wish to reformat as needed.
+  localTask.value.planned_duration = `${hours}:${minutes}`;
+  localTask.value.planned_duration_display = formatted;
+  // Save the update via the task store.
+  taskStore.updateTask(localTask.value);
+  handleTaskUpdated(localTask.value);
+};
+
+const onTimePopupCancel = () => {
+  isTimePopupOpen.value = false;
+};
+
 </script>
 
 <template>
@@ -104,10 +153,18 @@ const handleTaskUpdated = (updatedTask) => {
         </span>
       </div>
     </div>
-    <div class="task-duration">
-      <Clock v-if="localTask.duration" size="14" />
-      {{ localTask.duration }}
+    <div ref="durationFloatingReference" class="task-duration" @click.stop="openTimeDropdown">
+      <Clock v-if="localTask.planned_duration" size="14" />
+      {{ localTask.planned_duration_display }}
     </div>
+    <TimeDropdownPopup
+      v-if="isTimePopupOpen"
+      ref="floatingComponent"
+      :style="floatingStyles"
+      :initial-hours="timePopupHours"
+      :initial-minutes="timePopupMinutes"
+      @save="onTimePopupSave"
+      @cancel="onTimePopupCancel" />
   </div>
 </template>
 
@@ -206,6 +263,11 @@ const handleTaskUpdated = (updatedTask) => {
   color: var(--color-text-tertiary);
   white-space: nowrap;
   padding-left: 0.5rem;
+  cursor: pointer;
+}
+.task-duration:hover {
+  background-color: var(--color-background-tertiary);
+  border-radius: 0.5rem;
 }
 
 .tag-purple {

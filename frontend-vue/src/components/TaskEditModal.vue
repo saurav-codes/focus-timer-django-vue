@@ -304,16 +304,6 @@ onUnmounted(() => {
   transition: background-color var(--transition-base);
 }
 
-.save-button {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-}
-
-.save-button:hover {
-  background-color: var(--color-primary-dark);
-}
-
 .delete-button {
   background-color: transparent;
   color: var(--color-error);

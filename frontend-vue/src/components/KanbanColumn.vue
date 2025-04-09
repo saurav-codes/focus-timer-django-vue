@@ -51,8 +51,8 @@ const totalDuration = computed(() => {
   let totalMinutes = 0;
 
   localTasks.value.forEach(task => {
-    if (task.duration) {
-      const [hours, minutes] = task.duration.split(':').map(Number);
+    if (task.planned_duration) {
+      const [hours, minutes] = task.planned_duration.split(':').map(Number);
       totalMinutes += (hours * 60) + minutes;
     }
   });
