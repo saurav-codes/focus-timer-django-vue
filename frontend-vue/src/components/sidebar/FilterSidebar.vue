@@ -170,11 +170,11 @@ onMounted(async () => {
 
 .filter-sidebar {
   width: 320px;
-  height: 100vh;
+  height: 95vh;
   background-color: var(--color-background);
   box-shadow: var(--shadow-lg);
   padding: 1.5rem;
-  overflow-y: auto;
+  overflow-y: scroll;
   animation: slideIn 0.2s ease-out;
 }
 
