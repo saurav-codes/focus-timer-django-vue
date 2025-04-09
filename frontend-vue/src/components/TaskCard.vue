@@ -3,7 +3,7 @@ import TaskEditModal from './TaskEditModal.vue';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, useTemplateRef } from 'vue';
-import { Clock } from 'lucide-vue-next';
+import { Clock, XIcon } from 'lucide-vue-next';
 import {useFloating } from '@floating-ui/vue';
 import { useElementHover } from '@vueuse/core'
 
@@ -12,7 +12,7 @@ const taskItem = useTemplateRef('taskItem');
 const isHovered = useElementHover(taskItem);
 
 
-const emit = defineEmits(['task-deleted', 'task-updated']);
+const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed']);
 const taskStore = useTaskStore();
 const props = defineProps({
   task: {
@@ -49,6 +49,14 @@ const tags = computed(() => {
   }
   return [];
 });
+
+const removeTag = (tag) => {
+  console.log("emiting removing tag", tag);
+  console.log("the tags list is", tags.value);
+  const updated_tags_list = tags.value.filter(t => t !== tag);
+  console.log("the updated tags list is", updated_tags_list);
+  emit('tag-removed', updated_tags_list, localTask.value.id);
+};
 
 // Generate consistent tag colors based on tag name
 const getTagColor = (tagName) => {
@@ -150,13 +158,14 @@ const onTimePopupCancel = () => {
       <div class="task-title">
         {{ localTask.title }}
       </div>
-      <div v-if="tags.length" class="task-meta">
+      <div v-if="tags.length" v-auto-animate class="task-meta">
         <span
           v-for="(tag, index) in tags"
           :key="index"
           class="task-tag"
           :class="`tag-${getTagColor(tag)}`">
           {{ tag }}
+          <XIcon v-if="isHovered" class="tag-remove-icon" size="12" @click.stop="removeTag(tag)" />
         </span>
       </div>
     </div>
@@ -260,6 +269,19 @@ const onTimePopupCancel = () => {
   color: white;
   display: inline-flex;
   align-items: center;
+}
+
+.tag-remove-icon {
+  margin-left: 0.25rem;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.tag-remove-icon:hover {
+  padding: 0.03rem;
+  transform: scale(1.2);
+  transition: ease-out 0.01s;
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-secondary);
 }
 
 .task-duration {

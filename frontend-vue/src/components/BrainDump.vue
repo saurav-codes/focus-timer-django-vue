@@ -139,6 +139,17 @@ function handleTaskUpdated(updatedTask) {
   taskStore.brainDumpTasks = taskStore.brainDumpTasks.map(task => task.id === updatedTask.id ? updatedTask : task);
 }
 
+function handleTagRemoved(updated_tags_list, taskId) {
+  // remove the tag from the task
+  const task = taskStore.brainDumpTasks.find(task => task.id === taskId);
+  if (!task) {
+    console.error("Task not found while removing tags for task", taskId);
+    return;
+  }
+  task.tags = updated_tags_list;
+  taskStore.updateTask(task);
+}
+
 </script>
 
 <template>
@@ -197,7 +208,7 @@ function handleTaskUpdated(updatedTask) {
       @sort-insert="taskStore.taskDroppedToBrainDump"
       @update:list="handleTaskOrderUpdate">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
-        <TaskCard :task="task" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
+        <TaskCard :task="task" @tag-removed="handleTagRemoved" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
       </SlickItem>
     </SlickList>
   </div>
