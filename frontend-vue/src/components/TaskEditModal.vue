@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, computed, onUnmounted} from 'vue';
 import { useTaskStore } from '../stores/taskstore';
-import { X, Trash2 } from 'lucide-vue-next';
+import { X, Trash2, PencilLine } from 'lucide-vue-next';
 import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
 import Multiselect from '@vueform/multiselect'
@@ -23,8 +23,6 @@ const emit = defineEmits(["closeModal", "task-deleted", "task-updated"])
 
 // Create a copy of the task to edit
 const editedTask = ref({ ...props.task });
-const allTags = ref([]);
-const isLoadingTags = ref(false);
 
 // Update local copy when prop changes
 watch(() => props.task, (newTask) => {
@@ -109,7 +107,10 @@ onUnmounted(() => {
     <div v-if="isOpen" class="modal-overlay" @click.self="closeModal">
       <div class="task-edit-modal">
         <div class="modal-header">
-          <h3>Edit Task</h3>
+          <h3 class="modal-header-title">
+            <PencilLine size="18" />
+            Edit Task
+          </h3>
           <button class="close-button" @click="closeModal">
             <X size="18" />
           </button>
@@ -213,6 +214,12 @@ onUnmounted(() => {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
+}
+
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .close-button {
