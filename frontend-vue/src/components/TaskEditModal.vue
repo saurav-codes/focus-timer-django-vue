@@ -2,7 +2,7 @@
 import { ref, watch, computed, onMounted, onUnmounted} from 'vue';
 import { useTaskStore } from '../stores/taskstore';
 import { X, Trash2 } from 'lucide-vue-next';
-import { useTimeAgo, useDateFormat} from '@vueuse/core';
+import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
 
 
@@ -27,34 +27,6 @@ const editedTask = ref({ ...props.task });
 watch(() => props.task, (newTask) => {
   editedTask.value = { ...newTask };
 }, { deep: true });
-
-const task_start_at = computed({
-  get: () => {
-    if (editedTask.value.start_at) {
-      return useDateFormat(editedTask.value.start_at, 'YYYY-MM-DD HH:mm:ss').value;
-    }
-    return "";
-  },
-  set: (value) => {
-    console.log("setting start_at", value);
-    const start_at_iso_string = new Date(value).toISOString();
-    editedTask.value.start_at = start_at_iso_string;
-  }
-});
-
-const task_end_at = computed({
-  get: () => {
-    if (editedTask.value.end_at) {
-      return useDateFormat(editedTask.value.end_at, 'YYYY-MM-DD HH:mm:ss').value;
-    }
-    return "";
-  },
-  set: (value) => {
-    console.log("setting end_at", value);
-    const end_at_iso_string = new Date(value).toISOString();
-    editedTask.value.end_at= end_at_iso_string;
-  }
-});
 
 // Format the created_at date
 const timeAgo = computed(() => {
@@ -231,6 +203,7 @@ onUnmounted(() => {
 
 .form-group {
   margin-bottom: 1.25rem;
+  width: 95%;
 }
 
 .form-input,
