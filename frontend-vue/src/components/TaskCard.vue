@@ -2,9 +2,15 @@
 import TaskEditModal from './TaskEditModal.vue';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
-import { ref, computed, defineEmits } from 'vue';
+import { ref, computed, useTemplateRef } from 'vue';
 import { Clock } from 'lucide-vue-next';
 import {useFloating } from '@floating-ui/vue';
+import { useElementHover } from '@vueuse/core'
+
+
+const taskItem = useTemplateRef('taskItem');
+const isHovered = useElementHover(taskItem);
+
 
 const emit = defineEmits(['task-deleted', 'task-updated']);
 const taskStore = useTaskStore();
@@ -133,6 +139,7 @@ const onTimePopupCancel = () => {
     @task-updated="handleTaskUpdated"
     @task-deleted="handleTaskDeleted" />
   <div
+    ref="taskItem"
     class="task-item"
     :class="{ 'completed': localTask.is_completed }"
     @click="openEditModal">
@@ -154,7 +161,7 @@ const onTimePopupCancel = () => {
       </div>
     </div>
     <div ref="durationFloatingReference" class="task-duration" @click.stop="openTimeDropdown">
-      <Clock v-if="localTask.planned_duration" size="14" />
+      <Clock v-if="localTask.planned_duration && isHovered" size="14" />
       {{ localTask.planned_duration_display }}
     </div>
     <TimeDropdownPopup
@@ -258,16 +265,17 @@ const onTimePopupCancel = () => {
 .task-duration {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   white-space: nowrap;
-  padding-left: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
   cursor: pointer;
 }
 .task-duration:hover {
   background-color: var(--color-background-tertiary);
-  border-radius: 0.5rem;
 }
 
 .tag-purple {
