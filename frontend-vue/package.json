@@ -12,6 +12,7 @@
     "@floating-ui/vue": "^1.1.6",
     "@fontsource/inter": "^5.1.1",
     "@fontsource/jetbrains-mono": "^5.1.2",
+    "@formkit/auto-animate": "^0.8.2",
     "@unovis/vue": "^1.5.1",
     "@vueuse/components": "^13.0.0",
     "@vueuse/core": "^12.8.2",
