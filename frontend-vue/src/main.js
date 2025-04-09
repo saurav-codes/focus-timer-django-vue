@@ -13,6 +13,7 @@ import { plugin as Slicksort } from 'vue-slicksort';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
 import './assets/index.css'
+import '@vueform/multiselect/themes/default.css';
 import App from './App.vue'
 import router from './router'
 

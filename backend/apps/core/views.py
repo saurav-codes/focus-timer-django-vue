@@ -113,5 +113,5 @@ def get_all_tags(request):
     """
     # Get tags only from tasks
     # TODO: filter this project or user specific tasks
-    tags = Tag.objects.filter(task__isnull=False).distinct()
-    return Response([{'id': tag.id, 'name': tag.name} for tag in tags])
+    tags = Tag.objects.filter(task__isnull=False).distinct().values_list('name', flat=True)
+    return Response(tags)

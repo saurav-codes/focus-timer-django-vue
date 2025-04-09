@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted} from 'vue';
+import { ref, watch, computed, onUnmounted} from 'vue';
 import { useTaskStore } from '../stores/taskstore';
 import { X, Trash2 } from 'lucide-vue-next';
 import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
+import Multiselect from '@vueform/multiselect'
 
 
 const props = defineProps({
@@ -22,6 +23,8 @@ const emit = defineEmits(["closeModal", "task-deleted", "task-updated"])
 
 // Create a copy of the task to edit
 const editedTask = ref({ ...props.task });
+const allTags = ref([]);
+const isLoadingTags = ref(false);
 
 // Update local copy when prop changes
 watch(() => props.task, (newTask) => {
@@ -68,15 +71,31 @@ const handleKeyDown = (event) => {
   }
 };
 
+const selectedTags = computed({
+  get() {
+    if (editedTask.value.tags) {
+      if (Array.isArray(editedTask.value.tags)) {
+        return editedTask.value.tags.flatMap(tag => {
+          if (typeof tag === 'string' && tag.includes(',')) {
+            return tag.split(',');
+          }
+          return tag;
+        });
+      }
+    }
+    return [];
+  },
+  set(newTags) {
+    editedTask.value.tags = newTags;
+    saveTask();
+  }
+});
+
 const closeModal = () => {
   console.log("emiting close event")
   emit("closeModal")
 }
 
-onMounted(() => {
-  // Esc key for closing modal
-  document.addEventListener('keydown', handleKeyDown);
-});
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
@@ -115,6 +134,18 @@ onUnmounted(() => {
               placeholder="Add details about this task..."
               rows="4"
               @blur="saveTask" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags</label>
+            <Multiselect
+              v-model="selectedTags"
+              mode="tags"
+              :options="taskStore.tags"
+              :create-option="true"
+              :close-on-select="false"
+              :caret="true"
+              :searchable="true"
+              placeholder="Search or add tags" />
           </div>
           <div class="form-group">
             <label class="checkbox-container">
@@ -160,9 +191,13 @@ onUnmounted(() => {
   border-radius: 0.5rem;
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
   animation: modal-appear 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: scroll;
 }
 
 .modal-header {
@@ -204,6 +239,13 @@ onUnmounted(() => {
 .form-group {
   margin-bottom: 1.25rem;
   width: 95%;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
 }
 
 .form-input,
