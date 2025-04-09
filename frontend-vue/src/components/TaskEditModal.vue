@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted, defineEmits } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted} from 'vue';
 import { useTaskStore } from '../stores/taskstore';
 import { X, Trash2 } from 'lucide-vue-next';
 import { useTimeAgo, useDateFormat} from '@vueuse/core';
@@ -144,22 +144,6 @@ onUnmounted(() => {
               rows="4"
               @blur="saveTask" />
           </div>
-
-          <div class="form-group">
-            <input
-              id="task-duration"
-              v-model.lazy="task_start_at"
-              type="datetime-local"
-              class="form-input"
-              @blur="saveTask">
-            <input
-              id="task-duration"
-              v-model.lazy="task_end_at"
-              type="datetime-local"
-              class="form-input"
-              @blur="saveTask">
-          </div>
-
           <div class="form-group">
             <label class="checkbox-container">
               <input v-model.lazy="editedTask.is_completed" type="checkbox" @change="saveTask">
