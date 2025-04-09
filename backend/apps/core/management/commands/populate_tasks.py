@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "column_date": None,
                 "tags": ["Planning", "Innovation"],
-                "duration": "00:20:00",
+                "planned_duration": "00:20:00",
             },
             {
                 "title": "Research competitor analysis",
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Research", "Strategy"],
                 "column_date": None,
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Draft content calendar",
@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Marketing", "Planning"],
                 "column_date": None,
-                "duration": "01:00:00",
+                "planned_duration": "01:00:00",
             },
 
             # Regular Tasks
@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Development", "Security"],
                 "column_date": today,
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Update API documentation",
@@ -56,7 +56,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "tags": ["Documentation", "API"],
                 "column_date": today,
-                "duration": "00:40:00",
+                "planned_duration": "00:40:00",
             },
             {
                 "title": "Weekly team meeting",
@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Meeting", "Team"],
                 "column_date": today + timedelta(days=1),
-                "duration": "00:80:00",
+                "planned_duration": "00:80:00",
             },
             {
                 "title": "Fix mobile responsiveness",
@@ -72,7 +72,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Bug", "UI"],
                 "column_date": today + timedelta(days=1),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Implement dark mode",
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Feature", "UI"],
                 "column_date": today - timedelta(days=1),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Performance optimization",
@@ -88,7 +88,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Performance", "Development"],
                 "column_date": today - timedelta(days=1),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "User feedback analysis",
@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "tags": ["Analysis", "User Experience"],
                 "column_date": today + timedelta(days=2),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Security audit",
@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Security", "Maintenance"],
                 "column_date": today + timedelta(days=2),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Create onboarding tutorial",
@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["UX", "Documentation"],
                 "column_date": today + timedelta(days=3),
-                "duration": "00:110:00",
+                "planned_duration": "00:110:00",
             },
             {
                 "title": "Update dependencies",
@@ -120,7 +120,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "tags": ["Maintenance", "Development"],
                 "column_date": today + timedelta(days=3),
-                "duration": "00:50:00",
+                "planned_duration": "00:50:00",
             },
             {
                 "title": "Implement email notifications",
@@ -128,7 +128,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Feature", "Backend"],
                 "column_date": today + timedelta(days=4),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
             {
                 "title": "Create monthly analytics report",
@@ -136,7 +136,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Analytics", "Reporting"],
                 "column_date": today + timedelta(days=4),
-                "duration": "00:30:00",
+                "planned_duration": "00:30:00",
             },
         ]
 
@@ -147,7 +147,7 @@ class Command(BaseCommand):
                 description=data["description"],
                 is_completed=data["is_completed"],
                 column_date=data["column_date"],
-                duration=parse_duration(data["duration"]),
+                planned_duration=parse_duration(data["planned_duration"]),
             )
             # Add tags separately since TaggableManager needs to be handled after creation
             task.tags.add(",".join(data["tags"]))
