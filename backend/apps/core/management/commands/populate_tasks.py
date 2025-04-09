@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from apps.core.models import Task
+from taggit.models import Tag
 from datetime import datetime, timedelta
 import pytz
 from django.utils.dateparse import parse_duration
@@ -150,7 +151,9 @@ class Command(BaseCommand):
                 planned_duration=parse_duration(data["planned_duration"]),
             )
             # Add tags separately since TaggableManager needs to be handled after creation
-            task.tags.add(",".join(data["tags"]))
+            for t in data["tags"]:
+                tag, _ = Tag.objects.get_or_create(name=t)
+                task.tags.add(tag)
 
             self.stdout.write(self.style.SUCCESS(
                 f"Created task: {task.title}"
