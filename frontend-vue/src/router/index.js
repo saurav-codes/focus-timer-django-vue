@@ -3,13 +3,15 @@ import KanbanPlannerView from '../views/KanbanPlanner.vue'
 import CalendarPlannerView from '../views/CalendarPlanner.vue'
 import DashboardView from '@/views/Dashboard.vue'
 import SettingsView from '@/views/Settings.vue'
+import HomePage from '@/views/HomePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '',
-      redirect: '/kanban-planner'
+      name: 'home',
+      component: HomePage
     },
     {
       path: '/kanban-planner',
