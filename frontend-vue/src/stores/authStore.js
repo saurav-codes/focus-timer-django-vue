@@ -3,8 +3,9 @@ import axios from 'axios';
 import router from '../router';
 import { useLocalStorage } from '@vueuse/core';
 
-
+const userDataLocalStorage = useLocalStorage('userData', {});
 const isAuthenticatedLocalStorage = useLocalStorage('isAuthenticated', false);
+
 // setting this to allow cookies to be set by
 // backend using response headers
 // this is also required for session authentication to work
@@ -52,6 +53,7 @@ export const useAuthStore = defineStore('authStore', {
     isLoading: false,
     registerErrors: {},
     loginErrors: {},
+    userData: userDataLocalStorage,
     isAuthenticated: isAuthenticatedLocalStorage,
   }),
 
@@ -89,6 +91,7 @@ export const useAuthStore = defineStore('authStore', {
 
         router.push('/kanban-planner');
         this.isAuthenticated = true;
+        this.userData = await this.fetchUserData();
         return true;
       } catch (error) {
         console.error('Login error:', error);
