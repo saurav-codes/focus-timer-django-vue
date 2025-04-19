@@ -88,6 +88,7 @@ const calculateMenuItemStyle = (index, isExpanded) => {
           :key="item.path || item.id">
           <div
             class="menu-item"
+            :title="item.label"
             :class="{ 'active': route.path === item.path }"
             :style="calculateMenuItemStyle(index, isExpanded)"
             @click="handleDockItemClick(item)">
