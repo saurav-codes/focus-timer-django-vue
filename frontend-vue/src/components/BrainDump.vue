@@ -34,7 +34,7 @@ const addTask = async () => {
       id: Date.now(),
       title: newTaskTitle.value,
       is_completed: false,
-      duration: '0:30', // This will be parsed as a DurationField in Django
+      planned_duration: '0:30', // This will be parsed as a DurationField in Django
       order: 0,
       tags: [],
       user: authStore.userData.id,
