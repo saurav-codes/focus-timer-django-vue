@@ -7,9 +7,9 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .filters import TaskFilter
-from taggit.models import Tag
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.db.models import F
 # Create your views here.
 
 
@@ -127,8 +127,12 @@ def get_all_tags(request):
     Get all tags that are used in tasks
     """
     # Get tags only from tasks
-    tags = Tag.objects.filter(
-        task__isnull=False,
-        user=request.user,
-    ).distinct().values_list('name', flat=True)
-    return Response(tags)
+    print("request.user", request.user)
+    user_tags = Task.objects.filter(user=request.user)\
+        .exclude(tags__name__isnull=True)\
+        .values('tags__name', 'tags__id')\
+        .annotate(name=F('tags__name'), id=F('tags__id'))\
+        .values('name', 'id')\
+        .distinct()
+
+    return Response(user_tags)

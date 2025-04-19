@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { XIcon, SearchIcon } from 'lucide-vue-next';
 import { useTaskStore } from '../../stores/taskstore';
 import { useUIStore } from '../../stores/uiStore';
@@ -13,6 +13,26 @@ const selectedTags = ref([]);
 
 // Computed property to check if sidebar is visible
 const isVisible = computed(() => uiStore.isFilterSidebarVisible);
+
+// Watch for changes in sidebar visibility and fetch data when it becomes visible
+watch(isVisible, async (newValue) => {
+  if (newValue === true) {
+    // Fetch data when sidebar is opened
+    await loadFilterData();
+  }
+}, { immediate: false });
+
+// Function to load filter data
+const loadFilterData = async () => {
+  try {
+    await Promise.all([
+      taskStore.fetchProjects(),
+      taskStore.fetchTags()
+    ]);
+  } catch (error) {
+    console.error('Error loading filter data:', error);
+  }
+};
 
 // Function to close the sidebar
 const closeSidebar = () => {
@@ -65,11 +85,9 @@ const filteredTags = computed(() => {
 
 // Load projects and tags on component mount
 onMounted(async () => {
-  try {
-    await taskStore.fetchProjects();
-    await taskStore.fetchTags();
-  } catch (error) {
-    console.error('Error loading filter data:', error);
+  // Only load data initially if the sidebar is already visible
+  if (isVisible.value) {
+    await loadFilterData();
   }
 });
 </script>

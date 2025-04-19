@@ -4,11 +4,13 @@ import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter }
 import TaskCard from './TaskCard.vue';
 import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
+import { useAuthStore } from '../stores/authStore';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import Snackbar from './Snackbar.vue';
 
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
+const authStore = useAuthStore();
 const braindumpSnackbarRef = useTemplateRef('braindumpSnackbarRef');
 
 // Add state for controlling the scroll indicator visibility
@@ -34,6 +36,8 @@ const addTask = async () => {
       is_completed: false,
       duration: '0:30', // This will be parsed as a DurationField in Django
       order: 0,
+      tags: [],
+      user: authStore.userData.id,
     };
     // add the new task to the top of the list
     taskStore.brainDumpTasks.unshift(newTask);
