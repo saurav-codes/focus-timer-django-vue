@@ -146,6 +146,10 @@ onClickOutside(popupRef, handleSave);
   border-radius: 0.375rem;
   box-shadow: var(--shadow-lg);
   width: 200px;
+  /* Ensure the popup is positioned properly when teleported */
+  position: fixed;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
 }
 
 .popup-content {

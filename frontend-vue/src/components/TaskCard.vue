@@ -4,13 +4,12 @@ import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, useTemplateRef } from 'vue';
 import { Clock, XIcon } from 'lucide-vue-next';
-import {useFloating } from '@floating-ui/vue';
-import { useElementHover } from '@vueuse/core'
-
+import { useFloating } from '@floating-ui/vue';
+import { useElementHover } from '@vueuse/core';
+import { offset, flip, shift } from '@floating-ui/dom';
 
 const taskItem = useTemplateRef('taskItem');
 const isHovered = useElementHover(taskItem);
-
 
 const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed']);
 const taskStore = useTaskStore();
@@ -30,6 +29,14 @@ const floatingComponent = ref(null);
 const { floatingStyles} = useFloating(
   durationFloatingReference,
   floatingComponent,
+  {
+    placement: 'right-start',
+    middleware: [
+      offset(8),  // Add some space between the button and popup
+      flip(),     // Flip to other side if needed
+      shift()     // Shift the popup to keep it in view
+    ]
+  }
 );
 
 const localTask = computed(() => {
@@ -179,14 +186,18 @@ const onTimePopupCancel = () => {
       <Clock v-if="localTask.planned_duration && isHovered" size="14" />
       {{ localTask.planned_duration_display }}
     </div>
-    <TimeDropdownPopup
-      v-if="isTimePopupOpen"
-      ref="floatingComponent"
-      :style="floatingStyles"
-      :initial-hours="timePopupHours"
-      :initial-minutes="timePopupMinutes"
-      @save="onTimePopupSave"
-      @cancel="onTimePopupCancel" />
+
+    <!-- Use Teleport to render the popup at the document body level -->
+    <Teleport to="body">
+      <TimeDropdownPopup
+        v-if="isTimePopupOpen"
+        ref="floatingComponent"
+        :style="floatingStyles"
+        :initial-hours="timePopupHours"
+        :initial-minutes="timePopupMinutes"
+        @save="onTimePopupSave"
+        @cancel="onTimePopupCancel" />
+    </Teleport>
   </div>
 </template>
 
