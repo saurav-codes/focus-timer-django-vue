@@ -1,5 +1,32 @@
 <script setup>
-// No complex logic needed for the landing page at this point
+import { useAuthStore } from '../stores/authStore';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+// Check if user is already authenticated, redirect to app if they are
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.push('/kanban-planner');
+  } else if (localStorage.getItem('accessToken')) {
+    // We have a token but store is not initialized
+    authStore.initAuth();
+    if (authStore.isAuthenticated) {
+      router.push('/kanban-planner');
+    }
+  }
+});
+
+// Navigation handlers
+const goToLogin = () => {
+  router.push('/login');
+};
+
+const goToRegister = () => {
+  router.push('/register');
+};
 </script>
 
 <template>
@@ -16,9 +43,9 @@
             <a href="#testimonials" class="nav-link">Testimonials</a>
           </div>
           <div class="auth-links">
-            <!-- These will be actual links later when we implement auth -->
-            <router-link to="/kanban-planner" class="login-btn">Log In</router-link>
-            <router-link to="/kanban-planner" class="signup-btn">Get Started</router-link>
+            <!-- Updated links to use router navigation -->
+            <button @click="goToLogin" class="login-btn">Log In</button>
+            <button @click="goToRegister" class="signup-btn">Get Started</button>
           </div>
         </nav>
       </div>
@@ -32,7 +59,7 @@
             The all-in-one productivity platform that combines deep focus with intelligent planning to transform how you work.
           </p>
           <div class="hero-cta">
-            <router-link to="/kanban-planner" class="cta-button">Try For Free</router-link>
+            <button @click="goToRegister" class="cta-button">Try For Free</button>
             <a href="#features" class="secondary-link">See how it works <span class="arrow">→</span></a>
           </div>
         </div>
@@ -171,7 +198,7 @@
               <li>3-day planning horizon</li>
               <li>Up to 20 active tasks</li>
             </ul>
-            <router-link to="/kanban-planner" class="pricing-cta">Get Started</router-link>
+            <button @click="goToRegister" class="pricing-cta">Get Started</button>
           </div>
           <div class="pricing-card featured">
             <div class="popular-badge">Most Popular</div>
@@ -184,7 +211,7 @@
               <li>Time tracking</li>
               <li>Basic integrations</li>
             </ul>
-            <router-link to="/kanban-planner" class="pricing-cta">Start Free Trial</router-link>
+            <button @click="goToRegister" class="pricing-cta">Start Free Trial</button>
           </div>
           <div class="pricing-card">
             <h3 class="pricing-tier">Team</h3>
@@ -196,7 +223,7 @@
               <li>Advanced integrations</li>
               <li>Priority support</li>
             </ul>
-            <router-link to="/kanban-planner" class="pricing-cta">Contact Sales</router-link>
+            <button @click="goToRegister" class="pricing-cta">Contact Sales</button>
           </div>
         </div>
       </div>
@@ -206,7 +233,7 @@
       <div class="container">
         <h2 class="cta-title">Ready to transform your productivity?</h2>
         <p class="cta-subtitle">Join thousands of professionals who have reclaimed their focus and mastered their time.</p>
-        <router-link to="/kanban-planner" class="cta-button large">Get Started For Free</router-link>
+        <button @click="goToRegister" class="cta-button large">Get Started For Free</button>
       </div>
     </section>
 
@@ -315,29 +342,15 @@
   gap: 1rem;
 }
 
-.login-btn {
-  color: var(--color-text-primary);
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.login-btn:hover {
-  background-color: var(--color-background-secondary);
-}
-
-.signup-btn {
-  background-color: var(--color-primary);
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.signup-btn:hover {
-  background-color: var(--color-primary-dark, #4338ca);
+.login-btn,
+.signup-btn,
+.cta-button,
+.pricing-cta {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  border: none;
 }
 
 /* Hero section */
