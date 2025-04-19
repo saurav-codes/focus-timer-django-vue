@@ -15,7 +15,7 @@ class Command(BaseCommand):
         # Remove all existing tasks
         Task.objects.all().delete()
         # either create a new user or use the existing one
-        user = User.objects.first()
+        user = User.objects.filter(email='raju@gmail.com').first()
         if not user:
             print("didn't find user, creating one")
             user = User.objects.create_user(
