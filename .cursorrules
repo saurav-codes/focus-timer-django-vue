@@ -15,7 +15,7 @@ we are building a sunsama.com like productivity web app with django & Vue JS 3.
 the goal is to clone every feature of sunsama as it is.
 
 check the project architecture from docs/project-architecture.md
-always prefer VueUse library as it provides many useful composables
+always prefer VueUse library or native vuejs solution whenever possible
 security and user privacy is most critical in this project so make sure your suggested code is complaint.
 use the best code practises.
 choose the most optimal solution for the problem.
@@ -27,3 +27,7 @@ when writing git commits, keep them super short and clear.
 
 follow the best UI/UX principles.
 Keep the UI/UX super simple to use.
+simple is always better than complex & ease of use and simplicity is at the core of this project.
+i am beginner so explain add comments to explain the code.
+during debugging, explain the issue deeply once you found the solution.
+NEVER git commit any change until i ask.
