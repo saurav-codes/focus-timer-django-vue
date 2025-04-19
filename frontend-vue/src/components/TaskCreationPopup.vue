@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { X, Plus } from 'lucide-vue-next';
+import { X, Plus, Clock } from 'lucide-vue-next';
 import { useTaskStore } from '../stores/taskstore';
 import { useAuthStore } from '../stores/authStore';
 import { onKeyStroke } from '@vueuse/core';
+import TimeDropdownPopup from './TimeDropdownPopup.vue';
+import { useFloating } from '@floating-ui/vue';
+import { offset, flip, shift } from '@floating-ui/dom';
 
 const props = defineProps({
   isVisible: {
@@ -20,6 +23,28 @@ const authStore = useAuthStore();
 const newTaskTitle = ref('');
 const inputRef = ref(null);
 
+// Duration state
+const taskHours = ref(0);
+const taskMinutes = ref(30);
+const taskDurationDisplay = ref('30m');
+const isTimePopupOpen = ref(false);
+
+// Set up floating UI for time popup
+const durationButtonRef = ref(null);
+const timePopupRef = ref(null);
+const { floatingStyles } = useFloating(
+  durationButtonRef,
+  timePopupRef,
+  {
+    placement: 'bottom-start',
+    middleware: [
+      offset(8), // Add some space between the button and popup
+      flip(),    // Flip to the opposite side if there's not enough space
+      shift()    // Shift the popup if needed to ensure visibility
+    ]
+  }
+);
+
 // Watch for visibility changes and focus input when visible
 watch(() => props.isVisible, (newVal) => {
   if (newVal) {
@@ -27,19 +52,56 @@ watch(() => props.isVisible, (newVal) => {
     setTimeout(() => {
       inputRef.value?.focus();
     }, 0);
+  } else {
+    // Reset task data when popup is closed
+    resetTaskData();
   }
 });
+
+// Reset all task input data
+const resetTaskData = () => {
+  newTaskTitle.value = '';
+  taskHours.value = 0;
+  taskMinutes.value = 30;
+  taskDurationDisplay.value = '30m';
+  isTimePopupOpen.value = false;
+};
+
+// Open time popup
+const openTimePopup = () => {
+  isTimePopupOpen.value = true;
+};
+
+// Handle time popup save event
+const handleTimePopupSave = ({ hours, minutes, formatted, keepOpen }) => {
+  taskHours.value = hours;
+  taskMinutes.value = minutes;
+  taskDurationDisplay.value = formatted;
+
+  // Only close the popup if it's not just an update
+  if (!keepOpen) {
+    isTimePopupOpen.value = false;
+  }
+};
+
+// Handle time popup cancel event
+const handleTimePopupCancel = () => {
+  isTimePopupOpen.value = false;
+};
 
 // Add task and close popup
 const addTask = async () => {
   if (newTaskTitle.value.trim()) {
+    // Format duration string for backend
+    const durationString = `${taskHours.value}:${taskMinutes.value}`;
+
     // Create new task object
     const newTask = {
       id: Date.now(),
       title: newTaskTitle.value,
       is_completed: false,
-      planned_duration: '0:30', // Default 30 minutes duration
-      planned_duration_display: '30m',
+      planned_duration: durationString, // Format for backend
+      planned_duration_display: taskDurationDisplay.value, // For display
       order: 0,
       tags: [],
       user: authStore.userData.id,
@@ -48,8 +110,8 @@ const addTask = async () => {
     // Add the task to the brain dump tasks (optimistic update)
     taskStore.brainDumpTasks.unshift(newTask);
 
-    // Reset input and close popup
-    newTaskTitle.value = '';
+    // Reset input
+    resetTaskData();
 
     // Create task in backend
     const data = await taskStore.createTask(newTask);
@@ -88,7 +150,9 @@ onKeyStroke('Escape', () => {
       <div class="popup-container" @click.stop>
         <div class="popup-header">
           <span class="popup-title">Create Task</span>
-          <button class="close-button" @click="$emit('close')"><X size="18" /></button>
+          <button class="close-button" @click="$emit('close')">
+            <X size="18" />
+          </button>
         </div>
         <div class="popup-content">
           <div class="input-wrapper">
@@ -99,8 +163,32 @@ onKeyStroke('Escape', () => {
               type="text"
               placeholder="What needs to be done?"
               class="task-input"
-              @keydown="handleKeyDown" />
+              @keydown="handleKeyDown">
           </div>
+
+          <!-- Task duration selector -->
+          <div class="task-options">
+            <button
+              ref="durationButtonRef"
+              class="duration-button"
+              @click.stop="openTimePopup">
+              <Clock size="16" />
+              <span>{{ taskDurationDisplay }}</span>
+            </button>
+
+            <!-- Time dropdown popup portal -->
+            <Teleport to="body">
+              <TimeDropdownPopup
+                v-if="isTimePopupOpen"
+                ref="timePopupRef"
+                :style="floatingStyles"
+                :initial-hours="taskHours"
+                :initial-minutes="taskMinutes"
+                @save="handleTimePopupSave"
+                @cancel="handleTimePopupCancel" />
+            </Teleport>
+          </div>
+
           <div class="shortcuts-hint">
             <div class="shortcut-item">
               <span class="key">Enter</span>
@@ -196,6 +284,7 @@ onKeyStroke('Escape', () => {
   padding: 0 12px;
   background-color: var(--color-input-background, var(--color-background-secondary));
   transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 12px;
 }
 
 .input-wrapper:focus-within {
@@ -222,10 +311,38 @@ onKeyStroke('Escape', () => {
   color: var(--color-text-tertiary);
 }
 
+/* Task options styling */
+.task-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 10; /* Ensure the options are above other elements in the popup */
+}
+
+.duration-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.duration-button:hover {
+  background-color: var(--color-background-tertiary);
+  border-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
 .shortcuts-hint {
   display: flex;
   gap: 16px;
-  margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--color-border);
   color: var(--color-text-tertiary);

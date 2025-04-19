@@ -123,11 +123,17 @@ const openTimeDropdown = () => {
   isTimePopupOpen.value = true;
 };
 
-const onTimePopupSave = ({ hours, minutes, formatted }) => {
+const onTimePopupSave = ({ hours, minutes, formatted, keepOpen }) => {
   // Update localTask duration. Here we update the raw duration (e.g. "1:30")
   // and the display text. You might wish to reformat as needed.
   localTask.value.planned_duration = `${hours}:${minutes}`;
   localTask.value.planned_duration_display = formatted;
+
+  // Only close the popup if it's not just an update
+  if (!keepOpen) {
+    isTimePopupOpen.value = false;
+  }
+
   // Save the update via the task store.
   taskStore.updateTask(localTask.value);
   handleTaskUpdated(localTask.value);
