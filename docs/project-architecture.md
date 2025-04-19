@@ -55,10 +55,16 @@ This document outlines the architecture for our Sunsama clone productivity appli
 
 3. **BrainDumpColumn**
    - Special column for capturing quick tasks
-   - Has "Add Task" functionality
+   - Has "Add Task" button with keyboard shortcut hint
    - Supports drag-out to other columns
 
-4. **CalendarComponent**
+4. **TaskCreationPopup**
+   - Notion/Spotlight-style modal popup for quick task creation
+   - Triggered by 'a' keyboard shortcut
+   - Shows keyboard shortcut hints (Enter to save, Esc to close)
+   - Supports task creation with default duration
+
+5. **CalendarComponent**
    - Configurable view (day/week)
    - Displays tasks as time blocks
    - Supports task resizing
@@ -105,10 +111,19 @@ This document outlines the architecture for our Sunsama clone productivity appli
 ## User Interaction Flows
 
 ### Task Creation
-1. User clicks "Add Task" in Brain Dump column
-2. Empty editable card appears
-3. User enters task description (required)
-4. Task is saved on blur or Enter key
+1. User triggers task creation through one of two methods:
+   - Clicks the "Add Task" button in the Brain Dump column
+   - Presses the 'a' keyboard shortcut (when not focused in an input field)
+2. A centered modal popup appears (Notion/Spotlight style)
+3. User enters task description in the input field
+4. Task can be saved by:
+   - Pressing Enter key
+   - Clicking outside the popup (auto-saves if input has content)
+5. User can cancel task creation by:
+   - Pressing Escape key
+   - Clicking the close button
+6. On save, task is created with default duration (30m) and added to the Brain Dump column
+7. UI is updated immediately (optimistic update) while backend request is processed
 
 ### Task Movement
 1. User drags task from source column

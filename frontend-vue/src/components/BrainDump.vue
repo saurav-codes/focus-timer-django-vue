@@ -1,53 +1,27 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, useTemplateRef } from 'vue';
-import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter } from 'lucide-vue-next';
+import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter, Keyboard } from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
-import { useAuthStore } from '../stores/authStore';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import Snackbar from './Snackbar.vue';
+import TaskCreationPopup from './TaskCreationPopup.vue';
 
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
-const authStore = useAuthStore();
 const braindumpSnackbarRef = useTemplateRef('braindumpSnackbarRef');
 
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
-const newTaskTitle = ref('');
-const isAddingTask = ref(false);
+const showTaskCreationPopup = ref(false);
 
-const startAddingTask = () => {
-  /* add a new empty task card and focus on it's input box */
-  isAddingTask.value = true;
-  // Focus the input after the DOM updates
-  setTimeout(() => {
-    document.getElementById('new-task-input')?.focus();
-  }, 0);
+const openTaskCreationPopup = () => {
+  showTaskCreationPopup.value = true;
 };
 
-const addTask = async () => {
-  if (newTaskTitle.value.trim()) {
-    // make an object and send this values to backend
-    const newTask = {
-      id: Date.now(),
-      title: newTaskTitle.value,
-      is_completed: false,
-      planned_duration: '0:30', // This will be parsed as a DurationField in Django
-      order: 0,
-      tags: [],
-      user: authStore.userData.id,
-    };
-    // add the new task to the top of the list
-    taskStore.brainDumpTasks.unshift(newTask);
-    newTaskTitle.value = '';
-    const data = await taskStore.createTask(newTask);
-    // since we are doing optimistic update, we need to update the id of the task
-    taskStore.brainDumpTasks[0].id = data.id;
-    // update the order of the tasks in this column
-    taskStore.updateTaskOrder(taskStore.brainDumpTasks);
-  }
+const closeTaskCreationPopup = () => {
+  showTaskCreationPopup.value = false;
 };
 
 const handleTaskOrderUpdate = (new_tasks_array) => {
@@ -55,19 +29,6 @@ const handleTaskOrderUpdate = (new_tasks_array) => {
   setTimeout(() => {
     taskStore.updateTaskOrder(new_tasks_array);
   }, 2000);  // 2 second delay is just to make sure that task update operation is done
-};
-
-const cancelAddTask = () => {
-  newTaskTitle.value = '';
-  isAddingTask.value = false;
-};
-
-const handleKeyDown = (event) => {
-  if (event.key === 'Enter') {
-    addTask();
-  } else if (event.key === 'Escape') {
-    cancelAddTask();
-  }
 };
 
 // Add event listener for keyboard shortcuts
@@ -79,7 +40,7 @@ const handleKeyPress = (event) => {
     !document.activeElement.isContentEditable
   ) {
     event.preventDefault(); // Prevent 'a' from being typed
-    startAddingTask();
+    openTaskCreationPopup();
   }
 };
 
@@ -158,17 +119,21 @@ function handleTagRemoved(updated_tags_list, taskId) {
 
 <template>
   <Snackbar ref="braindumpSnackbarRef" />
+  <TaskCreationPopup :is-visible="showTaskCreationPopup" @close="closeTaskCreationPopup" />
+
   <!-- Brain Dump toggle button in a box -->
   <div class="brain-dump-toggle-btn-wrapper" @click="toggleBrainDump">
     <button class="brain-dump-toggle-btn" :title="isCollapsed ? 'Expand' : 'Collapse'">
       <component :is="isCollapsed ? ChevronRight : ChevronLeft" size="18" />
     </button>
   </div>
+
   <!-- Scroll indicator -->
   <div v-if="showScrollIndicator" class="scroll-indicator" @click="toggleBrainDump">
     <ChevronRight v-if="isCollapsed" size="24" />
     <ChevronLeft v-else size="24" />
   </div>
+
   <div class="brain-dump-container" :class="{ 'collapsed': isCollapsed }">
     <div class="header">
       <div class="header-top">
@@ -189,18 +154,16 @@ function handleTagRemoved(updated_tags_list, taskId) {
       </div>
     </div>
 
-    <div v-if="!isAddingTask" class="add-task" @click="startAddingTask">
-      <Plus size="16" class="plus-icon" />
-      <span>Add a task</span>
-    </div>
-
-    <div v-else class="new-task-input">
-      <input
-        id="new-task-input"
-        v-model="newTaskTitle"
-        placeholder="What needs to be done?"
-        @keydown="handleKeyDown"
-        @blur="cancelAddTask">
+    <!-- New task creation button with keyboard shortcut hint -->
+    <div class="add-task-container" @click="openTaskCreationPopup">
+      <div class="add-task">
+        <Plus size="16" class="plus-icon" />
+        <span>Add a task</span>
+      </div>
+      <div class="keyboard-shortcut-hint">
+        <Keyboard size="14" class="keyboard-icon" />
+        <span>Press <span class="key-hint">a</span></span>
+      </div>
     </div>
 
     <SlickList
@@ -242,9 +205,8 @@ function handleTagRemoved(updated_tags_list, taskId) {
 
 .brain-dump-container.collapsed .title,
 .brain-dump-container.collapsed .total-task,
-.brain-dump-container.collapsed .add-task,
-.brain-dump-container.collapsed .tasks-list,
-.brain-dump-container.collapsed .new-task-input {
+.brain-dump-container.collapsed .add-task-container,
+.brain-dump-container.collapsed .tasks-list {
   display: none;
 }
 
@@ -318,20 +280,52 @@ function handleTagRemoved(updated_tags_list, taskId) {
   color: var(--color-text-tertiary);
 }
 
+/* Add task container for button and shortcut hint */
+.add-task-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
 .add-task {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  border-radius: 0.375rem;
+  border-radius: 0.375rem 0.375rem 0 0;
   background-color: var(--color-background-secondary);
   color: var(--color-text-tertiary);
-  cursor: pointer;
   transition: background-color var(--transition-base);
-  margin-bottom: 1rem;
   font-size: var(--font-size-sm);
 }
 
+.keyboard-shortcut-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 0 0.375rem 0.375rem;
+  background-color: var(--color-background-tertiary);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.keyboard-icon {
+  color: var(--color-text-tertiary);
+}
+
+.key-hint {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 2px;
+  background-color: var(--color-background-secondary);
+  border-radius: 3px;
+  font-family: monospace;
+  font-weight: bold;
+  border: 1px solid var(--color-border);
+}
 
 /* Scroll indicator styling */
 .scroll-indicator {
@@ -356,7 +350,6 @@ function handleTagRemoved(updated_tags_list, taskId) {
 
 /* Bouncing animation */
 @keyframes bounce-right {
-
   0%,
   100% {
     transform: translateY(-50%) translateX(0);
@@ -367,41 +360,13 @@ function handleTagRemoved(updated_tags_list, taskId) {
   }
 }
 
-.add-task:hover {
+.add-task-container:hover .add-task {
   background-color: var(--color-background-tertiary);
   color: var(--color-text-secondary);
 }
 
 .plus-icon {
   color: var(--color-text-tertiary);
-}
-
-.new-task-input {
-  margin-bottom: 1rem;
-}
-
-.new-task-input input {
-  width: 91%;
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-input-background);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  outline: none;
-  transition: border-color var(--transition-base);
-}
-
-.new-task-input input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
 }
 
 .filter-toggle-btn {
@@ -420,5 +385,12 @@ function handleTagRemoved(updated_tags_list, taskId) {
 .filter-toggle-btn:hover {
   background-color: var(--color-background-tertiary);
   color: var(--color-text-secondary);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
 }
 </style>
