@@ -17,6 +17,7 @@ onMounted(() => {
     <main>
       <h2>settings will be here</h2>
       <code>{{ userData }}</code>
+      <button @click="authStore.logout">logout</button>
     </main>
   </div>
 </template>
