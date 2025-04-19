@@ -68,6 +68,21 @@ const clearFilters = () => {
   taskStore.clearFilters();
 };
 
+// Function to select all filters
+const selectAll = () => {
+  // Select all projects (since UI only allows single project selection, select the first one)
+  if (filteredProjects.value.length > 0) {
+    const firstProject = filteredProjects.value[0];
+    selectedProjectId.value = firstProject.id;
+    taskStore.setSelectedProjects([firstProject.id]);
+  }
+
+  // Select all tags
+  const tagNames = filteredTags.value.map(tag => tag.name);
+  selectedTags.value = tagNames;
+  taskStore.setSelectedTags(tagNames);
+};
+
 // Computed properties for filtered lists
 const filteredProjects = computed(() => {
   if (!searchQuery.value) return taskStore.projects;
@@ -102,7 +117,7 @@ onMounted(async () => {
         </button>
       </div>
       <p class="filter-description">
-        Filter table data and save filters.
+        Filter task data by projects and tags.
       </p>
 
       <!-- Search input -->
@@ -164,8 +179,8 @@ onMounted(async () => {
         <button class="clear-btn" @click="clearFilters">
           Clear all
         </button>
-        <button class="apply-btn" @click="closeSidebar">
-          Apply
+        <button class="select-all-btn" @click="selectAll">
+          Select all
         </button>
       </div>
     </div>
@@ -374,7 +389,7 @@ onMounted(async () => {
   border-color: var(--color-text-tertiary);
 }
 
-.apply-btn {
+.select-all-btn {
   padding: 0.625rem 1.25rem;
   background-color: var(--color-primary);
   border: none;
@@ -385,7 +400,7 @@ onMounted(async () => {
   transition: all 0.2s;
 }
 
-.apply-btn:hover {
+.select-all-btn:hover {
   background-color: var(--color-primary-dark);
 }
 </style>
