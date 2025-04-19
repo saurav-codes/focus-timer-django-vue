@@ -2,10 +2,14 @@ from django.db import models
 from taggit.managers import TaggableManager
 from django.utils.functional import cached_property
 from django.utils.duration import _get_duration_components
+from django.contrib.auth import get_user_model
 
+
+User = get_user_model()
 
 
 class Project(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -15,6 +19,7 @@ class Project(models.Model):
 
 
 class Task(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     order = models.PositiveSmallIntegerField(default=0)

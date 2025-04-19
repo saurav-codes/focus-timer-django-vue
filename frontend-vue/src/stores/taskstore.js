@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
 import { useDateFormat } from '@vueuse/core';
+import { useAuthStore } from './authStore';
+
 
 const today = new Date();
 
@@ -84,10 +85,15 @@ export const useTaskStore = defineStore('taskStore', {
     selectedTags: [],
     isLoading: false,
   }),
+  getters: {
+    axios_instance() {
+      const authStore = useAuthStore();
+      return authStore.axios_instance;
+    }
+  },
   actions: {
-    async fetchTasks(filters = {}) {
+    async fetchTasks() {
       try {
-        this.isLoading = true;
 
         // Create query parameters from filters
         const params = new URLSearchParams();
@@ -102,7 +108,7 @@ export const useTaskStore = defineStore('taskStore', {
           });
         }
 
-        const { data } = await axios.get(`http://localhost:8000/api/tasks/?${params}`);
+        const { data } = await this.axios_instance.get(`api/tasks/?${params}`);
 
         // Reset task arrays
         this.kanbanColumns.forEach(column => {
@@ -140,7 +146,7 @@ export const useTaskStore = defineStore('taskStore', {
 
     async fetchProjects() {
       try {
-        const { data } = await axios.get('http://localhost:8000/api/projects/');
+        const { data } = await this.axios_instance.get('api/projects/');
         this.projects = data;
         return data;
       } catch (error) {
@@ -151,7 +157,7 @@ export const useTaskStore = defineStore('taskStore', {
 
     async fetchTags() {
       try {
-        const { data } = await axios.get('http://localhost:8000/api/tags/');
+        const { data } = await this.axios_instance.get('api/tags/');
         this.tags = data;
         return data;
       } catch (error) {
@@ -189,7 +195,7 @@ export const useTaskStore = defineStore('taskStore', {
     },
 
     async toggleCompletion(taskId) {
-      await axios.post(`http://localhost:8000/api/tasks/${taskId}/toggle_completion/`);
+      await this.axios_instance.post(`api/tasks/${taskId}/toggle_completion/`);
     },
 
     async createTask(task) {
@@ -199,12 +205,12 @@ export const useTaskStore = defineStore('taskStore', {
         planned_duration: formatDurationForAPI(task.planned_duration)
       };
 
-      const { data } = await axios.post('http://localhost:8000/api/tasks/', taskWithFormattedDuration);
+      const { data } = await this.axios_instance.post('api/tasks/', taskWithFormattedDuration);
       return data;
     },
 
     async deleteTask(taskId) {
-      await axios.delete(`http://localhost:8000/api/tasks/${taskId}/`);
+      await this.axios_instance.delete(`api/tasks/${taskId}/`);
     },
 
     async updateTask(task) {
@@ -214,7 +220,7 @@ export const useTaskStore = defineStore('taskStore', {
         planned_duration: formatDurationForAPI(task.planned_duration)
       };
 
-      const {data} = await axios.put(`http://localhost:8000/api/tasks/${task.id}/`, taskWithFormattedDuration);
+      const {data} = await this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);
       return data;
     },
 
@@ -230,7 +236,7 @@ export const useTaskStore = defineStore('taskStore', {
           "tasks": tasks_array,
           "action": "update_order"
         };
-        axios.put('http://localhost:8000/api/tasks/', data);
+        await this.axios_instance.put('api/tasks/', data);
       } catch (error) {
         console.error('Error updating tasks order:', error);
       }

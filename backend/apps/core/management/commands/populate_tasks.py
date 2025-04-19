@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
 from apps.core.models import Task
 from taggit.models import Tag
+from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
 import pytz
 from django.utils.dateparse import parse_duration
 
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Populate the database with fake tasks'
@@ -12,6 +14,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Remove all existing tasks
         Task.objects.all().delete()
+        # either create a new user or use the existing one
+        user = User.objects.first()
+        if not user:
+            print("didn't find user, creating one")
+            user = User.objects.create_user(
+                first_name='raju test user',
+                email='raju@gmail.com',
+                password='raju123'
+            )
+        else:
+            print(f"found user {user.email} so using it to assign tasks")
         self.stdout.write(self.style.WARNING("Deleted all existing tasks."))
         today = datetime.now(pytz.utc)
 
@@ -149,6 +162,7 @@ class Command(BaseCommand):
                 is_completed=data["is_completed"],
                 column_date=data["column_date"],
                 planned_duration=parse_duration(data["planned_duration"]),
+                user=user,
             )
             # Add tags separately since TaggableManager needs to be handled after creation
             for t in data["tags"]:

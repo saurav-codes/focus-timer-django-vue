@@ -4,15 +4,16 @@ from .serializers import TaskSerializer, ProjectSerializer
 from django_filters import rest_framework as filters
 from rest_framework.response import Response
 from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .filters import TaskFilter
 from taggit.models import Tag
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 
 
-class TasksApiView(APIView):
+class TasksApiView(LoginRequiredMixin, APIView):
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TaskFilter
 
@@ -20,7 +21,7 @@ class TasksApiView(APIView):
         """
         Get all tasks
         """
-        tasks = Task.objects.all()
+        tasks = Task.objects.filter(user=request.user)
         # Apply filtering
         filterset = TaskFilter(request.GET, queryset=tasks)
         if filterset.is_valid():
@@ -54,7 +55,7 @@ class TasksApiView(APIView):
         return Response({"error": "unknown action"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TaskApiView(APIView):
+class TaskApiView(LoginRequiredMixin, APIView):
     def get(self, request, pk):
         """
         Get a task by id
@@ -82,8 +83,8 @@ class TaskApiView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@csrf_exempt
 @api_view(['POST'])
+@login_required
 def toggle_task_completion(request, pk):
     """
     Toggle the completion status of a task
@@ -96,17 +97,18 @@ def toggle_task_completion(request, pk):
 
 
 @api_view(['GET'])
+@login_required
 def get_all_projects(request):
     """
     Get all projects
     """
-    # TODO: filter this project or user specific tasks
-    projects = Project.objects.all()
+    projects = Project.objects.filter(user=request.user)
     serializer = ProjectSerializer(projects, many=True)
     return Response(serializer.data)
 
 
 @api_view(['POST'])
+@login_required
 def create_project(request):
     """
     Create a new project
@@ -119,11 +121,14 @@ def create_project(request):
 
 
 @api_view(['GET'])
+@login_required
 def get_all_tags(request):
     """
     Get all tags that are used in tasks
     """
     # Get tags only from tasks
-    # TODO: filter this project or user specific tasks
-    tags = Tag.objects.filter(task__isnull=False).distinct().values_list('name', flat=True)
+    tags = Tag.objects.filter(
+        task__isnull=False,
+        user=request.user,
+    ).distinct().values_list('name', flat=True)
     return Response(tags)

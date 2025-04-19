@@ -19,6 +19,8 @@ from django.urls import path, include, re_path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^auth/', include('djoser.urls')),
-    path('', include('apps.core.urls')),
+    # Djoser auth endpoints
+    re_path(r'^auth/', include('apps.authentication.urls')),
+    # Core app endpoints
+    path('api/', include('apps.core.urls')),
 ]
