@@ -63,8 +63,10 @@ onMounted(() => {
     animateScroll();
   }, 100);
 
-  // Fetch tasks when component mounts
+  // Fetch tasks, projects, and tags when component mounts
   taskStore.fetchTasks();
+  taskStore.fetchProjects();
+  taskStore.fetchTags();
 
   // Add scroll event listener to detect end of scroll for infinite loading
   if (kanbanColumnsWrapper.value) {

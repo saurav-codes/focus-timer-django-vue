@@ -71,17 +71,7 @@ const handleKeyDown = (event) => {
 
 const selectedTags = computed({
   get() {
-    if (editedTask.value.tags) {
-      if (Array.isArray(editedTask.value.tags)) {
-        return editedTask.value.tags.flatMap(tag => {
-          if (typeof tag === 'string' && tag.includes(',')) {
-            return tag.split(',');
-          }
-          return tag;
-        });
-      }
-    }
-    return [];
+    return editedTask.value.tags || [];
   },
   set(newTags) {
     editedTask.value.tags = newTags;
@@ -89,8 +79,19 @@ const selectedTags = computed({
   }
 });
 
+const tagCreated = () => {
+  // fetch tags again to update the dropdown
+  // we added delay so task update request is completed first
+  // otherwise the tag is not available in the dropdown
+  // this is a hack to make it work
+  // TODO: a better to do this is use useFetch from vuecore which allows
+  // to line up the requests to avoid race condition
+  setTimeout(() => {
+    taskStore.fetchTags();
+  }, 2000);
+}
+
 const closeModal = () => {
-  console.log("emiting close event")
   emit("closeModal")
 }
 
@@ -141,12 +142,13 @@ onUnmounted(() => {
             <Multiselect
               v-model="selectedTags"
               mode="tags"
-              :options="taskStore.tags"
+              :options="taskStore.tags.map(tag => tag.name)"
               :create-option="true"
               :close-on-select="false"
               :caret="true"
               :searchable="true"
-              placeholder="Search or add tags" />
+              placeholder="Search or add tags"
+              @tag="tagCreated" />
           </div>
           <div class="form-group">
             <label class="checkbox-container">
