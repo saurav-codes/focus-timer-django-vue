@@ -1,7 +1,5 @@
 Django==5.2
 djangorestframework==3.15.2
-djangorestframework_simplejwt==5.4.0
-djoser==2.3.1
 django-cors-headers
 django-environ
 django-timezone-field
@@ -12,3 +10,11 @@ ruff
 django-taggit
 pytz
 django-simple-history
+django-filter
+
+# testing
+pytest
+pytest-django
+pytest-cov
+coverage
+faker
