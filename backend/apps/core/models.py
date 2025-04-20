@@ -3,6 +3,8 @@ from taggit.managers import TaggableManager
 from django.utils.functional import cached_property
 from django.utils.duration import _get_duration_components
 from django.contrib.auth import get_user_model
+from simple_history.models import HistoricalRecords
+
 
 
 User = get_user_model()
@@ -13,6 +15,7 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title
@@ -37,6 +40,7 @@ class Task(models.Model):
     # because he will add the task in diff timezones.
     tags = TaggableManager(blank=True)
     project = models.ForeignKey(Project, related_name='tasks', on_delete=models.SET_NULL, null=True, blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title

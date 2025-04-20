@@ -11,3 +11,4 @@ djlint
 ruff
 django-taggit
 pytz
+django-simple-history

@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
-
+from simple_history.models import HistoricalRecords
 
 class CustomUserManager(BaseUserManager):
     """
@@ -46,6 +46,7 @@ class User(AbstractUser):
     # like a referral link or a specific marketing campaign
     joined_from_source = models.CharField(max_length=255, null=True, blank=True)
     objects = CustomUserManager()
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.email
