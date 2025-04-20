@@ -58,10 +58,7 @@ const tags = computed(() => {
 });
 
 const removeTag = (tag) => {
-  console.log("emiting removing tag", tag);
-  console.log("the tags list is", tags.value);
   const updated_tags_list = tags.value.filter(t => t !== tag);
-  console.log("the updated tags list is", updated_tags_list);
   emit('tag-removed', updated_tags_list, localTask.value.id);
 };
 
