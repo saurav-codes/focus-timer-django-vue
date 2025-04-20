@@ -48,14 +48,10 @@ INSTALLED_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'djoser',
     'rest_framework',
-    'rest_framework.authtoken',
     "corsheaders",
     "taggit",
     "django_filters",
-    "crispy_forms",
-    "crispy_bootstrap4",
     "simple_history",
 ]
 
@@ -166,31 +162,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = env('ALLOWED_ORIGINS', cast=list)
-print(CORS_ALLOWED_ORIGINS)
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-
-# Djoser settings
-DJOSER = {
-    'LOGIN_FIELD': 'email',
-    'USER_CREATE_PASSWORD_RETYPE': True,
-    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
-    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
-    'SEND_CONFIRMATION_EMAIL': True,
-    'SET_USERNAME_RETYPE': True,
-    'SET_PASSWORD_RETYPE': True,
-    'PASSWORD_RESET_CONFIRM_RETYPE': True,
-    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
-    'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}',
-    'ACTIVATION_URL': 'activate/{uid}/{token}',
-    'SEND_ACTIVATION_EMAIL': True,
-    'SERIALIZERS': {
-        'user_create': 'djoser.serializers.UserCreateSerializer',
-        'user': 'djoser.serializers.UserSerializer',
-        'current_user': 'djoser.serializers.UserSerializer',
-        'user_delete': 'djoser.serializers.UserDeleteSerializer',
-    },
-}
 
 # For development only - for real email use proper settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
