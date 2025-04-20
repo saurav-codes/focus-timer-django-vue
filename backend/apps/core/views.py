@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from .filters import TaskFilter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.db.models import F
+from taggit.models import Tag, TaggedItem
 # Create your views here.
 
 
@@ -126,13 +126,16 @@ def get_all_tags(request):
     """
     Get all tags that are used in tasks
     """
-    # Get tags only from tasks
-    print("request.user", request.user)
-    user_tags = Task.objects.filter(user=request.user)\
-        .exclude(tags__name__isnull=True)\
-        .values('tags__name', 'tags__id')\
-        .annotate(name=F('tags__name'), id=F('tags__id'))\
-        .values('name', 'id')\
-        .distinct()
+    # Get IDs of tasks owned by the current user
+    user_task_ids = Task.objects.filter(user=request.user).values_list('id', flat=True)
+
+    # Get unique tags associated with those tasks
+    tag_ids = TaggedItem.objects.filter(
+        object_id__in=user_task_ids,
+        content_type__model='task'
+    ).values_list('tag_id', flat=True).distinct()
+
+    # Get the actual tags with proper formatting
+    user_tags = Tag.objects.filter(id__in=tag_ids).values('name', 'id')
 
     return Response(user_tags)
