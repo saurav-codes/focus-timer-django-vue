@@ -28,6 +28,7 @@ when writing git commits, keep them super short and clear.
 follow the best UI/UX principles.
 Keep the UI/UX super simple to use.
 simple is always better than complex & ease of use and simplicity is at the core of this project.
+always suggest the most simplest but most optimal solution. it should be based on best practices & what senior developers generally suggest.
 i am beginner so explain add comments to explain the code.
 during debugging, explain the issue deeply once you found the solution.
 NEVER git commit any change until i ask.
