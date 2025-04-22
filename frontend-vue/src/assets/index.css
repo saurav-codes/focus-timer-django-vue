@@ -1,14 +1,14 @@
 /* Base theme variables */
 :root {
-  /* Primary colors - Vibrant indigo blue with better gradient */
-  --color-primary: #4f46e5;
-  --color-primary-light: #6366f1;
-  --color-primary-dark: #4338ca;
-  --color-primary-rgb: 79, 70, 229; /* Same as #4f46e5 but in RGB format */
+  /* Primary colors - Enhanced contrast indigo blue */
+  --color-primary: #4338ca;
+  --color-primary-light: #4f46e5;
+  --color-primary-dark: #3730a3;
+  --color-primary-rgb: 67, 56, 202; /* Same as #4338ca but in RGB format */
 
-  /* Secondary accent - Teal for visual interest and contrast */
+  /* Secondary accent - Vibrant teal with improved contrast */
   --color-secondary: #0d9488;
-  --color-secondary-light: #14b8a6;
+  --color-secondary-light: #2dd4bf;
   --color-secondary-dark: #0f766e;
 
   /* Neutral palette - Improved slate grays */
@@ -33,6 +33,7 @@
   --color-text-primary: var(--color-neutral-900);
   --color-text-secondary: var(--color-neutral-700);
   --color-text-tertiary: var(--color-neutral-500);
+  --color-text-selected: var(--color-neutral-50);
 
   /* Feedback colors */
   --color-success: #10b981;
@@ -173,16 +174,16 @@
 
 /* Dark theme overrides */
 .dark {
-  /* Primary colors - Adjusted for dark mode visibility */
-  --color-primary: #818cf8;
-  --color-primary-light: #a5b4fc;
-  --color-primary-dark: #6366f1;
-  --color-primary-rgb: 129, 140, 248; /* Same as #818cf8 but in RGB format */
+  /* Primary colors - Enhanced contrast for dark mode */
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark: #4f46e5;
+  --color-primary-rgb: 99, 102, 241; /* Same as #6366f1 but in RGB format */
 
-  /* Secondary accent - Brightened for dark mode */
-  --color-secondary: #2dd4bf;
-  --color-secondary-light: #5eead4;
-  --color-secondary-dark: #14b8a6;
+  /* Secondary accent - Improved visibility for dark mode */
+  --color-secondary: #14b8a6;
+  --color-secondary-light: #2dd4bf;
+  --color-secondary-dark: #0d9488;
 
   /* Backgrounds */
   --color-background: var(--color-neutral-950);
@@ -194,6 +195,7 @@
   --color-text-primary: var(--color-neutral-50);
   --color-text-secondary: var(--color-neutral-300);
   --color-text-tertiary: var(--color-neutral-400);
+  --color-text-selected: var(--color-neutral-50);
 
   /* Component specific */
   --color-border: var(--color-neutral-800);
