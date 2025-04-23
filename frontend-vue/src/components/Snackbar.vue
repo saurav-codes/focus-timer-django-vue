@@ -36,7 +36,7 @@ watch(snackbarItems, (newItems) => {
   if (newItems.length > 0) {
     // Get the latest item
     const latestItem = newItems[newItems.length - 1];
-
+    const timeout = latestItem.timeout;
     // Create a timeout to remove the item after 4 seconds
     const timeoutId = setTimeout(() => {
       // Remove this specific item from the array
@@ -46,24 +46,23 @@ watch(snackbarItems, (newItems) => {
       };
       // execute final action
       if (latestItem.finalAction) {
-        latestItem.finalAction();
-        console.log(`after 4 seconds final action executed for item ${latestItem.id}`);
+       latestItem.finalAction();
       }
-      console.log(`snackbar timeout id: ${latestItem.id} cleared after 4 seconds final action executed`);
       delete snackbarItemsTimeoutIds.value[latestItem.id];
-    }, 4000);
+    }, timeout);
     snackbarItemsTimeoutIds.value[latestItem.id] = timeoutId;
   }
 }, { deep: true });
 
 // Function to add a new snackbar item
-const addSnackbarItem = (message, actionText, buttonAction, finalAction) => {
+const addSnackbarItem = (message, actionText, buttonAction, finalAction, timeout=4000) => {
   snackbarItems.value.push({
     id: Date.now(), // Unique ID for each snackbar
     message,
     actionText,
     buttonAction,
     finalAction,
+    timeout,
   });
 };
 
@@ -78,11 +77,8 @@ const removeSnackbarItem = (id) => {
 function executeAction(item) {
   // as of now, this is executing undo action
   item.buttonAction();
-  console.log(`button action executed for item ${item.id}`);
   removeSnackbarItem(item.id);
-  console.log(`item ${item.id} removed from snackbar`);
   clearTimeout(snackbarItemsTimeoutIds.value[item.id]);
-  console.log(`snackbar timeout id: ${snackbarItemsTimeoutIds.value[item.id]} cleared`);
   delete snackbarItemsTimeoutIds.value[item.id];
 }
 
@@ -125,7 +121,7 @@ defineExpose({
   bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 11000;
   display: flex;
   flex-direction: column-reverse;
   gap: 0.5rem;
