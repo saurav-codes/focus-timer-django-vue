@@ -659,4 +659,8 @@ watch(() => props.value, () => {
   transform: scale(1.05);
 }
 
+input {
+  color: var(--color-text-primary)
+}
+
 </style>
