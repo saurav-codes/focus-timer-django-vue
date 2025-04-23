@@ -4,7 +4,8 @@ import { useTaskStore } from '../stores/taskstore';
 import { X, Trash2, PencilLine } from 'lucide-vue-next';
 import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
-import Multiselect from '@vueform/multiselect'
+import Multiselect from '@vueform/multiselect';
+import RecurringTaskEditor from './RecurringTaskEditor.vue';
 
 
 const props = defineProps({
@@ -95,6 +96,11 @@ const closeModal = () => {
   emit("closeModal")
 }
 
+const updateRecurrenceRule = (value) => {
+  console.log("updateRecurrenceRule called with value -> ", value);
+  editedTask.value.recurrence_rule = value;
+  saveTask();
+}
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
@@ -156,6 +162,11 @@ onUnmounted(() => {
               <span class="label-text">Completed</span>
             </label>
           </div>
+
+          <!-- Recurring Task Editor -->
+          <RecurringTaskEditor
+            :value="editedTask.recurrence_rule"
+            @update:value="updateRecurrenceRule" />
 
           <div class="meta-info">
             <span class="created-at">Created {{ timeAgo }}</span>
