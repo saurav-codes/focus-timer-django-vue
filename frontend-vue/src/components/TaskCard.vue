@@ -3,7 +3,7 @@ import TaskEditModal from './TaskEditModal.vue';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, useTemplateRef } from 'vue';
-import { Clock, XIcon } from 'lucide-vue-next';
+import { Clock, Repeat1, XIcon } from 'lucide-vue-next';
 import { useFloating } from '@floating-ui/vue';
 import { useElementHover } from '@vueuse/core';
 import { offset, flip, shift } from '@floating-ui/dom';
@@ -195,6 +195,10 @@ const onTimePopupCancel = () => {
         @save="onTimePopupSave"
         @cancel="onTimePopupCancel" />
     </Teleport>
+    <Repeat1
+      v-if="localTask.recurrence_rule"
+      class="recurring-icon"
+      size="12" />
   </div>
 </template>
 
@@ -209,6 +213,7 @@ const onTimePopupCancel = () => {
   transition: background-color var(--transition-base);
   cursor: move;
   user-select: none;
+  position: relative;
 }
 
 .task-item:hover {
@@ -312,6 +317,13 @@ const onTimePopupCancel = () => {
 }
 .task-duration:hover {
   background-color: var(--color-background-tertiary);
+}
+
+.recurring-icon {
+  color: var(--color-text-tertiary);
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
 }
 
 .tag-purple {
