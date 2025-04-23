@@ -195,10 +195,13 @@ const onTimePopupCancel = () => {
         @save="onTimePopupSave"
         @cancel="onTimePopupCancel" />
     </Teleport>
-    <Repeat1
+    <div
       v-if="localTask.recurrence_rule"
-      class="recurring-icon"
-      size="12" />
+      title="This is a recurring task">
+      <Repeat1
+        class="recurring-icon"
+        size="12" />
+    </div>
   </div>
 </template>
 
