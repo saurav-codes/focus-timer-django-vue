@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, useTemplateRef} from 'vue';
 import { RRule } from 'rrule';
-import { Calendar, LucideRepeat, CircleDot, Calendar1, CalendarDays, Clock, X, CalendarRange, CalendarClock } from 'lucide-vue-next';
+import { Calendar, LucideRepeat, CircleDot, Calendar1, CalendarDays, Clock, X, CalendarRange, CalendarClock, AlarmClock } from 'lucide-vue-next';
 import Snackbar from './Snackbar.vue';
 
 const snackbarRef = useTemplateRef('snackbarRef');
@@ -11,10 +11,25 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  startAt: {
+    type: String,
+    default: ''
+  }
 });
 
-const emit = defineEmits(['update:value']);
+const emit = defineEmits(['update:value', 'update:startAt']);
 const isOpen = ref(Boolean(props.value));
+
+const getStartTime = (dateObj) => {
+  if (!dateObj) {
+    dateObj = new Date();
+  }
+  const d = new Date(dateObj);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// Start time for the recurring task
+const startTime = ref(getStartTime(props.startAt));
 
 const toggleRecurringEditor = () => {
   isOpen.value = !isOpen.value;
@@ -227,10 +242,32 @@ function handleEndAfterToggle() {
   until.value = null;
 }
 
+// Update start time and emit event
+const updateStartTime = () => {
+  // Parse the time input
+  const currentDate = new Date();
+  const [hours, minutes] = startTime.value.split(':').map(Number);
+
+  // Set the local time
+  currentDate.setHours(hours, minutes, 0, 0);
+
+  // This will automatically convert to UTC when we call toISOString()
+  // For example, if user is in India (UTC+5:30) and enters 17:30,
+  // this will convert to 12:00 UTC in the ISO string
+  emit('update:startAt', currentDate.toISOString());
+};
+
 // Initialize form when component mounts or value changes
 watch(() => props.value, () => {
   parseRule();
 }, { immediate: true, deep: true });
+
+// Watch for changes in startAt prop
+watch(() => props.startAt, (newStartAt) => {
+  if (newStartAt) {
+    startTime.value = getStartTime(newStartAt);
+  }
+}, { immediate: true });
 
 </script>
 <template>
@@ -297,6 +334,19 @@ watch(() => props.value, () => {
               </button>
             </div>
             <span>{{ currentFrequencyLabel }}</span>
+          </div>
+
+          <!-- Start Time Selector -->
+          <div class="start-time-selector">
+            <div class="start-time-label">
+              <AlarmClock size="16" />
+              <span>Start Time:</span>
+            </div>
+            <input
+              v-model="startTime"
+              type="time"
+              class="time-input"
+              @change="updateStartTime">
           </div>
 
           <!-- Weekday Selector (only for weekly) -->
@@ -698,5 +748,29 @@ watch(() => props.value, () => {
 input {
   color: var(--color-text-primary)
 }
+.start-time-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  background-color: var(--color-background-secondary);
+  border-radius: 0.375rem;
+}
 
+.start-time-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.time-input {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-input-background);
+  font-size: var(--font-size-sm);
+}
 </style>

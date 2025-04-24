@@ -102,6 +102,12 @@ const updateRecurrenceRule = (value) => {
   saveTask();
 }
 
+const updateStartTime = (value) => {
+  console.log("updateStartTime called with value -> ", value);
+  editedTask.value.start_at = value;
+  saveTask();
+}
+
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
 });
@@ -166,6 +172,8 @@ onUnmounted(() => {
           <!-- Recurring Task Editor -->
           <RecurringTaskEditor
             :value="editedTask.recurrence_rule"
+            :start-at="editedTask.start_at"
+            @update:start-at="updateStartTime"
             @update:value="updateRecurrenceRule" />
 
           <div class="meta-info">
