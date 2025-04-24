@@ -544,13 +544,14 @@ watch(() => props.value, () => {
 
 .weekday-button {
   flex: 1;
-  height: 2rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   border: 1px solid var(--color-border);
   background-color: var(--color-background-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.2s ease;
