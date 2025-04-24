@@ -534,17 +534,17 @@ watch(() => props.value, () => {
   padding: 0 0.5rem;
   font-weight: var(--font-weight-medium);
 }
-
 .weekday-selector {
   display: flex;
   justify-content: space-between;
-  gap: 0.25rem;
-  margin: 0.5rem 0;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
 }
 
 .weekday-button {
   flex: 1;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,14 +553,49 @@ watch(() => props.value, () => {
   background-color: var(--color-background-secondary);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.weekday-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary-light);
+}
+
+.weekday-button:active {
+  transform: translateY(0);
 }
 
 .weekday-button.selected {
   background-color: var(--color-primary);
   color: white;
-  border-color: var(--color-primary-dark);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.weekday-button.selected:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.weekday-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.weekday-button:hover::before {
+  opacity: 1;
 }
 
 .end-options {
