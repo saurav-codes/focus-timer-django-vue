@@ -25,7 +25,7 @@ def set_csrf_token(request):
 @require_http_methods(['POST'])
 def login_view(request):
     try:
-        data = json.loads(request.body.decode('utf-8'))
+        data = request.POST
         email = data['email']
         password = data['password']
     except json.JSONDecodeError:
