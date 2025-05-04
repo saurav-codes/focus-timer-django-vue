@@ -38,8 +38,6 @@ const timeAgo = computed(() => {
   return '';
 });
 
-const isDeleting = ref(false);
-
 const saveTask = async () => {
   try {
     await taskStore.updateTask(editedTask.value);
@@ -50,12 +48,13 @@ const saveTask = async () => {
   }
 };
 
+const isDeleting = ref(false);
 const deleteTask = async () => {
   if (isDeleting.value) return;
   isDeleting.value = true;
   try {
     emit("task-deleted", editedTask.value.id);
-    closeModal()
+    closeModal();
   } catch (error) {
     console.error('Error deleting task:', error);
   } finally {
