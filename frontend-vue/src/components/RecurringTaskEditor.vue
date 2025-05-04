@@ -4,6 +4,7 @@ import { RRule } from 'rrule';
 import { Calendar, LucideRepeat, CircleDot, Calendar1, CalendarDays, Clock, X, CalendarRange, CalendarClock, AlarmClock } from 'lucide-vue-next';
 import Snackbar from './Snackbar.vue';
 
+
 const snackbarRef = useTemplateRef('snackbarRef');
 
 const props = defineProps({
@@ -40,11 +41,11 @@ const toggleRecurringEditor = () => {
       interval.value = 1;
       updateRule();  // emit a update event with rrule string based on form values
       snackbarRef.value.addSnackbarItem(
-        'Task Repeat On',
+        "Task Repeat On. Later, A new task will be added to Next scheduled date automatically.",
         'OK',
         () => {},
         () => {},
-        1000
+        4000
       );
     }
   } else {
@@ -75,19 +76,10 @@ function handleFrequencyOptionClicked(option) {
   if (option.value === RRule.WEEKLY) {
     // add initial one weekday by default
     if (selectedWeekDays.value.length === 0) {
-      selectedWeekDays.value.push(weekdaysOptions[0].value);
-      // changing week day will automatically update rule
-      // since we are using watcher on selectedWeekDays
-    } else {
-      // this means that user already have some frequency options selected
-      // so we will just trigger updateRule() here
-      updateRule();
+      selectedWeekDays.value.push(weekdaysOptions[0].value.weekday);
     }
-  } else {
-    // we aren't updating rule on click of frequency option so
-    // we will update it now.
-    updateRule();
   }
+  updateRule();
 }
 
 // Weekday options
@@ -182,7 +174,7 @@ const toggleWeekday = (day) => {
   updateRule();
 };
 
-const updateRule = () => {
+const _rrule_obj = computed(() => {
   // this function Generate RRULE string from form values
   const options = {
     freq: frequency.value,
@@ -201,23 +193,19 @@ const updateRule = () => {
     options.until = new Date(until.value);
   }
 
-  const rule = new RRule(options);
-  const ruleString = rule.toString();
+  return new RRule(options);
+})
+
+const updateRule = () => {
+  // this function Generate RRULE string from form values
+  const ruleString = _rrule_obj.value.toString();
+  console.log("updateRule", ruleString);
   emit('update:value', ruleString);
 };
 
 // Human-readable description of the rule
 const ruleDescription = computed(() => {
-  if (!props.value) {
-    return 'No Repeat Schedule';
-  }
-  try {
-    const rule = RRule.fromString(props.value);
-    return rule.toText();
-  } catch (e) {
-    console.log(e)
-    return 'Invalid recurrence rule';
-  }
+  return _rrule_obj.value.toText();
 });
 
 // Get current frequency label
