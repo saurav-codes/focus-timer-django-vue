@@ -9,7 +9,7 @@ from django.db import transaction
 def _generate_rec_tasks_for_parent(parent_task:Task, occurences_dates:list[datetime.datetime]):
     for occurence_date in occurences_dates:
         with transaction.atomic():
-            child = Task.objects.create(
+            child, created = Task.objects.update_or_create(
                 user=parent_task.user,
                 title=parent_task.title,
                 description=parent_task.description,
@@ -23,10 +23,12 @@ def _generate_rec_tasks_for_parent(parent_task:Task, occurences_dates:list[datet
                 recurrence_parent=parent_task,
                 project=parent_task.project,
             )
-            # copy over tags
-            child.tags.set(parent_task.tags.all())
+            if created:
+                # copy over tags
+                child.tags.set(parent_task.tags.all())
 
-        print(f"Created task: {child.title} for date: {occurence_date}")
+        action = "created" if created else "updated"
+        print(f"{action} task: {child.title} for date: {occurence_date}")
 
 
 def gen_rec_tasks_for_parent(parent_task:Task):
