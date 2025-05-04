@@ -67,6 +67,7 @@
   --font-weight-bold: 700;
 
   /* Font sizes - follows a visual scale */
+  --font-size-xxs: 0.625rem;  /* 10px */
   --font-size-xs: 0.75rem;    /* 12px */
   --font-size-sm: 0.875rem;   /* 14px */
   --font-size-base: 1rem;     /* 16px */
@@ -268,4 +269,37 @@ body {
 
 *::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+
+.tag-purple {
+  background-color: #9333ea;
+}
+
+.tag-blue {
+  background-color: #3b82f6;
+}
+
+.tag-green {
+  background-color: #10b981;
+}
+
+.tag-red {
+  background-color: #ef4444;
+}
+
+.tag-yellow {
+  background-color: #f59e0b;
+}
+
+.tag-indigo {
+  background-color: #6366f1;
+}
+
+.tag-orange {
+  background-color: #f97316;
+}
+
+.tag-pink {
+  background-color: #ec4899;
 }

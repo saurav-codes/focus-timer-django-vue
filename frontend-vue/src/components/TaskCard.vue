@@ -3,7 +3,7 @@ import TaskEditModal from './TaskEditModal.vue';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
 import { ref, computed, useTemplateRef } from 'vue';
-import { Clock, Repeat1, XIcon } from 'lucide-vue-next';
+import { Clock, Repeat1, Tag, XIcon } from 'lucide-vue-next';
 import { useFloating } from '@floating-ui/vue';
 import { useElementHover } from '@vueuse/core';
 import { offset, flip, shift } from '@floating-ui/dom';
@@ -174,6 +174,7 @@ const onTimePopupCancel = () => {
           :key="index"
           class="task-tag"
           :class="`tag-${getTagColor(tag)}`">
+          <Tag size="12" />
           {{ tag }}
           <XIcon v-if="isHovered" class="tag-remove-icon" size="12" @click.stop="removeTag(tag)" />
         </span>
@@ -285,7 +286,7 @@ const onTimePopupCancel = () => {
 }
 
 .task-tag {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
   padding: 0.125rem 0.375rem;
   border-radius: 1rem;
   color: white;
@@ -327,38 +328,6 @@ const onTimePopupCancel = () => {
   position: absolute;
   right: 0.5rem;
   bottom: 0.5rem;
-}
-
-.tag-purple {
-  background-color: #9333ea;
-}
-
-.tag-blue {
-  background-color: #3b82f6;
-}
-
-.tag-green {
-  background-color: #10b981;
-}
-
-.tag-red {
-  background-color: #ef4444;
-}
-
-.tag-yellow {
-  background-color: #f59e0b;
-}
-
-.tag-indigo {
-  background-color: #6366f1;
-}
-
-.tag-orange {
-  background-color: #f97316;
-}
-
-.tag-pink {
-  background-color: #ec4899;
 }
 
 </style>
