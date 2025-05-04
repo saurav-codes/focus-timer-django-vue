@@ -83,7 +83,6 @@ export const useTaskStore = defineStore('taskStore', {
     tags: [],
     selectedProjects: [],
     selectedTags: [],
-    isLoading: false,
   }),
   getters: {
     axios_instance() {
@@ -135,11 +134,9 @@ export const useTaskStore = defineStore('taskStore', {
           return !task.column_date;
         });
 
-        this.isLoading = false;
         return data;
       } catch (error) {
         console.error('Error fetching tasks:', error);
-        this.isLoading = false;
         throw error;
       }
     },
@@ -191,11 +188,11 @@ export const useTaskStore = defineStore('taskStore', {
       }
       // After adding columns, fetch tasks for the new columns
       // Return the promise so the caller knows when it's done
-      return await this.fetchTasks();
+      return this.fetchTasks();
     },
 
     async toggleCompletion(taskId) {
-      await this.axios_instance.post(`api/tasks/${taskId}/toggle_completion/`);
+      return this.axios_instance.post(`api/tasks/${taskId}/toggle_completion/`);
     },
 
     async createTask(task) {
@@ -205,12 +202,11 @@ export const useTaskStore = defineStore('taskStore', {
         planned_duration: formatDurationForAPI(task.planned_duration)
       };
 
-      const { data } = await this.axios_instance.post('api/tasks/', taskWithFormattedDuration);
-      return data;
+      return this.axios_instance.post('api/tasks/', taskWithFormattedDuration);
     },
 
     async deleteTask(taskId) {
-      await this.axios_instance.delete(`api/tasks/${taskId}/`);
+      return this.axios_instance.delete(`api/tasks/${taskId}/`);
     },
 
     async updateTask(task) {
@@ -220,8 +216,7 @@ export const useTaskStore = defineStore('taskStore', {
         planned_duration: formatDurationForAPI(task.planned_duration)
       };
 
-      const {data} = await this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);
-      return data;
+      return this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);
     },
 
     async taskDroppedToBrainDump({value}) {
@@ -236,7 +231,7 @@ export const useTaskStore = defineStore('taskStore', {
           "tasks": tasks_array,
           "action": "update_order"
         };
-        await this.axios_instance.put('api/tasks/', data);
+        return this.axios_instance.put('api/tasks/', data);
       } catch (error) {
         console.error('Error updating tasks order:', error);
       }
