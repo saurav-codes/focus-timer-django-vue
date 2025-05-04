@@ -22,11 +22,30 @@ class Project(models.Model):
 
 
 class Task(models.Model):
+    BACKLOG = 'BACKLOG'
+    BRAINDUMP = 'BRAINDUMP'
+    ON_BOARD = 'ON_BOARD'
+    COMPLETED = 'COMPLETED'
+    ARCHIVED = 'ARCHIVED'
+
+    TASK_STATUS_CHOICES = (
+        (BACKLOG, 'Backlog'),
+        (BRAINDUMP, 'Brain Dump'),
+        (ON_BOARD, 'On Board'),
+        (COMPLETED, 'Completed'),
+        (ARCHIVED, 'Archived'),
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     order = models.PositiveSmallIntegerField(default=0)
     is_completed = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=20,
+        choices=TASK_STATUS_CHOICES,
+        default=BRAINDUMP,
+        help_text="Status of the task."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     planned_duration = models.DurationField(blank=True, null=True)
     # column_date is used for tracking the location of task in the kanban board column

@@ -104,6 +104,7 @@ const addTask = async () => {
       planned_duration_display: taskDurationDisplay.value, // For display
       order: 0,
       tags: [],
+      status: 'BRAINDUMP',
       user: authStore.userData.id,
     };
 

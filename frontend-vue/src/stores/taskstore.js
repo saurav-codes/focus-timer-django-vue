@@ -83,6 +83,7 @@ export const useTaskStore = defineStore('taskStore', {
     tags: [],
     selectedProjects: [],
     selectedTags: [],
+    backlogs: [],
   }),
   getters: {
     axios_instance() {
@@ -118,7 +119,7 @@ export const useTaskStore = defineStore('taskStore', {
         // Distribute tasks to columns
         this.kanbanColumns.forEach((column) => {
           const filteredTasks = data.filter((task) => {
-            if (task.column_date) {
+            if (task.status === 'ON_BOARD') {
               const taskDate = new Date(task.column_date);
               const taskDateString = taskDate.toDateString();
               return taskDateString === column.date.toDateString();
@@ -131,7 +132,12 @@ export const useTaskStore = defineStore('taskStore', {
         });
 
         this.brainDumpTasks = data.filter((task) => {
-          return !task.column_date;
+          return task.status === 'BRAINDUMP';
+        });
+
+        // Update backlogs
+        this.backlogs = data.filter((task) => {
+          return task.status === 'BACKLOG';
         });
 
         return data;
@@ -221,6 +227,7 @@ export const useTaskStore = defineStore('taskStore', {
 
     async taskDroppedToBrainDump({value}) {
       value.column_date = null;
+      value.status = 'BRAINDUMP';
       await this.updateTask(value);
     },
 
