@@ -1,5 +1,12 @@
 from django.urls import path
-from .views import TasksApiView, TaskApiView, toggle_task_completion, get_all_projects, get_all_tags, create_project
+from .views import (
+    TasksApiView,
+    TaskApiView,
+    toggle_task_completion,
+    get_all_projects,
+    get_all_tags,
+    create_project,
+)
 
 app_name = 'core'
 
