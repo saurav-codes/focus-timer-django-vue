@@ -114,7 +114,7 @@ const addTask = async () => {
     resetTaskData();
 
     // Create task in backend
-    const data = await taskStore.createTask(newTask);
+    const { data } = await taskStore.createTask(newTask);
 
     // Update task ID with the one from backend
     taskStore.brainDumpTasks[0].id = data.id;
