@@ -6,6 +6,7 @@ This document outlines the architecture for our Sunsama clone productivity appli
 ## Tech Stack
 - **Frontend**: Vue.js 3, Pinia, Vue Router
 - **Backend**: Django, Django REST Framework
+- **Background Tasks**: Celery, Redis, django-celery-beat, django-celery-results
 - **UI Components**: Custom components with Lucide icons
 - **Styling**: Custom CSS with utility classes
 
@@ -184,6 +185,24 @@ This document outlines the architecture for our Sunsama clone productivity appli
 - Integrations
 - Multi-user support
 - Time tracking
+
+## Background Processing
+
+### Celery and Celery Beat
+- **Task Queue**: Celery for asynchronous task processing
+- **Message Broker**: Redis for communication between Django and Celery workers
+- **Scheduled Tasks**: Celery Beat for periodic task scheduling
+- **Task Storage**: django-celery-results for storing task execution results
+
+### Key Tasks
+- **Recurring Task Generation**: Automatically creates task instances based on recurrence rules
+- **Future Planned Tasks**: Background processing for time-based operations
+
+### Implementation
+- Celery workers process tasks asynchronously
+- Celery Beat schedules periodic tasks
+- Tasks are defined in app-specific `tasks.py` files
+- Configuration in `backend/celery.py` and Django settings
 
 ## Development Best Practices
 1. **Component Design**
