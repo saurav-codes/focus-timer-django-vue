@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, useTemplateRef, onUnmounted, ref } from 'vue';
+import { onMounted, useTemplateRef, onUnmounted } from 'vue';
 import BrainDump from '../components/BrainDump.vue';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue';
@@ -17,9 +17,11 @@ const uiStore = useUIStore();
 // need this reference to scroll the kanban columns wrapper when the page loads
 const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper');
 const scroll_data = useScroll(kanbanColumnsWrapper, {behavior: 'smooth'});
+const hasHorizontalScrollbar = () => {
+  if (!kanbanColumnsWrapper.value) return false;
+  return kanbanColumnsWrapper.value.scrollWidth > kanbanColumnsWrapper.value.clientWidth;
+};
 
-// Track if we're near the right edge to load more columns
-const isNearRightEdge = ref(false);
 // Load more columns when near right edge
 const checkScrollPosition = async () => {
   if (!kanbanColumnsWrapper.value) return;
@@ -27,13 +29,13 @@ const checkScrollPosition = async () => {
   // Calculate if we're near the right edge
   const { scrollLeft, scrollWidth, clientWidth } = kanbanColumnsWrapper.value;
   const scrollThreshold = 300; // Pixel threshold before the end to trigger loading more columns
+  const noScrollbar = !hasHorizontalScrollbar();
+  const nearEdge = scrollWidth - (scrollLeft + clientWidth) < scrollThreshold
 
-  if (scrollWidth - (scrollLeft + clientWidth) < scrollThreshold) {
+  if (nearEdge || noScrollbar) {
     // We're near the right edge, load more columns if not already loading
-    if (!isNearRightEdge.value && !uiStore.isLoadingMoreColumns) {
-      isNearRightEdge.value = true;
+    if (!uiStore.isLoadingMoreColumns) {
       uiStore.setLoadingMoreColumns(true);
-
       try {
         // Wait for the columns to be added and tasks to be fetched
         await taskStore.addMoreColumns(3);
@@ -42,7 +44,6 @@ const checkScrollPosition = async () => {
       } finally {
         // Always reset loading state after completion (success or error)
         uiStore.setLoadingMoreColumns(false);
-        isNearRightEdge.value = false;
       }
     }
   }
@@ -62,6 +63,9 @@ onMounted(() => {
   setTimeout(() => {
     animateScroll();
   }, 100);
+
+  // Initial check after a short delay to ensure columns are rendered
+  setTimeout(checkScrollPosition, 500);
 
   // Fetch tasks, projects, and tags when component mounts
   taskStore.fetchTasks();
