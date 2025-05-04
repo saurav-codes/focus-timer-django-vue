@@ -52,6 +52,8 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "taggit",
     "django_filters",
+    "django_celery_results",
+    "django_celery_beat",
     "simple_history",
 ]
 
@@ -194,3 +196,9 @@ SESSION_COOKIE_SAMESITE = 'None'  # With HTTPS in production
 SESSION_COOKIE_SECURE = True  # Required with SameSite=None
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
+
+
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')

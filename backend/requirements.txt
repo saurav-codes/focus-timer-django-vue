@@ -18,3 +18,9 @@ pytest-django
 pytest-cov
 coverage
 faker
+python-dateutil
+
+celery
+django-celery-results
+redis
+django-celery-beat
