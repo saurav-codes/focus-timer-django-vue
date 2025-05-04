@@ -39,9 +39,9 @@ const toggleRecurringEditor = () => {
     if (!props.value) {
       frequency.value = RRule.DAILY;
       interval.value = 1;
-      updateRule();  // emit a update event with rrule string based on form values
+      updateRule(false);  // emit a update event with rrule string based on form values
       snackbarRef.value.addSnackbarItem(
-        "Task Repeat On. Later, A new task will be added to Next scheduled date automatically.",
+        '✅ Task Repeat on - A recurring task will be automatically created later based on the selected options.',
         'OK',
         () => {},
         () => {},
@@ -196,11 +196,20 @@ const _rrule_obj = computed(() => {
   return new RRule(options);
 })
 
-const updateRule = () => {
+const updateRule = (show_snackbar = true) => {
   // this function Generate RRULE string from form values
   const ruleString = _rrule_obj.value.toString();
   console.log("updateRule", ruleString);
   emit('update:value', ruleString);
+  if (show_snackbar) {
+    snackbarRef.value.addSnackbarItem(
+          `Task Repeat Schedule Updated`,
+          'OK',
+          () => {},
+          () => {},
+          2000
+        );
+  }
 };
 
 // Human-readable description of the rule
@@ -370,7 +379,7 @@ watch(() => props.startAt, (newStartAt) => {
                   type="radio"
                   name="end-type"
                   :checked="Boolean(count)"
-                  @click="handleEndAfterToggle">
+                  @click="handleEndAfterToggle(); updateRule()">
                 <span>After</span>
                 <input
                   v-if="!!count"
