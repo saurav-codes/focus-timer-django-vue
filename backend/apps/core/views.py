@@ -10,6 +10,7 @@ from .filters import TaskFilter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from taggit.models import Tag, TaggedItem
+from django.db import transaction
 # Create your views here.
 
 
@@ -26,7 +27,6 @@ class TasksApiView(LoginRequiredMixin, APIView):
         filterset = TaskFilter(request.GET, queryset=tasks)
         if filterset.is_valid():
             tasks = filterset.qs
-        # above we sorted task by order & of same order then sort by id
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
@@ -36,7 +36,8 @@ class TasksApiView(LoginRequiredMixin, APIView):
         """
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            with transaction.atomic():
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -49,8 +50,9 @@ class TasksApiView(LoginRequiredMixin, APIView):
             tasks = request.data.get('tasks')
             for idx, task in enumerate(tasks, start=1):
                 task_obj = get_object_or_404(Task, pk=task['id'])
-                task_obj.order = idx
-                task_obj.save()
+                with transaction.atomic():
+                    task_obj.order = idx
+                    task_obj.save()
             return Response(status=status.HTTP_200_OK)
         return Response({"error": "unknown action"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -73,13 +75,15 @@ class TaskApiView(LoginRequiredMixin, APIView):
         task = get_object_or_404(Task, pk=pk)
         serializer = TaskSerializer(task, data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            with transaction.atomic():
+                serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         task = get_object_or_404(Task, pk=pk)
-        task.delete()
+        with transaction.atomic():
+            task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -91,8 +95,9 @@ def toggle_task_completion(request, pk):
     best to use since we aren't sending/receiving any data unlike the TaskApiView
     """
     task:Task = get_object_or_404(Task, pk=pk)
-    task.is_completed = not task.is_completed
-    task.save()
+    with transaction.atomic():
+        task.is_completed = not task.is_completed
+        task.save()
     return Response(status=status.HTTP_200_OK)
 
 
@@ -115,7 +120,8 @@ def create_project(request):
     """
     serializer = ProjectSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        with transaction.atomic():
+            serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
