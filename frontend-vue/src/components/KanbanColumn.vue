@@ -70,7 +70,7 @@ const totalDuration = computed(() => {
 
 function handleTaskDroppedToKanban ( { value }) {
   value.column_date = props.dateObj.toISOString()
-  console.log("task value before update", value)
+  value.status = "ON_BOARD"
   taskStore.updateTask(value);
 }
 
@@ -137,7 +137,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
         :distance="5"
         class="tasks-list"
         group="kanban-group"
-        :accept="['brain-dump-group']"
+        :accept="['brain-dump-group', 'backlog-group']"
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">

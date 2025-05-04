@@ -148,7 +148,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
       :distance="5"
       group="brain-dump-group"
       class="tasks-list"
-      :accept="['kanban-group']"
+      :accept="['kanban-group', 'backlog-group']"
       @sort-insert="taskStore.taskDroppedToBrainDump"
       @update:list="handleTaskOrderUpdate">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
