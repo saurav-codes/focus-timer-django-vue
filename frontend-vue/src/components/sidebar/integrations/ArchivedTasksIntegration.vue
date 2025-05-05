@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { CheckCircle, Calendar, Tag, Clock, CircleDashed } from 'lucide-vue-next';
+import { CheckCircle, Calendar, Tag, Clock, CircleDashed, LucideListCheck } from 'lucide-vue-next';
 import { SlickItem, SlickList } from 'vue-slicksort';
 import { useTaskStore } from '../../../stores/taskstore';
 import { useTimeAgo } from '@vueuse/core';
@@ -36,7 +36,11 @@ const completedTasksCount = computed(() => {
   <div class="archived-integration">
     <div class="integration-header">
       <h3>Archived Tasks</h3>
+      <div class="archived-subtitle">
+        Tasks will be auto-archived after 30 days
+      </div>
       <div class="archived-count">
+        <LucideListCheck size="12" />
         {{ completedTasksCount }} Completed
       </div>
     </div>
@@ -110,9 +114,9 @@ const completedTasksCount = computed(() => {
 
 .integration-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 20px;
+  position: relative;
 }
 
 .integration-header h3 {
@@ -122,9 +126,22 @@ const completedTasksCount = computed(() => {
   color: var(--color-text, #cdd6f4);
 }
 
+.archived-subtitle {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #7f849c);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
 .archived-count {
-  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
   color: var(--color-text-secondary, #a6adc8);
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .archived-list {
