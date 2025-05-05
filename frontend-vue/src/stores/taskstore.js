@@ -84,6 +84,7 @@ export const useTaskStore = defineStore('taskStore', {
     selectedProjects: [],
     selectedTags: [],
     backlogs: [],
+    archivedTasks: [],
   }),
   getters: {
     axios_instance() {
@@ -139,6 +140,13 @@ export const useTaskStore = defineStore('taskStore', {
         this.backlogs = data.filter((task) => {
           return task.status === 'BACKLOG';
         });
+
+        // Update archived tasks
+        this.archivedTasks = data.filter((task) => {
+          return task.status === 'ARCHIVED';
+        });
+        // Sort archived tasks by created_at date (newest first)
+        this.archivedTasks.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
         return data;
       } catch (error) {

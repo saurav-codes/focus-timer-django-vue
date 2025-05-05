@@ -137,7 +137,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
         :distance="5"
         class="tasks-list"
         group="kanban-group"
-        :accept="['brain-dump-group', 'backlog-group']"
+        :accept="['brain-dump-group', 'backlog-group', 'archived-group']"
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">

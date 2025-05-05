@@ -1,51 +1,34 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { CheckCircle, Calendar, Tag } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { CheckCircle, Calendar, Tag, Clock, CircleDashed } from 'lucide-vue-next';
+import { SlickItem, SlickList } from 'vue-slicksort';
+import { useTaskStore } from '../../../stores/taskstore';
+import { useTimeAgo } from '@vueuse/core';
 
-// Mock archived tasks data
-const archivedTasks = ref([
-  {
-    id: 1,
-    title: 'Research competitor features',
-    completedDate: '2 days ago',
-    project: 'Market Analysis',
-    tags: ['Research']
-  },
-  {
-    id: 2,
-    title: 'Create wireframes for landing page',
-    completedDate: '1 week ago',
-    project: 'Website Redesign',
-    tags: ['Design', 'UI']
-  },
-  {
-    id: 3,
-    title: 'Update user documentation',
-    completedDate: '2 weeks ago',
-    project: 'Knowledge Base',
-    tags: ['Documentation']
-  },
-  {
-    id: 4,
-    title: 'Fix login page validation',
-    completedDate: '3 weeks ago',
-    project: 'Bug Fixes',
-    tags: ['Frontend', 'Auth']
-  }
-]);
+const taskStore = useTaskStore();
 
-// Group tasks by completion date
-const groupedTasks = computed(() => {
-  const groups = {};
+// Format the created_at date
+const timeAgo = (timestamp) => {
+  return useTimeAgo(new Date(timestamp)).value;
+};
 
-  archivedTasks.value.forEach(task => {
-    if (!groups[task.completedDate]) {
-      groups[task.completedDate] = [];
-    }
-    groups[task.completedDate].push(task);
-  });
+// Generate consistent tag colors based on tag name
+const getTagColor = (tagName) => {
+  const colors = ['purple', 'blue', 'green', 'red', 'yellow', 'indigo', 'orange', 'pink'];
+  // Simple hash function to generate a consistent index for each tag
+  const hash = tagName.split('').reduce((acc, char) => {
+    return acc + char.charCodeAt(0);
+  }, 0);
+  return colors[hash % colors.length];
+};
 
-  return groups;
+async function handleTaskDroppedToArchived ( { value }) {
+  value.status = "ARCHIVED"
+  await taskStore.updateTask(value);
+}
+
+const completedTasksCount = computed(() => {
+  return taskStore.archivedTasks.filter(task => task.is_completed).length;
 });
 </script>
 
@@ -54,41 +37,63 @@ const groupedTasks = computed(() => {
     <div class="integration-header">
       <h3>Archived Tasks</h3>
       <div class="archived-count">
-        {{ archivedTasks.length }} completed
+        {{ completedTasksCount }} Completed
       </div>
     </div>
 
-    <div class="archived-list">
-      <div v-for="(tasks, date) in groupedTasks" :key="date" class="archived-group">
-        <div class="archived-date">
-          <Calendar size="14" />
-          <span>{{ date }}</span>
-        </div>
-
-        <div v-for="task in tasks" :key="task.id" class="archived-card">
-          <div class="archived-status">
-            <CheckCircle size="16" class="completed-icon" />
-          </div>
-
-          <div class="archived-content">
-            <div class="archived-title">
-              {{ task.title }}
+    <div
+      class="archived-list">
+      <div class="archived-group">
+        <SlickList
+          v-model:list="taskStore.archivedTasks"
+          :distance="5"
+          group="archived-group"
+          class="archived-tasks-list"
+          :accept="['kanban-group', 'brain-dump-group']"
+          @sort-insert="handleTaskDroppedToArchived">
+          <SlickItem
+            v-for="(task,idx) in taskStore.archivedTasks"
+            :key="task.id"
+            :item="task"
+            :index="idx"
+            class="archived-card">
+            <div class="archived-status">
+              <CheckCircle v-if="task.is_completed" size="16" class="completed-icon" />
+              <CircleDashed v-else size="16" />
             </div>
-            <div class="archived-project">
-              {{ task.project }}
-            </div>
 
-            <div class="archived-tags">
-              <div v-for="(tag, index) in task.tags" :key="index" class="archived-tag">
-                <Tag size="12" />
-                <span>{{ tag }}</span>
+            <div class="archived-content">
+              <div class="archived-title">
+                {{ task.title }}
+              </div>
+
+              <div class="archived-meta">
+                <div v-if="task.planned_duration_display" class="archived-time">
+                  <Clock size="14" />
+                  <span>{{ task.planned_duration_display }}</span>
+                </div>
+
+                <div v-if="task.project" class="archived-project">
+                  {{ task.project && typeof task.project === 'object' ? task.project.title : task.project }}
+                </div>
+                <div class="archived-date">
+                  <Calendar size="14" />
+                  <span>{{ timeAgo(task.created_at) }}</span>
+                </div>
+              </div>
+
+              <div class="archived-tags">
+                <div v-for="(tag, index) in task.tags" :key="index" class="archived-tag">
+                  <Tag size="12" :class="`tag-${getTagColor(tag)}`" />
+                  <span>{{ tag }}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </SlickItem>
+        </SlickList>
       </div>
 
-      <div v-if="archivedTasks.length === 0" class="no-archived">
+      <div v-if="taskStore.archivedTasks.length === 0" class="no-archived">
         No archived tasks found
       </div>
     </div>
@@ -124,6 +129,11 @@ const groupedTasks = computed(() => {
 
 .archived-list {
   flex: 1;
+  overflow-y: auto;
+}
+
+.archived-tasks-list {
+  margin-bottom: 8px;
 }
 
 .archived-group {
@@ -133,10 +143,8 @@ const groupedTasks = computed(() => {
 .archived-date {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
   color: var(--color-text-secondary, #a6adc8);
-  margin-bottom: 8px;
 }
 
 .archived-date svg {
@@ -175,10 +183,21 @@ const groupedTasks = computed(() => {
   color: var(--color-text-secondary, #a6adc8);
 }
 
-.archived-project {
+.archived-meta {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.archived-time, .archived-project {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: var(--color-text-tertiary, #7f849c);
-  margin-bottom: 8px;
+}
+
+.archived-time svg {
+  margin-right: 4px;
 }
 
 .archived-tags {
@@ -200,6 +219,16 @@ const groupedTasks = computed(() => {
 .archived-tag svg {
   margin-right: 4px;
 }
+
+/* Tag colors */
+.tag-purple { color: #c678dd; }
+.tag-blue { color: #61afef; }
+.tag-green { color: #98c379; }
+.tag-red { color: #e06c75; }
+.tag-yellow { color: #e5c07b; }
+.tag-indigo { color: #7c7cff; }
+.tag-orange { color: #d19a66; }
+.tag-pink { color: #ff79c6; }
 
 .no-archived {
   text-align: center;
