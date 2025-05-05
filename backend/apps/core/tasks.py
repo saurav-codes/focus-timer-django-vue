@@ -71,3 +71,30 @@ def generate_recurring_tasks():
     for parent in templates_tasks:
         gen_rec_tasks_for_parent(parent)
     return "done"
+
+
+@app.task(name="archive_old_tasks")
+def archive_old_tasks():
+    """
+    Archives tasks that haven't been updated in 30 days.
+    This task runs daily at midnight.
+    """
+    print("Archiving old tasks...")
+
+    # Calculate the date 30 days ago
+    thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
+
+    # Find tasks that haven't been updated in 30 days and aren't already archived
+    old_tasks = Task.objects.filter(
+        updated_at__lt=thirty_days_ago,
+    ).exclude(status=Task.ARCHIVED)
+
+    count = 0
+    for task in old_tasks:
+        task.status = Task.ARCHIVED
+        task.save(update_fields=['status'])
+        count += 1
+
+    print(f"Archived {count} old tasks")
+    return f"Archived {count} old tasks"
+
