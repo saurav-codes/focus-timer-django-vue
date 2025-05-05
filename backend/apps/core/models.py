@@ -47,6 +47,7 @@ class Task(models.Model):
         help_text="Status of the task."
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     planned_duration = models.DurationField(blank=True, null=True)
     # column_date is used for tracking the location of task in the kanban board column
     column_date = models.DateTimeField(blank=True, null=True)
