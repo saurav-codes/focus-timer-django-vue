@@ -190,8 +190,8 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:8000"]  # We add your frontend URL here.
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://localhost:8000']  # We add your frontend URL here.
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:8000", "http://localhost:61883"]  # We add your frontend URL here.
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://localhost:8000', 'http://localhost:61883']  # We add your frontend URL here.
 SESSION_COOKIE_SAMESITE = 'None'  # With HTTPS in production
 SESSION_COOKIE_SECURE = True  # Required with SameSite=None
 CSRF_COOKIE_SAMESITE = 'None'
