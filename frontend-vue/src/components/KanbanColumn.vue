@@ -100,6 +100,11 @@ function handleTaskUpdated(updatedTask) {
   localTasks.value = localTasks.value.map(task => task.id === updatedTask.id ? updatedTask : task);
 }
 
+function handleTaskArchived(taskId) {
+  // remove task from localTasks because we already handling the DB update in the store
+  localTasks.value = localTasks.value.filter(task => task.id!== taskId);
+}
+
 function handleTagRemoved(updated_tags_list, taskId) {
   // remove the tag from the task
   const task = localTasks.value.find(task => task.id === taskId);
@@ -141,7 +146,12 @@ function handleTagRemoved(updated_tags_list, taskId) {
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
         <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
-          <TaskCard :task="task" @tag-removed="handleTagRemoved" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
+          <TaskCard
+            :task="task"
+            @tag-removed="handleTagRemoved"
+            @task-deleted="handleTaskDeleted"
+            @task-archived="handleTaskArchived"
+            @task-updated="handleTaskUpdated" />
         </SlickItem>
       </SlickList>
     </div>

@@ -82,6 +82,10 @@ function handleTaskUpdated(updatedTask) {
   taskStore.brainDumpTasks = taskStore.brainDumpTasks.map(task => task.id === updatedTask.id ? updatedTask : task);
 }
 
+function handleTaskArchived(taskId) {
+  taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter(task => task.id !== taskId);
+}
+
 function handleTagRemoved(updated_tags_list, taskId) {
   // remove the tag from the task
   const task = taskStore.brainDumpTasks.find(task => task.id === taskId);
@@ -152,7 +156,12 @@ function handleTagRemoved(updated_tags_list, taskId) {
       @sort-insert="taskStore.taskDroppedToBrainDump"
       @update:list="handleTaskOrderUpdate">
       <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
-        <TaskCard :task="task" @tag-removed="handleTagRemoved" @task-deleted="handleTaskDeleted" @task-updated="handleTaskUpdated" />
+        <TaskCard
+          :task="task"
+          @tag-removed="handleTagRemoved"
+          @task-deleted="handleTaskDeleted"
+          @task-archived="handleTaskArchived"
+          @task-updated="handleTaskUpdated" />
       </SlickItem>
     </SlickList>
   </div>

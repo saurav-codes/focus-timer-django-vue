@@ -11,7 +11,7 @@ import { offset, flip, shift } from '@floating-ui/dom';
 const taskItem = useTemplateRef('taskItem');
 const isHovered = useElementHover(taskItem);
 
-const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed']);
+const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed', 'task-archived']);
 const taskStore = useTaskStore();
 const props = defineProps({
   task: {
@@ -101,6 +101,10 @@ const handleTaskUpdated = (updatedTask) => {
   emit('task-updated', updatedTask);
 }
 
+const handleTaskArchived = (taskId) => {
+  emit('task-archived', taskId);
+}
+
 // ----- Time Dropdown Popup integration -----
 const isTimePopupOpen = ref(false);
 // Set default hours/minutes parsed out of the current duration_display
@@ -155,6 +159,7 @@ const onTimePopupCancel = () => {
     :is-open="isEditModalOpen"
     @close-modal="closeEditModal"
     @task-updated="handleTaskUpdated"
+    @task-archived="handleTaskArchived"
     @task-deleted="handleTaskDeleted" />
   <div
     ref="taskItem"

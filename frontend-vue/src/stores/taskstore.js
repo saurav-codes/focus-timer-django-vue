@@ -233,6 +233,11 @@ export const useTaskStore = defineStore('taskStore', {
       return this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);
     },
 
+    async pushToArchiveTask(task) {
+      // push task to archive
+      this.archivedTasks.unshift(task);
+    },
+
     async taskDroppedToBrainDump({value}) {
       value.column_date = null;
       value.status = 'BRAINDUMP';

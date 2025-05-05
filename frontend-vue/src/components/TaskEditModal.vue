@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, computed, onUnmounted} from 'vue';
 import { useTaskStore } from '../stores/taskstore';
-import { X, Trash2, PencilLine } from 'lucide-vue-next';
+import { X, Trash2, PencilLine, Archive } from 'lucide-vue-next';
 import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
 import Multiselect from '@vueform/multiselect';
@@ -20,7 +20,7 @@ const props = defineProps({
 });
 
 const taskStore = useTaskStore();
-const emit = defineEmits(["closeModal", "task-deleted", "task-updated"])
+const emit = defineEmits(["closeModal", "task-deleted", "task-updated", "task-archived"])
 
 // Create a copy of the task to edit
 const editedTask = ref({ ...props.task });
@@ -59,6 +59,24 @@ const deleteTask = async () => {
     console.error('Error deleting task:', error);
   } finally {
     isDeleting.value = false;
+  }
+};
+
+const isArchiving = ref(false);
+const archiveTask = async () => {
+  if (isArchiving.value) return;
+  isArchiving.value = true;
+  try {
+    // Archive the task
+    editedTask.value.status = 'ARCHIVED';
+    await taskStore.updateTask(editedTask.value);
+    await taskStore.pushToArchiveTask(editedTask.value);
+    emit("task-archived", editedTask.value.id);
+    closeModal();
+  } catch (error) {
+    console.error('Error archiving task:', error);
+  } finally {
+    isArchiving.value = false;
   }
 };
 
@@ -181,11 +199,18 @@ onUnmounted(() => {
         </div>
 
         <div class="modal-footer">
-          <button class="delete-button" @click="deleteTask">
-            <Trash2 v-if="!isDeleting" size="16" />
-            <VueSpinner v-if="isDeleting" />
-            <span>Delete</span>
-          </button>
+          <div class="footer-buttons">
+            <button class="archive-button" @click="archiveTask">
+              <Archive v-if="!isArchiving" size="16" />
+              <VueSpinner v-if="isArchiving" />
+              <span>Archive</span>
+            </button>
+            <button class="delete-button" @click="deleteTask">
+              <Trash2 v-if="!isDeleting" size="16" />
+              <VueSpinner v-if="isDeleting" />
+              <span>Delete</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -312,13 +337,19 @@ onUnmounted(() => {
 
 .modal-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--color-border);
 }
 
+.footer-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .save-button,
-.delete-button {
+.delete-button,
+.archive-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -338,5 +369,16 @@ onUnmounted(() => {
 
 .delete-button:hover {
   background-color: var(--color-background-secondary);
+}
+
+.archive-button {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.archive-button:hover {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
 }
 </style>
