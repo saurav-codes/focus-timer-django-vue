@@ -92,6 +92,11 @@ const handleTimePopupCancel = () => {
   isTimePopupOpen.value = false;
 };
 
+const selectedProjectId = ref(null);
+const assignProject = (projectId) => {
+  selectedProjectId.value = projectId;
+};
+
 // Add task and close popup
 const addTask = async () => {
   if (newTaskTitle.value.trim()) {
@@ -109,6 +114,7 @@ const addTask = async () => {
       tags: [],
       status: 'BRAINDUMP',
       user: authStore.userData.id,
+      project: selectedProjectId.value, // Add project ID if selected
     };
 
     // Add the task to the brain dump tasks (optimistic update)
@@ -150,7 +156,7 @@ onKeyStroke('Escape', () => {
 
 <template>
   <Teleport to="body">
-    <div v-if="isVisible" class="popup-overlay" @click="$emit('close')">
+    <div v-if="isVisible" class="task-create-popup-overlay" @click="$emit('close')">
       <div class="popup-container" @click.stop>
         <div class="popup-header">
           <span class="popup-title">Create Task</span>
@@ -185,12 +191,15 @@ onKeyStroke('Escape', () => {
               <TimeDropdownPopup
                 v-if="isTimePopupOpen"
                 ref="timePopupRef"
-                :style="floatingStyles"
+                :style="timeFloatingStyles"
                 :initial-hours="taskHours"
                 :initial-minutes="taskMinutes"
                 @save="handleTimePopupSave"
                 @cancel="handleTimePopupCancel" />
             </Teleport>
+
+            <!-- Project dropdown popup portal -->
+            <ProjectDropdownPopup @project-selected="assignProject" />
           </div>
 
           <div class="shortcuts-hint">
@@ -210,7 +219,7 @@ onKeyStroke('Escape', () => {
 </template>
 
 <style scoped>
-.popup-overlay {
+.task-create-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;

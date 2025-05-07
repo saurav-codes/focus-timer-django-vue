@@ -166,6 +166,29 @@ export const useTaskStore = defineStore('taskStore', {
       }
     },
 
+    async createProject(projectData) {
+      try {
+        const { data }= await this.axios_instance.post('api/projects/create/', projectData);
+        // Add the new project to the projects array
+        this.projects.push(data);
+        return data;
+      } catch (error) {
+        console.error('Error creating project:', error);
+        throw error;
+      }
+    },
+
+    async deleteProject(projectId) {
+      try {
+        // Remove the deleted project from the projects array
+        this.projects = this.projects.filter(project => project.id !== projectId);
+        return await this.axios_instance.delete(`api/projects/${projectId}/`);
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        throw error;
+      }
+    },
+
     async fetchTags() {
       try {
         const { data } = await this.axios_instance.get('api/tags/');

@@ -112,13 +112,41 @@ def get_all_projects(request):
     return Response(serializer.data)
 
 
+class ProjectDetailApiView(LoginRequiredMixin, APIView):
+    def get(self, request, pk):
+        """
+        Get a project by id
+        """
+        project = get_object_or_404(Project, pk=pk)
+        serializer = ProjectSerializer(project)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        """
+        Update a project
+        """
+        project = get_object_or_404(Project, pk=pk)
+        serializer = ProjectSerializer(project, data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        project = get_object_or_404(Project, pk=pk)
+        with transaction.atomic():
+            project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(['POST'])
 @login_required
 def create_project(request):
     """
     Create a new project
     """
-    serializer = ProjectSerializer(data=request.data)
+    serializer = ProjectSerializer(data={**request.data, 'user': request.user.id})
     if serializer.is_valid():
         with transaction.atomic():
             serializer.save()
