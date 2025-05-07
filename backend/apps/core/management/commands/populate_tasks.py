@@ -1,10 +1,22 @@
 from django.core.management.base import BaseCommand
-from apps.core.models import Task
+from apps.core.models import Task, Project
 from taggit.models import Tag
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
 import pytz
 from django.utils.dateparse import parse_duration
+import random
+
+project_names = [
+   "Social Media Marketing",
+   "UI/UX Design",
+   "Backend Development",
+   "Frontend Development",
+   "Content Creation",
+   "SEO Optimization",
+   "LifeStyle",
+   "Health & Fitness"
+]
 
 User = get_user_model()
 
@@ -14,6 +26,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Remove all existing tasks
         Task.objects.all().delete()
+        self.stdout.write(self.style.SUCCESS("Deleted all existing tasks."))
         # either create a new user or use the existing one
         user = User.objects.filter(email='raju@gmail.com').first()
         if not user:
@@ -25,7 +38,16 @@ class Command(BaseCommand):
             )
         else:
             print(f"found user {user.email} so using it to assign tasks")
-        self.stdout.write(self.style.WARNING("Deleted all existing tasks."))
+        Project.objects.all().delete()
+        self.stdout.write(self.style.SUCCESS("Deleted all existing projects."))
+        # Create sample projects
+        for project_name in project_names:
+            project = Project.objects.create(
+                title=project_name,
+                description=f"Description for {project_name}",
+                user=user
+            )
+            self.stdout.write(self.style.SUCCESS(f"Created project: {project.title}"))
         today = datetime.now(pytz.utc)
 
         tasks_data = [
@@ -280,6 +302,7 @@ class Command(BaseCommand):
         ]
 
         # Insert sample tasks into the database
+        project_ids = Project.objects.values_list('id', flat=True)
         for data in tasks_data:
             task = Task.objects.create(
                 title=data["title"],
@@ -288,6 +311,7 @@ class Command(BaseCommand):
                 column_date=data["column_date"],
                 planned_duration=parse_duration(data["planned_duration"]),
                 user=user,
+                project_id=random.choice(project_ids),
                 status=data["status"],
             )
             # Add tags separately since TaggableManager needs to be handled after creation
