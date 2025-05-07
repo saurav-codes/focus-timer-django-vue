@@ -5,7 +5,8 @@ import { useTaskStore } from '../stores/taskstore';
 import { useAuthStore } from '../stores/authStore';
 import { onKeyStroke } from '@vueuse/core';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
-import { useFloating } from '@floating-ui/vue';
+import ProjectDropdownPopup from './ProjectDropdownPopup.vue';
+import { useFloating, autoUpdate } from '@floating-ui/vue';
 import { offset, flip, shift } from '@floating-ui/dom';
 
 const props = defineProps({
@@ -32,10 +33,12 @@ const isTimePopupOpen = ref(false);
 // Set up floating UI for time popup
 const durationButtonRef = ref(null);
 const timePopupRef = ref(null);
-const { floatingStyles } = useFloating(
+
+const { floatingStyles: timeFloatingStyles } = useFloating(
   durationButtonRef,
   timePopupRef,
   {
+    whileElementsMounted: autoUpdate,  // keep the popup close to the button while screen size changes
     placement: 'bottom-start',
     middleware: [
       offset(8), // Add some space between the button and popup
