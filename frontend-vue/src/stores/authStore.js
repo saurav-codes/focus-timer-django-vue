@@ -68,7 +68,7 @@ export const useAuthStore = defineStore('authStore', {
         response => response,
         error => {
           // Check if error is 401 Unauthorized
-          if (error.response && error.response.status === 401) {
+          if (error.response && error.response.status === 403) {
             // Logout if the user is authenticated
             if (this.isAuthenticated) {
               console.log('Token expired or invalid, logging out...');
