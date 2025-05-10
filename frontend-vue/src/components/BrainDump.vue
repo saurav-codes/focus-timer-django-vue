@@ -6,6 +6,7 @@ import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import TaskCreationPopup from './TaskCreationPopup.vue';
+import Popper from 'vue3-popper';
 
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
@@ -13,6 +14,7 @@ const taskStore = useTaskStore();
 // Add state for controlling the scroll indicator visibility
 const showScrollIndicator = ref(true);
 const showTaskCreationPopup = ref(false);
+const showPopper = ref(false);
 
 const openTaskCreationPopup = () => {
   showTaskCreationPopup.value = true;
@@ -125,9 +127,11 @@ function handleTagRemoved(updated_tags_list, taskId) {
           Brain Dump
         </h2>
         <!-- Update the filter toggle button -->
-        <button class="filter-toggle-btn" title="Filter tasks" @click.stop="uiStore.toggleFilterSidebar">
-          <Filter size="16" />
-        </button>
+        <Popper arrow content="Filter Tasks based on tags and projects" :show="showPopper">
+          <button @mouseenter="showPopper=true" @mouseleave="showPopper=false" class="filter-toggle-btn" title="Filter tasks" @click.stop="uiStore.toggleFilterSidebar">
+            <Filter size="16" />
+          </button>
+        </Popper>
       </div>
       <div class="total-task">
         <BadgeCheck class="small-icon" size="14" />

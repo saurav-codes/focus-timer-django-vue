@@ -23,4 +23,6 @@ urlpatterns = [
     re_path(r'^auth/', include('apps.authentication.urls')),
     # Core app endpoints
     path('api/', include('apps.core.urls')),
+    # integrations endpoints
+    path("api/gcalendar/", include("apps.integrations.google_calendar.urls")),
 ]

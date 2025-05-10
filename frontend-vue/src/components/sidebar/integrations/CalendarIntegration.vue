@@ -1,93 +1,121 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useCalendarStore } from '../../../stores/calendarStore';
+import { LucideCalendar, LucideLink, LucideUnlink } from 'lucide-vue-next';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import FullCalendar from '@fullcalendar/vue3';
+import Popper from 'vue3-popper';
 
-// Mock calendar data
-const calendarEvents = ref([
-  {
-    id: 1,
-    title: 'Team Standup',
-    date: new Date(new Date().setHours(10, 0, 0)),
-    duration: 30, // minutes
-    color: '#89b4fa'
-  },
-  {
-    id: 2,
-    title: 'Product Review',
-    date: new Date(new Date().setHours(13, 0, 0)),
-    duration: 60,
-    color: '#f38ba8'
-  },
-  {
-    id: 3,
-    title: 'Client Meeting',
-    date: new Date(new Date().setHours(15, 30, 0)),
-    duration: 45,
-    color: '#a6e3a1'
-  }
-]);
+const calendarStore = useCalendarStore();
+const isConnected = ref(false);
+const isLoading = ref(false);
+const showPopper = ref(false);
 
-// Format time (e.g., "10:00 AM")
-const formatTime = (date) => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
+onMounted(async () => {
+  isLoading.value = true;
+  isConnected.value = await calendarStore.checkGoogleConnection();
+  isLoading.value = false;
+});
+
+const connectGoogleCalendar = () => {
+  calendarStore.startGoogleAuth();
+};
+
+const disconnectGoogleCalendar = async () => {
+  isLoading.value = true;
+  await calendarStore.disconnectGoogleCalendar();
+  isConnected.value = false;
+  isLoading.value = false;
+};
+
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
+  initialView: 'timeGridDay',
+  headerToolbar: false,
+  allDaySlot: false,
+  eventTimeFormat: {
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: true
-  });
-};
-
-// Get event duration in human-readable format
-const getEventDuration = (minutes) => {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-};
+    meridiem: false
+  },
+  slotMinTime: '00:00:00',
+  slotMaxTime: '23:59:00',
+  height: 'auto',
+  expandRows: true,
+  stickyHeaderDates: false,
+  navLinks: false,
+  dayMaxEvents: false,
+  // eventClick: handleEventClick,
+  // dateClick: handleDateClick,
+  // datesSet: handleDatesSet,
+  // events: events.value
+  selectable: true,
+});
 </script>
 
 <template>
   <div class="calendar-integration">
     <div class="integration-header">
-      <h3>Calendar</h3>
-      <div class="date-display">
-        {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) }}
+      <div class="left-header">
+        <h3>
+          <LucideCalendar :size="14" />
+          Calendar
+        </h3>
+        <div class="date-display">
+          {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) }}
+        </div>
       </div>
+      <Popper v-if="isConnected" arrow content="Disconnect Google Calendar" :show="showPopper">
+        <LucideUnlink
+          class="disconnect-button"
+          :class="{'disabled-div': isLoading}"
+          :size="14"
+          @mouseover="showPopper=true"
+          @mouseleave="showPopper=false"
+          @click="disconnectGoogleCalendar" />
+      </Popper>
     </div>
-
-    <div class="events-list">
-      <div v-for="event in calendarEvents" :key="event.id" class="event-card">
-        <div class="event-time">
-          {{ formatTime(event.date) }}
-        </div>
-        <div class="event-details">
-          <div class="event-title">
-            {{ event.title }}
+    <div class="google-calendar-connect">
+      <div v-if="isLoading" class="loading">
+        <div class="spinner" />
+        <span>Loading...</span>
+      </div>
+      <div v-else-if="!isConnected" class="connect-prompt">
+        <p>Sync your tasks with Google Calendar to manage your schedule more effectively.</p>
+        <button
+          class="connect-button"
+          :disabled="calendarStore.isLoading"
+          @click="connectGoogleCalendar">
+          {{ calendarStore.isLoading ? 'Connecting...' : 'Connect Google Calendar' }}
+          <div v-if="!calendarStore.isLoading">
+            <LucideLink class="link-icon" size="16" />
           </div>
-          <div class="event-duration">
-            {{ getEventDuration(event.duration) }}
-          </div>
-        </div>
-        <div class="event-color" :style="{ backgroundColor: event.color }" />
+        </button>
       </div>
 
-      <div v-if="calendarEvents.length === 0" class="no-events">
-        No events scheduled for today
-      </div>
+      <!-- Render FullCalendar component here -->
+      <FullCalendar v-else :options="calendarOptions" />
     </div>
   </div>
 </template>
 
 <style scoped>
 .calendar-integration {
-  padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .integration-header {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
 }
 
 .integration-header h3 {
@@ -101,54 +129,84 @@ const getEventDuration = (minutes) => {
   font-size: 14px;
   color: var(--color-text-secondary, #a6adc8);
 }
-
-.events-list {
-  flex: 1;
+.google-calendar-connect {
+  background-color: var(--color-background);
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border);
 }
 
-.event-card {
+.loading {
   display: flex;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background-color: var(--color-background, #1e1e2e);
-  border-radius: 8px;
-  border: 1px solid var(--color-border, #313244);
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-.event-time {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #a6adc8);
-  width: 80px;
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
 }
 
-.event-details {
-  flex: 1;
+@keyframes spinner {
+  to {transform: rotate(360deg);}
 }
 
-.event-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.event-duration {
-  font-size: 12px;
-  color: var(--color-text-tertiary, #7f849c);
-}
-
-.event-color {
-  width: 4px;
-  height: 36px;
-  border-radius: 2px;
-  margin-left: 12px;
-}
-
-.no-events {
+.connect-prompt {
   text-align: center;
-  padding: 24px;
-  color: var(--color-text-tertiary, #7f849c);
-  font-style: italic;
 }
+
+.connect-prompt h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: var(--font-size-lg);
+}
+
+.connect-prompt p {
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.connect-button, .disconnect-button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.connect-button:hover, .disconnect-button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.connect-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.disconnect-button {
+  background-color: var(--color-error);
+  margin-top: 1rem;
+  padding: 0.3rem;
+  background: transparent;
+}
+
+.disconnect-button:hover {
+  background-color: var(--color-error-dark, #dc2626);
+}
+
+.disabled-div {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 </style>

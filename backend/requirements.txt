@@ -24,3 +24,10 @@ celery
 django-celery-results
 redis
 django-celery-beat
+
+# google auth
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+

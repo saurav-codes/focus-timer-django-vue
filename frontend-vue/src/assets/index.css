@@ -43,6 +43,7 @@
 
   /* Component specific */
   --color-border: var(--color-neutral-200);
+  --color-border-with-opacity: rgba(86, 109, 162, 0.08);
   --color-input-background: var(--color-background);
   --dock-background: var(--color-background-secondary);
   --dock-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
@@ -167,6 +168,15 @@
 
   --ms-empty-color: #4B5563;
   --ms-empty-bg: var(--color-background-secondary);
+  --popper-theme-background-color: var(--ms-option-color-pointed);
+  --popper-theme-text-color: var(--color-text-selected);
+
+  --fc-page-bg-color: transparent;
+}
+
+/* Hide un-neccessary headers of full */
+.fc-col-header {
+  display: none;
 }
 
 .multiselect-tags-search {
@@ -235,6 +245,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   width: 99vw;
   height: 100vh;
+
+  /* overrides for popover */
+  --popper-theme-padding: 0.5rem;
 }
 
 /* Helper classes for applying typography consistently */
@@ -259,6 +272,25 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   overflow-y: scroll;
+}
+
+.fc .fc-day-today {
+  /* use the default theme as bg color */
+  background-color: var(--color-background) !important;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  /* make border of time slots a bit transparent */
+  border: 1px solid #dddddd52;
+}
+
+.fc .fc-timegrid-slot-minor {
+  /* remove border of slots */
+  border: none;
+}
+.fc .fc-scrollgrid {
+  /* remove border of fullcalendar component */
+  border: none !important;
 }
 
 /* Disable scrollbar globally */

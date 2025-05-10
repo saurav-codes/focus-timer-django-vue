@@ -11,6 +11,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { plugin as Slicksort } from 'vue-slicksort';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
+import Popper from "vue3-popper";
+
 
 import './assets/index.css'
 import '@vueform/multiselect/themes/default.css';
@@ -25,6 +27,8 @@ app.use(router)
 app.use(pinia)
 app.use(Slicksort)
 app.use(autoAnimatePlugin)
+
+app.component("Popper", Popper);
 
 // Initialize auth state
 const authStore = useAuthStore(pinia)

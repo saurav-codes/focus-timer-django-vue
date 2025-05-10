@@ -13,6 +13,12 @@
     "@fontsource/inter": "^5.1.1",
     "@fontsource/jetbrains-mono": "^5.1.2",
     "@formkit/auto-animate": "^0.8.2",
+    "@fullcalendar/core": "^6.1.17",
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.17",
+    "@fullcalendar/list": "^6.1.17",
+    "@fullcalendar/timegrid": "^6.1.17",
+    "@fullcalendar/vue3": "^6.1.17",
     "@unovis/vue": "^1.5.1",
     "@vueform/multiselect": "^2.6.11",
     "@vueuse/components": "^13.0.0",
@@ -25,6 +31,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "vue-slicksort": "^2.0.5",
+    "vue3-popper": "^1.5.0",
     "vue3-spinners": "^1.2.2"
   },
   "devDependencies": {
