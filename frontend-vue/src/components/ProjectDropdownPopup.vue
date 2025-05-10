@@ -173,7 +173,7 @@ onClickOutside(projectPopupRef, () => {
   background-color: var(--color-background);
   border-radius: 6px;
   box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
-  z-index: 9999999;
+  z-index: 7;
   border: 1px solid var(--color-border);
 }
 

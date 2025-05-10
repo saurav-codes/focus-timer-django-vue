@@ -195,7 +195,7 @@ onMounted(async () => {
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 7;
   display: flex;
   justify-content: flex-end;
   align-items: stretch;

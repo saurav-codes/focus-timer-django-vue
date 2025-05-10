@@ -140,7 +140,7 @@ onClickOutside(popupRef, handleSave);
 }
 
 .time-popup {
-  z-index: 1100; /* Ensure it appears above other elements */
+  z-index: 7; /* Ensure it appears above other elements */
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;

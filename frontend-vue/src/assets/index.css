@@ -293,6 +293,11 @@ body {
   border: none !important;
 }
 
+.task-dragging {
+  /* while task is dragging, keep z index highest */
+  z-index: 7;
+}
+
 /* Disable scrollbar globally */
 * {
   scrollbar-width: none; /* Firefox */

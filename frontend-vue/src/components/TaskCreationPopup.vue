@@ -230,7 +230,7 @@ onKeyStroke('Escape', () => {
   justify-content: center;
   align-items: flex-start;
   padding-top: 15vh;
-  z-index: 1000;
+  z-index: 6;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -330,7 +330,7 @@ onKeyStroke('Escape', () => {
   gap: 10px;
   margin-bottom: 16px;
   position: relative;
-  z-index: 10; /* Ensure the options are above other elements in the popup */
+  z-index: 7; /* Ensure the options are above other elements in the popup */
 }
 
 .duration-button {

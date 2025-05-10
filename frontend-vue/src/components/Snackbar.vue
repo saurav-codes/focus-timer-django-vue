@@ -121,7 +121,7 @@ defineExpose({
   bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 11000;
+  z-index: 6;
   display: flex;
   flex-direction: column-reverse;
   gap: 0.5rem;

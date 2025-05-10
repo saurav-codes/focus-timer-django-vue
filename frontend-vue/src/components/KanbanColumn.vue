@@ -142,6 +142,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
         :distance="5"
         class="tasks-list"
         group="kanban-group"
+        helper-class="task-dragging"
         :accept="['brain-dump-group', 'backlog-group', 'archived-group']"
         @sort-insert="handleTaskDroppedToKanban"
         @update:list="handleTaskOrderUpdate">
