@@ -125,7 +125,7 @@ const parseDurationDisplay = (str) => {
 
 const openTimeDropdown = () => {
   // Parse current duration if available
-  const { hrs, mins } = parseDurationDisplay(localTask.value.planned_duration_display);
+  const { hrs, mins } = parseDurationDisplay(localTask.value.duration_display);
   timePopupHours.value = hrs;
   timePopupMinutes.value = mins;
   isTimePopupOpen.value = true;
@@ -134,8 +134,8 @@ const openTimeDropdown = () => {
 const onTimePopupSave = ({ hours, minutes, formatted, keepOpen }) => {
   // Update localTask duration. Here we update the raw duration (e.g. "1:30")
   // and the display text. You might wish to reformat as needed.
-  localTask.value.planned_duration = `${hours}:${minutes}`;
-  localTask.value.planned_duration_display = formatted;
+  localTask.value.duration = `${hours}:${minutes}`;
+  localTask.value.duration_display = formatted;
 
   // Only close the popup if it's not just an update
   if (!keepOpen) {
@@ -151,6 +151,8 @@ const onTimePopupCancel = () => {
   isTimePopupOpen.value = false;
 };
 
+const taskData = JSON.stringify(props.task)
+
 </script>
 
 <template>
@@ -164,6 +166,7 @@ const onTimePopupCancel = () => {
   <div
     ref="taskItem"
     class="task-item"
+    :data-event="taskData"
     :class="{ 'completed': localTask.is_completed }"
     @click="openEditModal">
     <div v-if="showCheckbox" class="task-checkbox" @click.stop="toggleCompletion">
@@ -186,8 +189,8 @@ const onTimePopupCancel = () => {
       </div>
     </div>
     <div ref="durationFloatingReference" class="task-duration" @click.stop="openTimeDropdown">
-      <Clock v-if="localTask.planned_duration && isHovered" size="14" />
-      {{ localTask.planned_duration_display }}
+      <Clock v-if="localTask.duration && isHovered" size="14" />
+      {{ localTask.duration_display }}
     </div>
 
     <!-- Use Teleport to render the popup at the document body level -->

@@ -23,7 +23,7 @@ class TaskInline(admin.TabularInline):
     form = TaskAdminForm
     extra = 0
     fields = ('title', 'status', 'is_completed', 'order')
-    readonly_fields = ('get_planned_duration_display',)
+    readonly_fields = ('get_duration_display',)
     show_change_link = True
 
 
@@ -50,7 +50,7 @@ class TaskAdmin(SimpleHistoryAdmin):
         'is_completed',
         'order',
         'project',
-        'get_planned_duration_display',
+        'get_duration_display',
     )
     list_display_links   = ('title',)
     list_filter          = ('status', 'is_completed', 'project')

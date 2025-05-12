@@ -15,7 +15,7 @@ def _generate_rec_tasks_for_parent(parent_task:Task, occurences_dates:list[datet
                 description=parent_task.description,
                 order=parent_task.order,
                 is_completed=False,
-                planned_duration=parent_task.planned_duration,
+                duration=parent_task.duration,
                 column_date=occurence_date,
                 start_at=occurence_date,
                 end_at=parent_task.end_at,

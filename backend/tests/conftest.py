@@ -57,7 +57,7 @@ def task(authenticated_user, project):
         description="This is a test task",
         order=1,
         is_completed=False,
-        planned_duration=timedelta(minutes=30),
+        duration=timedelta(minutes=30),
         project=project
     )
 
@@ -72,7 +72,7 @@ def kanban_task(authenticated_user):
         description="This is a task in a kanban column",
         order=1,
         is_completed=False,
-        planned_duration=timedelta(minutes=45),
+        duration=timedelta(minutes=45),
         column_date=today
     )
 
@@ -90,7 +90,7 @@ def calendar_task(authenticated_user):
         description="This is a task in the calendar",
         order=1,
         is_completed=False,
-        planned_duration=timedelta(hours=1),
+        duration=timedelta(hours=1),
         start_at=start,
         end_at=end
     )
@@ -105,5 +105,5 @@ def completed_task(authenticated_user):
         description="This is a completed task",
         order=1,
         is_completed=True,
-        planned_duration=timedelta(minutes=15)
+        duration=timedelta(minutes=15)
     )

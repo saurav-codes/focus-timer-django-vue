@@ -69,7 +69,7 @@ function handleTaskDroppedToBacklog ( { value }) {
           <div class="backlog-meta">
             <div class="backlog-time">
               <Clock size="14" />
-              <span>{{ task.planned_duration_display }}</span>
+              <span>{{ task.duration_display }}</span>
             </div>
 
             <div class="backlog-date">

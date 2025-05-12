@@ -72,9 +72,9 @@ const completedTasksCount = computed(() => {
               </div>
 
               <div class="archived-meta">
-                <div v-if="task.planned_duration_display" class="archived-time">
+                <div v-if="task.duration_display" class="archived-time">
                   <Clock size="14" />
-                  <span>{{ task.planned_duration_display }}</span>
+                  <span>{{ task.duration_display }}</span>
                 </div>
 
                 <div v-if="task.project" class="archived-project">

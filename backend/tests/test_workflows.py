@@ -33,7 +33,7 @@ def test_complete_task_workflow(authenticated_client, authenticated_user):
         'title': 'Workflow Task',
         'description': 'A task for testing workflow',
         'order': 1,
-        'planned_duration': '00:45:00',  # 45 minutes
+        'duration': '00:45:00',  # 45 minutes
         'project': project_id,
         'tags': ['workflow', 'test']
     }
@@ -55,7 +55,7 @@ def test_complete_task_workflow(authenticated_client, authenticated_user):
         'title': 'Workflow Task',
         'description': 'A task for testing workflow',
         'order': 1,
-        'planned_duration': '00:45:00',
+        'duration': '00:45:00',
         'project': project_id,
         'tags': ['workflow', 'test'],
         'column_date': today
@@ -79,7 +79,7 @@ def test_complete_task_workflow(authenticated_client, authenticated_user):
         'title': 'Workflow Task',
         'description': 'A task for testing workflow',
         'order': 1,
-        'planned_duration': '00:45:00',
+        'duration': '00:45:00',
         'project': project_id,
         'tags': ['workflow', 'test'],
         'column_date': today,

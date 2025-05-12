@@ -34,7 +34,9 @@ class Command(BaseCommand):
             user = User.objects.create_user(
                 first_name='raju test user',
                 email='raju@gmail.com',
-                password='raju123'
+                password='raju123',
+                is_superuser=True,
+                is_staff=True
             )
         else:
             print(f"found user {user.email} so using it to assign tasks")
@@ -59,7 +61,7 @@ class Command(BaseCommand):
                 "status": Task.BRAINDUMP,
                 "column_date": None,
                 "tags": ["Planning", "Innovation"],
-                "planned_duration": "00:20:00",
+                "duration": "00:20:00",
             },
             {
                 "title": "Research competitor analysis",
@@ -68,7 +70,7 @@ class Command(BaseCommand):
                 "status": Task.BRAINDUMP,
                 "tags": ["Research", "Strategy"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Draft content calendar",
@@ -77,7 +79,7 @@ class Command(BaseCommand):
                 "status": Task.BRAINDUMP,
                 "tags": ["Marketing", "Planning"],
                 "column_date": None,
-                "planned_duration": "01:00:00",
+                "duration": "01:00:00",
             },
 
             # Regular Tasks
@@ -88,7 +90,7 @@ class Command(BaseCommand):
                 "status": Task.ON_BOARD,
                 "tags": ["Development", "Security"],
                 "column_date": today,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Update API documentation",
@@ -97,7 +99,7 @@ class Command(BaseCommand):
                 "status": Task.ON_BOARD,
                 "tags": ["Documentation", "API"],
                 "column_date": today,
-                "planned_duration": "00:40:00",
+                "duration": "00:40:00",
             },
             {
                 "title": "Weekly team meeting",
@@ -106,7 +108,7 @@ class Command(BaseCommand):
                 "tags": ["Meeting", "Team"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=1),
-                "planned_duration": "00:80:00",
+                "duration": "00:80:00",
             },
             {
                 "title": "Fix mobile responsiveness",
@@ -115,7 +117,7 @@ class Command(BaseCommand):
                 "tags": ["Bug", "UI"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=1),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Implement dark mode",
@@ -124,7 +126,7 @@ class Command(BaseCommand):
                 "tags": ["Feature", "UI"],
                 "status": Task.ON_BOARD,
                 "column_date": today - timedelta(days=1),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Performance optimization",
@@ -133,7 +135,7 @@ class Command(BaseCommand):
                 "tags": ["Performance", "Development"],
                 "status": Task.ON_BOARD,
                 "column_date": today - timedelta(days=1),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "User feedback analysis",
@@ -142,7 +144,7 @@ class Command(BaseCommand):
                 "tags": ["Analysis", "User Experience"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=2),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Security audit",
@@ -151,7 +153,7 @@ class Command(BaseCommand):
                 "tags": ["Security", "Maintenance"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=2),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Create onboarding tutorial",
@@ -160,7 +162,7 @@ class Command(BaseCommand):
                 "tags": ["UX", "Documentation"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=3),
-                "planned_duration": "00:110:00",
+                "duration": "00:110:00",
             },
             {
                 "title": "Update dependencies",
@@ -169,7 +171,7 @@ class Command(BaseCommand):
                 "tags": ["Maintenance", "Development"],
                 "column_date": today + timedelta(days=3),
                 "status": Task.ON_BOARD,
-                "planned_duration": "00:50:00",
+                "duration": "00:50:00",
             },
             {
                 "title": "Implement email notifications",
@@ -178,7 +180,7 @@ class Command(BaseCommand):
                 "tags": ["Feature", "Backend"],
                 "status": Task.ON_BOARD,
                 "column_date": today + timedelta(days=4),
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Create monthly analytics report",
@@ -187,7 +189,7 @@ class Command(BaseCommand):
                 "tags": ["Analytics", "Reporting"],
                 "column_date": today + timedelta(days=4),
                 "status": Task.ON_BOARD,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             # backlog tasks
             {
@@ -197,7 +199,7 @@ class Command(BaseCommand):
                 "tags": ["Analytics", "Reporting"],
                 "status": Task.BACKLOG,
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "go to market",
@@ -206,7 +208,7 @@ class Command(BaseCommand):
                 "status": Task.BACKLOG,
                 "tags": ["outdoor", "Reporting"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             # Archived Tasks
             {
@@ -216,7 +218,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "Cleanup"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Update project wiki",
@@ -225,7 +227,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Wiki"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Remove deprecated APIs",
@@ -234,7 +236,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "API"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Clean up old branches",
@@ -243,7 +245,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "Git"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Update README",
@@ -252,7 +254,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Git"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Create release notes",
@@ -261,7 +263,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Release"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Migrate to new server",
@@ -270,7 +272,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Infrastructure", "Maintenance"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Backup database",
@@ -279,7 +281,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Backup", "Maintenance"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Test disaster recovery plan",
@@ -288,7 +290,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Testing", "Maintenance"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
             {
                 "title": "Conduct user interviews",
@@ -297,7 +299,7 @@ class Command(BaseCommand):
                 "status": Task.ARCHIVED,
                 "tags": ["Research", "User Experience"],
                 "column_date": None,
-                "planned_duration": "00:30:00",
+                "duration": "00:30:00",
             },
         ]
 
@@ -309,7 +311,7 @@ class Command(BaseCommand):
                 description=data["description"],
                 is_completed=data["is_completed"],
                 column_date=data["column_date"],
-                planned_duration=parse_duration(data["planned_duration"]),
+                duration=parse_duration(data["duration"]),
                 user=user,
                 project_id=random.choice(project_ids),
                 status=data["status"],

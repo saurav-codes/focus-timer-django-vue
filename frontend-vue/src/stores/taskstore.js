@@ -52,16 +52,16 @@ const addDays = (date, days) => {
 };
 
 // Add a helper function to format duration
-const formatDurationForAPI = (planned_duration) => {
-  if (!planned_duration) return null;
+const formatDurationForAPI = (duration) => {
+  if (!duration) return null;
 
   // If already in ISO format, return as is
-  if (planned_duration.includes('P') && planned_duration.includes('T')) {
-    return planned_duration;
+  if (duration.includes('P') && duration.includes('T')) {
+    return duration;
   }
 
   // Parse HH:MM format
-  const [hours, minutes] = planned_duration.split(':').map(Number);
+  const [hours, minutes] = duration.split(':').map(Number);
 
   // Convert to ISO 8601 duration format
   return `PT${hours}H${minutes}M`;
@@ -236,7 +236,7 @@ export const useTaskStore = defineStore('taskStore', {
       // Format duration before sending to API
       const taskWithFormattedDuration = {
         ...task,
-        planned_duration: formatDurationForAPI(task.planned_duration)
+        duration: formatDurationForAPI(task.duration)
       };
 
       return this.axios_instance.post('api/tasks/', taskWithFormattedDuration);
@@ -250,7 +250,7 @@ export const useTaskStore = defineStore('taskStore', {
       // Format duration before sending to API
       const taskWithFormattedDuration = {
         ...task,
-        planned_duration: formatDurationForAPI(task.planned_duration)
+        duration: formatDurationForAPI(task.duration)
       };
 
       return this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);

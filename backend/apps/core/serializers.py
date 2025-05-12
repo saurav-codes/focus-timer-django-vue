@@ -7,14 +7,14 @@ from dateutil.rrule import rrulestr
 
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField()
-    planned_duration_display = serializers.SerializerMethodField()
+    duration_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
         fields = '__all__'
 
-    def get_planned_duration_display(self, obj):
-        return obj.get_planned_duration_display
+    def get_duration_display(self, obj):
+        return obj.get_duration_display
 
     def validate_recurrence_rule(self, value):
         if not value:

@@ -108,8 +108,8 @@ const addTask = async () => {
       id: Date.now(),
       title: newTaskTitle.value,
       is_completed: false,
-      planned_duration: durationString, // Format for backend
-      planned_duration_display: taskDurationDisplay.value, // For display
+      duration: durationString, // Format for backend
+      duration_display: taskDurationDisplay.value, // For display
       order: 0,
       tags: [],
       status: 'BRAINDUMP',

@@ -26,9 +26,9 @@ def test_task_model_creation(task, authenticated_user, project):
     assert task.project == project
     assert task.order == 1
     assert task.is_completed is False
-    assert task.planned_duration == timedelta(minutes=30)
+    assert task.duration == timedelta(minutes=30)
     assert str(task) == "Test Task"
-    assert task.get_planned_duration_display == "30m"
+    assert task.get_duration_display == "30m"
 
 @pytest.mark.unit
 def test_task_duration_display_hours_and_minutes():
@@ -40,28 +40,28 @@ def test_task_duration_display_hours_and_minutes():
     assert minutes == 15
 
     # Formatting check
-    task = Task(planned_duration=duration)
-    assert task.get_planned_duration_display == "2h 15m"
+    task = Task(duration=duration)
+    assert task.get_duration_display == "2h 15m"
 
 @pytest.mark.unit
 def test_task_duration_display_hours_only():
     """Test the duration display with only hours."""
     duration = timedelta(hours=3)
-    task = Task(planned_duration=duration)
-    assert task.get_planned_duration_display == "3h"
+    task = Task(duration=duration)
+    assert task.get_duration_display == "3h"
 
 @pytest.mark.unit
 def test_task_duration_display_minutes_only():
     """Test the duration display with only minutes."""
     duration = timedelta(minutes=45)
-    task = Task(planned_duration=duration)
-    assert task.get_planned_duration_display == "45m"
+    task = Task(duration=duration)
+    assert task.get_duration_display == "45m"
 
 @pytest.mark.unit
 def test_task_duration_display_none():
-    """Test the duration display when planned_duration is None."""
-    task = Task(planned_duration=None)
-    assert task.get_planned_duration_display is None
+    """Test the duration display when duration is None."""
+    task = Task(duration=None)
+    assert task.get_duration_display is None
 
 # Integration Tests for Views
 @pytest.mark.integration
@@ -92,7 +92,7 @@ def test_create_task(authenticated_client, authenticated_user, project):
         'title': 'New Task',
         'description': 'This is a new task',
         'order': 2,
-        'planned_duration': '00:45:00',  # 45 minutes
+        'duration': '00:45:00',  # 45 minutes
         'project': project.id,
         'tags': ['work', 'important']
     }
@@ -108,7 +108,7 @@ def test_create_task(authenticated_client, authenticated_user, project):
     task = Task.objects.get(title='New Task')
     assert task.description == 'This is a new task'
     assert task.order == 2
-    assert task.planned_duration == timedelta(minutes=45)
+    assert task.duration == timedelta(minutes=45)
     assert task.project.id == project.id
     assert list(task.tags.names()) == ['work', 'important']
 
@@ -155,7 +155,7 @@ def test_update_task(authenticated_client, task):
         'title': 'Updated Task',
         'description': 'This task has been updated',
         'is_completed': True,
-        'planned_duration': '01:00:00',  # 1 hour
+        'duration': '01:00:00',  # 1 hour
         'user': task.user.id,
         'tags': ['updated', 'important']
     }
@@ -172,7 +172,7 @@ def test_update_task(authenticated_client, task):
     assert task.title == 'Updated Task'
     assert task.description == 'This task has been updated'
     assert task.is_completed is True
-    assert task.planned_duration == timedelta(hours=1)
+    assert task.duration == timedelta(hours=1)
     assert set(task.tags.names()) == {'updated', 'important'}
 
 @pytest.mark.integration
