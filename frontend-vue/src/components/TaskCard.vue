@@ -160,7 +160,7 @@ watch(localTask, (new_task_array) => {
 </script>
 
 <template>
-  <div>
+  <div :id="`task-card-${localTask.id}`">
     <div
       ref="taskItem"
       class="task-item"

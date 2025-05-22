@@ -72,7 +72,9 @@ const totalDuration = computed(() => {
 
 
 async function handleTaskDroppedToKanban ( { added, moved } ){
-  if (uiStore.isPointerOverIntegration) { return }
+  if (uiStore.isPointerOverIntegration) {
+    return false;
+  }
   // Handle when a task is added to this column
   if (added) {
     const element = added.element;

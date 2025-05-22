@@ -112,13 +112,15 @@ async function handleTaskDropped(dropInfo) {
     await taskStore.updateTask(droppedTask);
 
     // Then remove it from its source location (kanban or braindump)
+    console.log("Removing task from kanban or braindump");
     await taskStore.searchAndRemoveTaskFromKanbanOrBraindump(droppedTask.id);
 
-    // remove again after 1 second incase of task was dropped after remove operation
-    setTimeout(() => {
-      // Remove the task from the calendar after 1 second
-      taskStore.searchAndRemoveTaskFromKanbanOrBraindump(droppedTask.id);
-    }, 1000);
+    // remove again ( hackish way ) as tasks doesn't get removed if snapped to a kanban col while dragging to fullcalendar
+    const taskCardElement = document.getElementById(`task-card-${droppedTask.id}`);
+    if (taskCardElement) {
+      taskCardElement.remove();
+      console.log("Task card removed from DOM");
+    }
 
     return true;
 
