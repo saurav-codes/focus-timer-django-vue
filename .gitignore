@@ -35,3 +35,4 @@
 *.env
 
 *db.sqlite3*
+.windsurf/
