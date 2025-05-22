@@ -179,7 +179,7 @@ async function handleTagRemoved(updated_tags_list, taskId) {
       group="kanban-group"
       :force-fallback="true"
       item-key="id"
-      @change="handleTaskDroppedToBrainDump"
+      @change="handleTaskDroppedToBrainDump">
       <template #item="{element}">
         <TaskCard
           :task="element"
