@@ -3,6 +3,7 @@ from .models import Task, Project
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 from dateutil.rrule import rrulestr
+from datetime import timedelta
 
 
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -27,6 +28,16 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
             print(e)
             raise serializers.ValidationError(f"Invalid RRULE: {e}")
         return value
+
+    def save(self, **kwargs):
+        task = super().save(**kwargs)
+        if task.start_at and not task.end_at:
+            # calculate end at based on duration
+            if not task.duration:
+                task.duration = timedelta(minutes=30)
+            task.end_at = task.start_at + task.duration
+            task.save()
+        return task
 
 
 class ProjectSerializer(serializers.ModelSerializer):

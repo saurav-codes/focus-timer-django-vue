@@ -2,7 +2,7 @@
 import TaskEditModal from './TaskEditModal.vue';
 import TimeDropdownPopup from './TimeDropdownPopup.vue';
 import { useTaskStore } from '../stores/taskstore';
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed, useTemplateRef, watch } from 'vue';
 import { Clock, Repeat1, Tag, XIcon } from 'lucide-vue-next';
 import { useFloating } from '@floating-ui/vue';
 import { useElementHover } from '@vueuse/core';
@@ -131,7 +131,7 @@ const openTimeDropdown = () => {
   isTimePopupOpen.value = true;
 };
 
-const onTimePopupSave = ({ hours, minutes, formatted, keepOpen }) => {
+const onTimePopupSave = async ({ hours, minutes, formatted, keepOpen }) => {
   // Update localTask duration. Here we update the raw duration (e.g. "1:30")
   // and the display text. You might wish to reformat as needed.
   localTask.value.duration = `${hours}:${minutes}`;
@@ -143,7 +143,7 @@ const onTimePopupSave = ({ hours, minutes, formatted, keepOpen }) => {
   }
 
   // Save the update via the task store.
-  taskStore.updateTask(localTask.value);
+  await taskStore.updateTask(localTask.value);
   handleTaskUpdated(localTask.value);
 };
 
@@ -151,65 +151,71 @@ const onTimePopupCancel = () => {
   isTimePopupOpen.value = false;
 };
 
-const taskData = JSON.stringify(props.task)
+const taskData = ref('')
+watch(localTask, (new_task_array) => {
+  taskData.value = JSON.stringify(new_task_array)
+}, {immediate:true, deep: true})
+
 
 </script>
 
 <template>
-  <TaskEditModal
-    :task="localTask"
-    :is-open="isEditModalOpen"
-    @close-modal="closeEditModal"
-    @task-updated="handleTaskUpdated"
-    @task-archived="handleTaskArchived"
-    @task-deleted="handleTaskDeleted" />
-  <div
-    ref="taskItem"
-    class="task-item"
-    :data-event="taskData"
-    :class="{ 'completed': localTask.is_completed }"
-    @click="openEditModal">
-    <div v-if="showCheckbox" class="task-checkbox" @click.stop="toggleCompletion">
-      <div class="checkbox" :class="{ 'checked': localTask.is_completed }" />
-    </div>
-    <div class="task-content">
-      <div class="task-title">
-        {{ localTask.title }}
-      </div>
-      <div v-if="tags.length" v-auto-animate class="task-meta">
-        <span
-          v-for="(tag, index) in tags"
-          :key="index"
-          class="task-tag"
-          :class="`tag-${getTagColor(tag)}`">
-          <Tag size="12" />
-          {{ tag }}
-          <XIcon v-if="isHovered" class="tag-remove-icon" size="12" @click.stop="removeTag(tag)" />
-        </span>
-      </div>
-    </div>
-    <div ref="durationFloatingReference" class="task-duration" @click.stop="openTimeDropdown">
-      <Clock v-if="localTask.duration && isHovered" size="14" />
-      {{ localTask.duration_display }}
-    </div>
-
-    <!-- Use Teleport to render the popup at the document body level -->
-    <Teleport to="body">
-      <TimeDropdownPopup
-        v-if="isTimePopupOpen"
-        ref="floatingComponent"
-        :style="floatingStyles"
-        :initial-hours="timePopupHours"
-        :initial-minutes="timePopupMinutes"
-        @save="onTimePopupSave"
-        @cancel="onTimePopupCancel" />
-    </Teleport>
+  <div>
     <div
-      v-if="localTask.recurrence_rule"
-      title="This is a recurring task">
-      <Repeat1
-        class="recurring-icon"
-        size="12" />
+      ref="taskItem"
+      class="task-item"
+      :data-event="taskData"
+      :class="{ 'completed': localTask.is_completed }"
+      @click="openEditModal">
+      <div v-if="showCheckbox" class="task-checkbox" @click.stop="toggleCompletion">
+        <div class="checkbox" :class="{ 'checked': localTask.is_completed }" />
+      </div>
+      <div class="task-content">
+        <div class="task-title">
+          {{ localTask.title }}
+        </div>
+        <div v-if="tags.length" v-auto-animate class="task-meta">
+          <span
+            v-for="(tag, index) in tags"
+            :key="index"
+            class="task-tag"
+            :class="`tag-${getTagColor(tag)}`">
+            <Tag size="12" />
+            {{ tag }}
+            <XIcon v-if="isHovered" class="tag-remove-icon" size="12" @click.stop="removeTag(tag)" />
+          </span>
+        </div>
+      </div>
+      <div ref="durationFloatingReference" class="task-duration" @click.stop="openTimeDropdown">
+        <Clock v-if="localTask.duration && isHovered" size="14" />
+        {{ localTask.duration_display }}
+      </div>
+
+      <!-- Use Teleport to render the popup at the document body level -->
+      <Teleport to="body">
+        <TimeDropdownPopup
+          v-if="isTimePopupOpen"
+          ref="floatingComponent"
+          :style="floatingStyles"
+          :initial-hours="timePopupHours"
+          :initial-minutes="timePopupMinutes"
+          @save="onTimePopupSave"
+          @cancel="onTimePopupCancel" />
+      </Teleport>
+      <TaskEditModal
+        :task="localTask"
+        :is-open="isEditModalOpen"
+        @close-modal="closeEditModal"
+        @task-updated="handleTaskUpdated"
+        @task-archived="handleTaskArchived"
+        @task-deleted="handleTaskDeleted" />
+      <div
+        v-if="localTask.recurrence_rule"
+        title="This is a recurring task">
+        <Repeat1
+          class="recurring-icon"
+          size="12" />
+      </div>
     </div>
   </div>
 </template>

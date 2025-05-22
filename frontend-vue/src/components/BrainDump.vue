@@ -4,9 +4,9 @@ import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter, 
 import TaskCard from './TaskCard.vue';
 import { useUIStore } from '../stores/uiStore';
 import { useTaskStore } from '../stores/taskstore';
-import { SlickList, SlickItem } from 'vue-slicksort';
 import TaskCreationPopup from './TaskCreationPopup.vue';
 import Popper from 'vue3-popper';
+import Draggable from 'vuedraggable';
 
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
@@ -22,13 +22,6 @@ const openTaskCreationPopup = () => {
 
 const closeTaskCreationPopup = () => {
   showTaskCreationPopup.value = false;
-};
-
-const handleTaskOrderUpdate = (new_tasks_array) => {
-  // Update the order of the tasks in the store
-  setTimeout(() => {
-    taskStore.updateTaskOrder(new_tasks_array);
-  }, 2000);  // 2 second delay is just to make sure that task update operation is done
 };
 
 // Add event listener for keyboard shortcuts
@@ -88,7 +81,29 @@ function handleTaskArchived(taskId) {
   taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter(task => task.id !== taskId);
 }
 
-function handleTagRemoved(updated_tags_list, taskId) {
+async function handleTaskDroppedToBrainDump({added, moved, removed}) {
+  if (uiStore.isPointerOverIntegration) { return }
+  // Handle when a task is added to this column
+  if (added) {
+    const element = added.element;
+    console.log("task added. to braindump")
+    console.log("added element", element)
+    await taskStore.taskDroppedToBrainDump(element);
+    await taskStore.updateTaskOrder(taskStore.brainDumpTasks);
+  }
+
+  // Handle when a task is moved within the same column
+  if (moved) {
+    // Just update the order since the task is staying in the same column
+    console.log("task moved. so updating task order")
+    await taskStore.updateTaskOrder(taskStore.brainDumpTasks);
+  }
+
+  // We don't need to handle removed here as the source column will handle it
+}
+
+
+async function handleTagRemoved(updated_tags_list, taskId) {
   // remove the tag from the task
   const task = taskStore.brainDumpTasks.find(task => task.id === taskId);
   if (!task) {
@@ -96,7 +111,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
     return;
   }
   task.tags = updated_tags_list;
-  taskStore.updateTask(task);
+  await taskStore.updateTask(task);
 }
 
 </script>
@@ -128,7 +143,12 @@ function handleTagRemoved(updated_tags_list, taskId) {
         </h2>
         <!-- Update the filter toggle button -->
         <Popper arrow content="Filter Tasks based on tags and projects" :show="showPopper">
-          <button @mouseenter="showPopper=true" @mouseleave="showPopper=false" class="filter-toggle-btn" title="Filter tasks" @click.stop="uiStore.toggleFilterSidebar">
+          <button
+            class="filter-toggle-btn"
+            title="Filter tasks"
+            @mouseenter="showPopper=true"
+            @mouseleave="showPopper=false"
+            @click.stop="uiStore.toggleFilterSidebar">
             <Filter size="16" />
           </button>
         </Popper>
@@ -151,23 +171,24 @@ function handleTagRemoved(updated_tags_list, taskId) {
       </div>
     </div>
 
-    <SlickList
-      v-model:list="taskStore.brainDumpTasks"
-      :distance="5"
-      group="brain-dump-group"
+    <Draggable
+      v-model="taskStore.brainDumpTasks"
       class="tasks-list"
-      :accept="['kanban-group', 'backlog-group', 'archived-group']"
-      @sort-insert="taskStore.taskDroppedToBrainDump"
-      @update:list="handleTaskOrderUpdate">
-      <SlickItem v-for="(task, idx) in taskStore.brainDumpTasks" :key="task.id" :index="idx" :item="task">
+      drag-class="dragging"
+      ghost-class="ghost-card"
+      group="kanban-group"
+      :force-fallback="true"
+      item-key="id"
+      @change="handleTaskDroppedToBrainDump"
+      <template #item="{element}">
         <TaskCard
-          :task="task"
+          :task="element"
           @tag-removed="handleTagRemoved"
           @task-deleted="handleTaskDeleted"
           @task-archived="handleTaskArchived"
           @task-updated="handleTaskUpdated" />
-      </SlickItem>
-    </SlickList>
+      </template>
+    </Draggable>
   </div>
 </template>
 

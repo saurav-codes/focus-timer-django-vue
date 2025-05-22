@@ -2,7 +2,9 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 import datetime
-import json
+from google.auth.transport.requests import Request as GoogleRequest
+from .utils import credentials_from_dict
+from google.auth.exceptions import RefreshError
 
 
 class GoogleCalendarCredentials(models.Model):
@@ -76,3 +78,34 @@ class GoogleCalendarCredentials(models.Model):
 
         self.token = token_data
         self.save(update_fields=['token', 'updated_at'])
+
+    def get_credentials(self):
+        credentials = credentials_from_dict(self.token)
+
+        # Check if the credentials are expired and try to refresh
+        if self.is_expired:
+            if not credentials.refresh_token:
+                self.delete()
+                return {
+                    'error': 'Refresh token missing. Please reconnect your Google Calendar.',
+                }
+            try:
+                credentials.refresh(request=GoogleRequest())
+            except RefreshError:
+                self.delete()
+                return {
+                    'error': 'Google Calendar authentication expired. Please reconnect.',
+                }
+            # Update the stored token
+            token_data = {
+                'token': credentials.token,
+                'refresh_token': credentials.refresh_token,
+                'token_uri': credentials.token_uri,
+                'client_id': credentials.client_id,
+                'client_secret': credentials.client_secret,
+                'scopes': credentials.scopes,
+                'expiry': credentials.expiry.isoformat() if credentials.expiry else None
+            }
+            self.token = token_data
+            self.save(update_fields=['token'])
+        return credentials

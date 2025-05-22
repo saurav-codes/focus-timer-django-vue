@@ -6,7 +6,7 @@ import GithubIntegration from './integrations/GithubIntegration.vue';
 import AsanaIntegration from './integrations/AsanaIntegration.vue';
 import BacklogIntegration from './integrations/BacklogIntegration.vue';
 import ArchivedTasksIntegration from './integrations/ArchivedTasksIntegration.vue';
-import { useUIStore } from '@/stores/uiStore';
+import { useUIStore } from '../../stores/uiStore'
 
 
 // Icons from Lucide
@@ -61,12 +61,13 @@ const handleintegrationSidebarToggle = () => {
   uiStore.toggleIntegrationSidebar();
 };
 
-
-
 </script>
 
 <template>
-  <div class="integration-sidebar">
+  <div
+    class="integration-sidebar"
+    @mouseenter="uiStore.setPointerOverIntegration(true)"
+    @mouseleave="uiStore.setPointerOverIntegration(false)">
     <!-- Integration Content -->
     <transition name="slide">
       <div v-if="showIntegrationSidebar" class="integration-content">

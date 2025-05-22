@@ -27,11 +27,13 @@ class Task(models.Model):
     ON_BOARD = 'ON_BOARD'
     COMPLETED = 'COMPLETED'
     ARCHIVED = 'ARCHIVED'
+    ON_CAL = 'ON_CAL'
 
     TASK_STATUS_CHOICES = (
         (BACKLOG, 'Backlog'),
         (BRAINDUMP, 'Brain Dump'),
         (ON_BOARD, 'On Board'),
+        (ON_CAL, 'ON CALENDAR'),
         (COMPLETED, 'Completed'),
         (ARCHIVED, 'Archived'),
     )

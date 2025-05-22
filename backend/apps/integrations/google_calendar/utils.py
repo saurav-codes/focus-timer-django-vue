@@ -1,14 +1,20 @@
 import json
 import datetime
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request as GoogleRequest
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from django.conf import settings
 
+
 # Define the scopes needed for Google Calendar
 # Read-only is used for the initial integration
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar.events',  # Manage events
+    'https://www.googleapis.com/auth/calendar.settings.readonly',
+    'https://www.googleapis.com/auth/calendar.readonly'  # Read calendar settings
+]
 
 # Full access scope for future use if needed
 # SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -74,7 +80,7 @@ def refresh_credentials(credentials):
     """
     if not credentials.valid:
         if credentials.refresh_token:
-            credentials.refresh(Request())
+            credentials.refresh(GoogleRequest())
 
             # Convert to token dict
             token_data = {
@@ -122,7 +128,7 @@ def format_event_for_fullcalendar(event):
     end = event['end'].get('dateTime', event['end'].get('date'))
 
     return {
-        'id': f"google-{event['id']}",
+        'id': event['id'],
         'title': event.get('summary', '(No title)'),
         'start': start,
         'end': end,
@@ -195,3 +201,17 @@ def handle_calendar_api_error(error, default_message="An error occurred with the
             error_details['message'] = error.reason if hasattr(error, 'reason') else default_message
 
     return error_details
+
+
+def can_modify_event(event:dict):
+    """Check if the authenticated user can modify this Google Calendar event."""
+    # Self-created events (you're the organizer)
+    if event.get('organizer', {}).get('self', False):
+        return True
+
+    # Events where guests can modify is enabled
+    if event.get('guestsCanModify', False):
+        return True
+
+    return False
+

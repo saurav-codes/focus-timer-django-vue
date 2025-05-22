@@ -85,12 +85,13 @@ export const useTaskStore = defineStore('taskStore', {
     selectedTags: [],
     backlogs: [],
     archivedTasks: [],
+    calendarTasks: [],
   }),
   getters: {
     axios_instance() {
       const authStore = useAuthStore();
       return authStore.axios_instance;
-    }
+    },
   },
   actions: {
     async fetchTasks() {
@@ -147,6 +148,10 @@ export const useTaskStore = defineStore('taskStore', {
         });
         // Sort archived tasks by created_at date (newest first)
         this.archivedTasks.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+        this.calendarTasks = data.filter((task) => {
+          return task.status === 'ON_CAL';
+        })
 
         return data;
       } catch (error) {
@@ -247,12 +252,14 @@ export const useTaskStore = defineStore('taskStore', {
     },
 
     async updateTask(task) {
+      console.log("update task called")
       // Format duration before sending to API
       const taskWithFormattedDuration = {
         ...task,
         duration: formatDurationForAPI(task.duration)
       };
 
+      console.log("sending post request for updating task")
       return this.axios_instance.put(`api/tasks/${task.id}/`, taskWithFormattedDuration);
     },
 
@@ -261,10 +268,61 @@ export const useTaskStore = defineStore('taskStore', {
       this.archivedTasks.unshift(task);
     },
 
-    async taskDroppedToBrainDump({value}) {
-      value.column_date = null;
-      value.status = 'BRAINDUMP';
-      await this.updateTask(value);
+    async taskDroppedToBrainDump(task) {
+      task.column_date = null;
+      task.status = 'BRAINDUMP';
+      await this.updateTask(task);
+    },
+
+    async _getKanbanColumnTasks (taskId) {
+
+      // search for this task first in braindump column
+      const index = this.brainDumpTasks.findIndex(task => task.id === taskId);
+      if (index !== -1) {
+        return this.brainDumpTasks
+      }
+      // if not found in brainDumpTasks, search in all kanban columns
+      for (let i = 0; i < this.kanbanColumns.length; i++) {
+        const column = this.kanbanColumns[i];
+        const taskIndex = column.tasks.findIndex(task => task.id === taskId);
+        if (taskIndex !== -1) {
+          return column.tasks;
+        }
+      }
+      console.log("we didn't find this task with id", taskId, " anywhere ")
+      return null
+    },
+
+    async updateTaskOrderOfKanban(taskId) {
+      // first find the column tasks to save order
+      const columnTasks = await this._getKanbanColumnTasks(taskId)
+      if (columnTasks) {
+        await this.updateTaskOrder(columnTasks)
+      }
+    },
+
+    async searchAndRemoveTaskFromKanbanOrBraindump(taskId) {
+      // Search for this task first in braindump column
+      const index = this.brainDumpTasks.findIndex(task => task.id === taskId);
+      if (index !== -1) {
+        this.brainDumpTasks.splice(index, 1);
+        console.log(`Removed task with index ${index} from braindump column`);
+        return;
+      }
+
+      // If not found in brainDumpTasks, search in all kanban columns
+      for (let i = 0; i < this.kanbanColumns.length; i++) {
+        const column = this.kanbanColumns[i];
+        const taskIndex = column.tasks.findIndex(task => task.id === taskId);
+
+        if (taskIndex !== -1) {
+          // Remove the task from this column's tasks array
+          column.tasks.splice(taskIndex, 1);
+          console.log(`Removed task with index ${taskIndex} from kanban column ${column.title}`);
+          return;
+        }
+      }
+      console.log("Could not find task with id", taskId, "in any column");
     },
 
     async updateTaskOrder(tasks_array) {

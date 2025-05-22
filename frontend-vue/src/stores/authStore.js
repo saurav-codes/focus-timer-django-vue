@@ -5,12 +5,13 @@ import { useLocalStorage } from '@vueuse/core';
 
 const userDataLocalStorage = useLocalStorage('userData', {});
 const isAuthenticatedLocalStorage = useLocalStorage('isAuthenticated', false);
+const BACKEND_BASE_URL = 'http://localhost:8000/'
 
 // setting this to allow cookies to be set by
 // backend using response headers
 // this is also required for session authentication to work
 const axios_instance = axios.create({
-  baseURL: 'http://localhost:8000/',
+  baseURL: BACKEND_BASE_URL,
   withCredentials: true,
   withXSRFToken: true,
   xsrfCookieName: 'csrftoken',

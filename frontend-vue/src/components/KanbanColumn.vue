@@ -2,10 +2,12 @@
 import { computed, ref, watch} from 'vue';
 import { BadgeCheck, Clock} from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
-import { SlickList, SlickItem } from 'vue-slicksort';
+import Draggable from 'vuedraggable';
 import { useTaskStore } from '../stores/taskstore';
+import { useUIStore } from '../stores/uiStore';
 
 const taskStore = useTaskStore();
+const uiStore = useUIStore()
 
 const props = defineProps({
   dateString: {
@@ -41,7 +43,7 @@ watch(() => props.tasks, (newTasks) => {
 // deep:true means watch the tasks array deeply
 
 const completedTasksCount = computed(() => {
-  return localTasks.value.filter(task => task.is_completed).length;
+  return localTasks.value.filter(task => task?.is_completed).length;
 });
 
 // Calculate total duration of all tasks in this column
@@ -49,8 +51,8 @@ const totalDuration = computed(() => {
   let totalMinutes = 0;
 
   localTasks.value.forEach(task => {
-    if (task.planned_duration) {
-      const [hours, minutes] = task.planned_duration.split(':').map(Number);
+    if (task?.duration) {
+      const [hours, minutes] = task.duration.split(':').map(Number);
       totalMinutes += (hours * 60) + minutes;
     }
   });
@@ -68,19 +70,28 @@ const totalDuration = computed(() => {
   }
 });
 
-function handleTaskDroppedToKanban ( { value }) {
-  value.column_date = props.dateObj.toISOString()
-  value.status = "ON_BOARD"
-  taskStore.updateTask(value);
-}
 
-function handleTaskOrderUpdate (new_tasks_array) {
-  // Update the order of the tasks in the store
-  setTimeout(() => {
-    taskStore.updateTaskOrder(new_tasks_array);
-  }, 2000);
-  // 2 second delay is just to make sure that task update
-  // operation is done before saving the new order of tasks in that column
+async function handleTaskDroppedToKanban ( { added, moved } ){
+  if (uiStore.isPointerOverIntegration) { return }
+  // Handle when a task is added to this column
+  if (added) {
+    const element = added.element;
+    // Update the task with the new column date and status
+    element.column_date = props.dateObj.toISOString()
+    element.status = "ON_BOARD"
+    await taskStore.updateTask(element);
+    // Task added, updating order
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
+
+  // Handle when a task is moved within the same column
+  if (moved) {
+    // Just update the order since the task is staying in the same column
+    // Task moved, updating order
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
+
+  // We don't need to handle removed here as the source column will handle it
 }
 
 async function handleTaskDeleted(taskId) {
@@ -105,7 +116,7 @@ function handleTaskArchived(taskId) {
   localTasks.value = localTasks.value.filter(task => task.id!== taskId);
 }
 
-function handleTagRemoved(updated_tags_list, taskId) {
+async function handleTagRemoved(updated_tags_list, taskId) {
   // remove the tag from the task
   const task = localTasks.value.find(task => task.id === taskId);
   if (!task) {
@@ -113,7 +124,7 @@ function handleTagRemoved(updated_tags_list, taskId) {
     return;
   }
   task.tags = updated_tags_list;
-  taskStore.updateTask(task);
+  await taskStore.updateTask(task);
 }
 
 </script>
@@ -137,24 +148,24 @@ function handleTagRemoved(updated_tags_list, taskId) {
       </div>
     </div>
     <div class="tasks-container">
-      <SlickList
-        v-model:list="localTasks"
-        :distance="5"
+      <Draggable
+        v-model="localTasks"
+        drag-class="dragging"
+        ghost-class="ghost-card"
         class="tasks-list"
+        :force-fallback="true"
         group="kanban-group"
-        helper-class="task-dragging"
-        :accept="['brain-dump-group', 'backlog-group', 'archived-group']"
-        @sort-insert="handleTaskDroppedToKanban"
-        @update:list="handleTaskOrderUpdate">
-        <SlickItem v-for="(task, idx) in localTasks" :key="task.id" :index="idx" :item="task">
+        item-key="id"
+        @change="handleTaskDroppedToKanban">
+        <template #item="{element}">
           <TaskCard
-            :task="task"
+            :task="element"
             @tag-removed="handleTagRemoved"
             @task-deleted="handleTaskDeleted"
             @task-archived="handleTaskArchived"
             @task-updated="handleTaskUpdated" />
-        </SlickItem>
-      </SlickList>
+        </template>
+      </Draggable>
     </div>
   </div>
 </template>

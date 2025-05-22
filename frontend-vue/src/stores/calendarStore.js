@@ -19,13 +19,13 @@ export const useCalendarStore = defineStore('calendar', {
         return this.isGoogleConnected;
       } catch (error) {
         console.error('Error checking Google connection:', error);
+        this.error("Error checking Google connection")
         this.isGoogleConnected = false;
         return false;
       } finally {
         this.isLoading = false;
       }
     },
-
     async startGoogleAuth() {
       const authStore = useAuthStore();
       try {
@@ -40,7 +40,6 @@ export const useCalendarStore = defineStore('calendar', {
         this.isLoading = false;
       }
     },
-
     async fetchEvents(startStr, endStr) {
       const authStore = useAuthStore();
       try {
@@ -58,7 +57,6 @@ export const useCalendarStore = defineStore('calendar', {
         this.isLoading = false;
       }
     },
-
     async disconnectGoogleCalendar() {
       const authStore = useAuthStore();
       try {
@@ -73,6 +71,21 @@ export const useCalendarStore = defineStore('calendar', {
         return false;
       } finally {
         this.isLoading = false;
+      }
+    },
+    async updateGoogleCalendarEvent(eventId, updateData) {
+      const authStore = useAuthStore();
+      try {
+        this.loading = true
+        await authStore.axios_instance.put(`api/gcalendar/events/${eventId}/`, updateData)
+        return true
+      } catch (error ) {
+        console.log("error came while updating google cal event, ", error)
+        console.log("the eventId was - ", eventId)
+        this.error = error.response.data.error
+        return false
+      } finally {
+        this.isLoading = false
       }
     }
   }

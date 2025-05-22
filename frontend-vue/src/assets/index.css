@@ -281,21 +281,42 @@ body {
 
 .fc-theme-standard td, .fc-theme-standard th {
   /* make border of time slots a bit transparent */
-  border: 1px solid #dddddd52;
+  border: 1px solid #dddddd7f;
 }
 
-.fc .fc-timegrid-slot-minor {
-  /* remove border of slots */
-  border: none;
+.fc-timegrid-slot-minor, .fc-scrollgrid-shrink {
+  border: none !important;
 }
+
+.fc-timegrid-slot-label {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+.fc-timegrid-slot-lane {
+  border-left: none !important;
+}
+
+.fc-event-title {
+  font-family: var(--font-family-mono);
+}
+
 .fc .fc-scrollgrid {
   /* remove border of fullcalendar component */
   border: none !important;
 }
 
-.task-dragging {
+.dragging > div {
   /* while task is dragging, keep z index highest */
-  z-index: 7;
+  transform: rotate(3deg) !important;
+  opacity: 1 !important;
+  z-index: 9 !important;
+  background: var(--color-background-secondary) !important;
+}
+
+.ghost-card {
+  opacity: 0.3 !important;
+  border: 2px dashed var(--color-primary) !important;
 }
 
 /* Disable scrollbar globally */

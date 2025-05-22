@@ -8,6 +8,8 @@ export const useUIStore = defineStore('ui', () => {
   const isIntegrationSidebarVisible = useLocalStorage('integration-sidebar-visible', false);
   const activeIntegration = useLocalStorage('active-integration', 'calendar');
   const isFilterSidebarVisible = useLocalStorage('filter-sidebar-visible', false);
+  const isPointerOverIntegration = ref(false);
+
 
 
   // Loading state for infinite scrolling
@@ -34,16 +36,22 @@ export const useUIStore = defineStore('ui', () => {
     isLoadingMoreColumns.value = isLoading;
   }
 
+  function setPointerOverIntegration(isOver) {
+    isPointerOverIntegration.value = isOver;
+  }
+
   return {
     isBrainDumpCollapsed,
     isIntegrationSidebarVisible,
     activeIntegration,
     isLoadingMoreColumns,
     isFilterSidebarVisible,
+    isPointerOverIntegration,
     toggleBrainDump,
     toggleIntegrationSidebar,
     setActiveIntegration,
     setLoadingMoreColumns,
-    toggleFilterSidebar
+    toggleFilterSidebar,
+    setPointerOverIntegration,
   };
 });
