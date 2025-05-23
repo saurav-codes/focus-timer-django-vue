@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { CheckCircle, Calendar, Tag, Clock, CircleDashed, LucideListCheck } from 'lucide-vue-next';
-import { SlickItem, SlickList } from 'vue-slicksort';
+import Draggable from 'vuedraggable';
 import { useTaskStore } from '../../../stores/taskstore';
 import { useTimeAgo } from '@vueuse/core';
 
@@ -22,13 +22,33 @@ const getTagColor = (tagName) => {
   return colors[hash % colors.length];
 };
 
-async function handleTaskDroppedToArchived ( { value }) {
-  value.status = "ARCHIVED"
-  await taskStore.updateTask(value);
+// Initialize with empty array
+const localTasks = ref([]);
+
+// Watch for changes to taskStore.archivedTasks and update localTasks
+watch(() => taskStore.archivedTasks, (newTasks) => {
+  // Create a deep copy of the tasks to avoid reference issues
+  localTasks.value = JSON.parse(JSON.stringify(newTasks));
+}, { immediate: true, deep: true }); // immediate: true makes it run on component mount
+
+async function handleTaskDroppedToArchived({ added, moved }) {
+  // Handle when a task is added to the archived list
+  if (added) {
+    const element = added.element;
+    // Update the task with archived status
+    element.status = "ARCHIVED";
+    await taskStore.updateTask(element);
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
+
+  // If tasks are reordered within the archived list
+  if (moved) {
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
 }
 
 const completedTasksCount = computed(() => {
-  return taskStore.archivedTasks.filter(task => task.is_completed).length;
+  return localTasks.value.filter(task => task.is_completed).length;
 });
 </script>
 
@@ -48,56 +68,56 @@ const completedTasksCount = computed(() => {
     <div
       class="archived-list">
       <div class="archived-group">
-        <SlickList
-          v-model:list="taskStore.archivedTasks"
-          :distance="5"
-          group="archived-group"
+        <Draggable
+          v-model="localTasks"
+          drag-class="dragging"
+          ghost-class="ghost-card"
           class="archived-tasks-list"
-          :accept="['kanban-group', 'brain-dump-group']"
-          @sort-insert="handleTaskDroppedToArchived">
-          <SlickItem
-            v-for="(task,idx) in taskStore.archivedTasks"
-            :key="task.id"
-            :item="task"
-            :index="idx"
-            class="archived-card">
-            <div class="archived-status">
-              <CheckCircle v-if="task.is_completed" size="16" class="completed-icon" />
-              <CircleDashed v-else size="16" />
+          :force-fallback="true"
+          group="kanban-group"
+          item-key="id"
+          @change="handleTaskDroppedToArchived">
+          <template #item="{element}">
+            <div class="archived-card">
+              <div class="archived-status">
+                <CheckCircle v-if="element.is_completed" size="16" class="completed-icon" />
+                <CircleDashed v-else size="16" />
+              </div>
+
+              <div class="archived-content">
+                <div class="archived-title">
+                  {{ element.title }}
+                </div>
+
+                <div class="archived-meta">
+                  <div v-if="element.project" class="archived-project">
+                    {{ element.project && typeof element.project === 'object' ? element.project.title : element.project }}
+                  </div>
+                  <div class="right-part">
+                    <div v-if="element.duration_display" class="archived-time">
+                      <Clock size="14" />
+                      <span>{{ element.duration_display }}</span>
+                    </div>
+                    <div class="archived-date">
+                      <Calendar size="14" />
+                      <span>{{ timeAgo(element.created_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="archived-tags">
+                  <div v-for="(tag, index) in element.tags" :key="index" class="archived-tag">
+                    <Tag size="12" :class="`tag-${getTagColor(tag)}`" />
+                    <span>{{ tag }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <div class="archived-content">
-              <div class="archived-title">
-                {{ task.title }}
-              </div>
-
-              <div class="archived-meta">
-                <div v-if="task.duration_display" class="archived-time">
-                  <Clock size="14" />
-                  <span>{{ task.duration_display }}</span>
-                </div>
-
-                <div v-if="task.project" class="archived-project">
-                  {{ task.project && typeof task.project === 'object' ? task.project.title : task.project }}
-                </div>
-                <div class="archived-date">
-                  <Calendar size="14" />
-                  <span>{{ timeAgo(task.created_at) }}</span>
-                </div>
-              </div>
-
-              <div class="archived-tags">
-                <div v-for="(tag, index) in task.tags" :key="index" class="archived-tag">
-                  <Tag size="12" :class="`tag-${getTagColor(tag)}`" />
-                  <span>{{ tag }}</span>
-                </div>
-              </div>
-            </div>
-          </SlickItem>
-        </SlickList>
+          </template>
+        </Draggable>
       </div>
 
-      <div v-if="taskStore.archivedTasks.length === 0" class="no-archived">
+      <div v-if="localTasks.length === 0" class="no-archived">
         No archived tasks found
       </div>
     </div>
@@ -161,7 +181,7 @@ const completedTasksCount = computed(() => {
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: var(--color-text-secondary, #a6adc8);
+  color: var(--color-text-secondary);
 }
 
 .archived-date svg {
@@ -173,10 +193,11 @@ const completedTasksCount = computed(() => {
   align-items: flex-start;
   padding: 12px;
   margin-bottom: 8px;
-  background-color: var(--color-background, #1e1e2e);
+  background-color: var(--color-background);
   border-radius: 8px;
-  border: 1px solid var(--color-border, #313244);
+  border: 1px solid var(--color-border);
   opacity: 0.8;
+  cursor: grab;
 }
 
 .archived-status {
@@ -195,14 +216,15 @@ const completedTasksCount = computed(() => {
 .archived-title {
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-decoration: line-through;
-  color: var(--color-text-secondary, #a6adc8);
+  color: var(--color-text-secondary);
 }
 
 .archived-meta {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 8px;
 }
 
@@ -210,11 +232,18 @@ const completedTasksCount = computed(() => {
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: var(--color-text-tertiary, #7f849c);
+  color: var(--color-text-tertiary);
 }
 
 .archived-time svg {
   margin-right: 4px;
+}
+
+.archived-meta .right-part {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
 }
 
 .archived-tags {
@@ -226,31 +255,21 @@ const completedTasksCount = computed(() => {
 .archived-tag {
   display: flex;
   align-items: center;
-  background-color: var(--color-background-secondary, #313244);
+  background-color: var(--color-background-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 11px;
-  color: var(--color-text-tertiary, #7f849c);
+  color: var(--color-text-tertiary);
 }
 
 .archived-tag svg {
   margin-right: 4px;
 }
 
-/* Tag colors */
-.tag-purple { color: #c678dd; }
-.tag-blue { color: #61afef; }
-.tag-green { color: #98c379; }
-.tag-red { color: #e06c75; }
-.tag-yellow { color: #e5c07b; }
-.tag-indigo { color: #7c7cff; }
-.tag-orange { color: #d19a66; }
-.tag-pink { color: #ff79c6; }
-
 .no-archived {
   text-align: center;
   padding: 24px;
-  color: var(--color-text-tertiary, #7f849c);
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 </style>
