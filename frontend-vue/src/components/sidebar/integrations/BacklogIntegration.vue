@@ -1,6 +1,7 @@
 <script setup>
+import { computed, ref, watch } from 'vue';
 import { Clock, Tag, Calendar } from 'lucide-vue-next';
-import { SlickItem, SlickList } from 'vue-slicksort';
+import Draggable from 'vuedraggable';
 import { useTaskStore } from '../../../stores/taskstore';
 import { useTimeAgo } from '@vueuse/core';
 
@@ -21,19 +22,37 @@ const getTagColor = (tagName) => {
   return colors[hash % colors.length];
 };
 
-function handleTaskOrderUpdate (new_tasks_array) {
-  // Update the order of the tasks in the store
-  setTimeout(() => {
-    taskStore.updateTaskOrder(new_tasks_array);
-  }, 2000);
-  // 2 second delay is just to make sure that task update
-  // operation is done before saving the new order of tasks in that column
+// Initialize with empty array
+const localTasks = ref([]);
+
+// Watch for changes to taskStore.backlogs and update localTasks
+watch(() => taskStore.backlogs, (newTasks) => {
+  // Create a deep copy of the tasks to avoid reference issues
+  localTasks.value = JSON.parse(JSON.stringify(newTasks));
+  localTasks.value.sort((a, b) => {
+    return a.order - b.order;
+  });
+}, { immediate: true, deep: true }); // immediate: true makes it run on component mount
+
+async function handleTaskDroppedToBacklog({ added, moved }) {
+  // Handle when a task is added to the backlog list
+  if (added) {
+    const element = added.element;
+    // Update the task with backlog status
+    element.status = "BACKLOG";
+    await taskStore.updateTask(element);
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
+
+  // If tasks are reordered within the backlog list
+  if (moved) {
+    await taskStore.updateTaskOrder(localTasks.value);
+  }
 }
 
-function handleTaskDroppedToBacklog ( { value }) {
-  value.status = "BACKLOG"
-  taskStore.updateTask(value);
-}
+const backlogCount = computed(() => {
+  return localTasks.value.length;
+});
 
 
 </script>
@@ -43,53 +62,54 @@ function handleTaskDroppedToBacklog ( { value }) {
     <div class="integration-header">
       <h3>Backlog</h3>
       <div class="backlog-count">
-        {{ taskStore.backlogs.length }} items
+        {{ backlogCount }} items
       </div>
     </div>
 
-    <SlickList
-      v-model:list="taskStore.backlogs"
-      :distance="5"
-      group="backlog-group"
-      :accept="['kanban-group', 'brain-dump-group']"
-      class="backlog-list"
-      @sort-insert="handleTaskDroppedToBacklog"
-      @update:list="handleTaskOrderUpdate">
-      <SlickItem
-        v-for="(task, idx) in taskStore.backlogs"
-        :key="task.id"
-        :item="task"
-        :index="idx"
-        class="backlog-card">
-        <div class="backlog-content">
-          <div class="backlog-title">
-            {{ task.title }}
-          </div>
+    <div class="backlog-list">
+      <Draggable
+        v-model="localTasks"
+        drag-class="dragging"
+        ghost-class="ghost-card"
+        class="backlog-tasks-list"
+        :force-fallback="true"
+        group="kanban-group"
+        item-key="id"
+        @change="handleTaskDroppedToBacklog">
+        <template #item="{element}">
+          <div class="backlog-card">
+            <div class="backlog-content">
+              <div class="backlog-title">
+                {{ element.title }}
+              </div>
 
-          <div class="backlog-meta">
-            <div class="backlog-time">
-              <Clock size="14" />
-              <span>{{ task.duration_display }}</span>
-            </div>
+              <div class="backlog-meta">
+                <div class="backlog-time">
+                  <Clock size="14" />
+                  <span>{{ element.duration_display }}</span>
+                </div>
 
-            <div class="backlog-date">
-              <Calendar size="14" />
-              <span>Added {{ timeAgo(task.created_at) }}</span>
+                <div class="backlog-date">
+                  <Calendar size="14" />
+                  <span>Added {{ timeAgo(element.created_at) }}</span>
+                </div>
+              </div>
+
+              <div class="backlog-tags">
+                <div v-for="(tag, index) in element.tags" :key="index" class="backlog-tag">
+                  <Tag size="12" :class="`tag-${getTagColor(tag)}`" />
+                  <span>{{ tag }}</span>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div class="backlog-tags">
-            <div v-for="(tag, index) in task.tags" :key="index" class="backlog-tag">
-              <Tag size="12" :class="`tag-${getTagColor(tag)}`" />
-              <span>{{ tag }}</span>
-            </div>
-          </div>
-        </div>
-      </SlickItem>
-      <div v-if="taskStore.backlogs.length === 0" class="no-backlog">
+        </template>
+      </Draggable>
+      
+      <div v-if="localTasks.length === 0" class="no-backlog">
         No backlog items found
       </div>
-    </SlickList>
+    </div>
   </div>
 </template>
 
@@ -122,6 +142,11 @@ function handleTaskDroppedToBacklog ( { value }) {
 
 .backlog-list {
   flex: 1;
+  overflow-y: auto;
+}
+
+.backlog-tasks-list {
+  margin-bottom: 8px;
 }
 
 .backlog-card {
