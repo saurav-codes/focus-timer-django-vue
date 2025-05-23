@@ -101,6 +101,22 @@ def toggle_task_completion(request, pk):
     return Response(status=status.HTTP_200_OK)
 
 
+
+@api_view(['POST'])
+@login_required
+def assign_project_to_task(request, task_id, project_id):
+    """
+    Assign a project to a task
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    project = get_object_or_404(Project, pk=project_id)
+    task.project = project
+    task.save()  # save() returns None, so we don't assign it
+    # Use the task object directly after saving
+    serializer = TaskSerializer(task)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(['GET'])
 @login_required
 def get_all_projects(request):

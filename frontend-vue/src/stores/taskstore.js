@@ -237,6 +237,10 @@ export const useTaskStore = defineStore('taskStore', {
       return this.axios_instance.post(`api/tasks/${taskId}/toggle_completion/`);
     },
 
+    async assignProject(taskId, projectId) {
+      return this.axios_instance.post(`api/assign_project/${taskId}/${projectId}/`);
+    },
+
     async createTask(task) {
       // Format duration before sending to API
       const taskWithFormattedDuration = {
