@@ -7,6 +7,17 @@ import { offset, flip, shift } from '@floating-ui/dom';
 import { useFloating, autoUpdate} from '@floating-ui/vue';
 
 
+const props = defineProps({
+  projectId: {
+    type: Number,
+    default: null
+  },
+  projectTitle: {
+    type: String,
+    default: null
+  }
+});
+
 const taskStore = useTaskStore();
 const emit = defineEmits(["project-selected"]);
 
@@ -34,9 +45,9 @@ const { floatingStyles: projectFloatingStyles } = useFloating(
 const newProjectTitle = ref('');
 const isCreatingNew = ref(false);
 // id to send to the backend
-const selectedProjectId = ref(null);
+const selectedProjectId = ref(props.projectId);
 // title to display in the button
-const selectedProjectTitle = ref(null);
+const selectedProjectTitle = ref(props.projectTitle);
 
 // close popup
 const closePopup = () => {
@@ -79,6 +90,8 @@ const createAndSelectProject = async () => {
       }
 
     } catch (error) {
+      // Log error but handled gracefully
+      // eslint-disable-next-line no-console
       console.error('Failed to create project:', error);
     }
   }
@@ -98,72 +111,74 @@ onClickOutside(projectPopupRef, () => {
 </script>
 
 <template>
-  <!-- Project selector -->
-  <button
-    ref="projectButtonRef"
-    class="option-button project-button"
-    @click.stop="isProjectPopupOpen = !isProjectPopupOpen">
-    <FolderIcon size="16" />
-    <span>{{ selectedProjectTitle || 'No Project' }}</span>
-  </button>
+  <div>
+    <!-- Project selector -->
+    <button
+      ref="projectButtonRef"
+      class="option-button project-button"
+      @click.stop="isProjectPopupOpen = !isProjectPopupOpen">
+      <FolderIcon size="16" />
+      <span>{{ selectedProjectTitle || 'No Project' }}</span>
+    </button>
 
-  <Teleport to="body">
-    <div v-if="!!isProjectPopupOpen" ref="projectPopupRef" :style="projectFloatingStyles" class="project-dropdown-popup">
-      <div class="popup-header">
-        <span>Select Project</span>
-      </div>
-
-      <div class="popup-content">
-        <!-- No project option -->
-        <div
-          class="project-option"
-          :class="{ 'selected': selectedProjectTitle === null }"
-          @click="selectProject(null)">
-          <span>No Project</span>
+    <Teleport to="body">
+      <div v-if="!!isProjectPopupOpen" ref="projectPopupRef" :style="projectFloatingStyles" class="project-dropdown-popup">
+        <div class="popup-header">
+          <span>Select Project</span>
         </div>
 
-        <!-- Existing projects -->
-        <div
-          v-for="project in taskStore.projects"
-          :key="project.id"
-          class="project-option"
-          :class="{ 'selected': selectedProjectId === project.id }"
-          @click="selectProject(project.id, project.title)">
-          <FolderIcon size="14" />
-          <span class="project-content">{{ project.title }}
-            <LucideTrash class="delete-button" size="14" @click.stop="taskStore.deleteProject(project.id)" />
-          </span>
-        </div>
+        <div class="popup-content">
+          <!-- No project option -->
+          <div
+            class="project-option"
+            :class="{ 'selected': selectedProjectTitle === null }"
+            @click="selectProject(null)">
+            <span>No Project</span>
+          </div>
 
-        <!-- Create new project option -->
-        <div v-if="!isCreatingNew" class="project-option new-project" @click="toggleNewProjectMode">
-          <Plus size="14" />
-          <span>Create New Project</span>
-        </div>
+          <!-- Existing projects -->
+          <div
+            v-for="project in taskStore.projects"
+            :key="project.id"
+            class="project-option"
+            :class="{ 'selected': selectedProjectId === project.id }"
+            @click="selectProject(project.id, project.title)">
+            <FolderIcon size="14" />
+            <span class="project-content">{{ project.title }}
+              <LucideTrash class="delete-button" size="14" @click.stop="taskStore.deleteProject(project.id)" />
+            </span>
+          </div>
 
-        <!-- New project input field -->
-        <div v-else class="new-project-input-container">
-          <input
-            id="new-project-input"
-            v-model="newProjectTitle"
-            type="text"
-            placeholder="Project Name"
-            @keydown.enter="createAndSelectProject">
-          <div class="new-project-actions">
-            <button class="btn-cancel" @click="toggleNewProjectMode">
-              Cancel
-            </button>
-            <button
-              class="btn-create"
-              :disabled="!newProjectTitle.trim()"
-              @click="createAndSelectProject">
-              Create
-            </button>
+          <!-- Create new project option -->
+          <div v-if="!isCreatingNew" class="project-option new-project" @click="toggleNewProjectMode">
+            <Plus size="14" />
+            <span>Create New Project</span>
+          </div>
+
+          <!-- New project input field -->
+          <div v-else class="new-project-input-container">
+            <input
+              id="new-project-input"
+              v-model="newProjectTitle"
+              type="text"
+              placeholder="Project Name"
+              @keydown.enter="createAndSelectProject">
+            <div class="new-project-actions">
+              <button class="btn-cancel" @click="toggleNewProjectMode">
+                Cancel
+              </button>
+              <button
+                class="btn-create"
+                :disabled="!newProjectTitle.trim()"
+                @click="createAndSelectProject">
+                Create
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </Teleport>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>

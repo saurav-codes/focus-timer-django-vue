@@ -6,6 +6,7 @@ import { useTimeAgo } from '@vueuse/core';
 import { VueSpinner } from 'vue3-spinners';
 import Multiselect from '@vueform/multiselect';
 import RecurringTaskEditor from './RecurringTaskEditor.vue';
+import ProjectDropdownPopup from './ProjectDropdownPopup.vue';
 
 
 const props = defineProps({
@@ -28,7 +29,7 @@ const editedTask = ref({ ...props.task });
 // Update local copy when prop changes
 watch(() => props.task, (newTask) => {
   editedTask.value = { ...newTask };
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 // Format the created_at date
 const timeAgo = computed(() => {
@@ -125,6 +126,22 @@ const updateStartTime = (value) => {
   saveTask();
 }
 
+// Handle project assignment
+const assignProject = async (projectId) => {
+  try {
+    // Make the API call to assign the project
+    const { data } = await taskStore.assignProject(editedTask.value.id, projectId);
+
+    // Update the local task data with the response
+    editedTask.value = { ...data };
+
+    // Emit event for parent to update the task card
+    emit("task-updated", editedTask.value);
+  } catch (error) {
+    console.error('Error assigning project to task:', error);
+  }
+}
+
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
 });
@@ -178,6 +195,17 @@ onUnmounted(() => {
               :searchable="true"
               placeholder="Search or add tags"
               @tag="tagCreated" />
+          </div>
+
+          <!-- Project assignment -->
+          <div class="form-group">
+            <label class="form-label">Project</label>
+            <div class="project-selector">
+              <ProjectDropdownPopup
+                :project-id="editedTask.project.id"
+                :project-title="editedTask.project.title"
+                @project-selected="assignProject" />
+            </div>
           </div>
           <div class="form-group">
             <label class="checkbox-container">
@@ -331,8 +359,33 @@ onUnmounted(() => {
 
 .meta-info {
   margin-top: 1rem;
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.project-selector {
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.project-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.project-button:hover {
+  background-color: var(--color-background-tertiary);
+  border-color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .modal-footer {
