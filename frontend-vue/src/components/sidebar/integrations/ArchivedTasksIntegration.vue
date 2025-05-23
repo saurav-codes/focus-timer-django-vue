@@ -29,6 +29,9 @@ const localTasks = ref([]);
 watch(() => taskStore.archivedTasks, (newTasks) => {
   // Create a deep copy of the tasks to avoid reference issues
   localTasks.value = JSON.parse(JSON.stringify(newTasks));
+  localTasks.value.sort((a, b) => {
+    return a.order - b.order;
+  });
 }, { immediate: true, deep: true }); // immediate: true makes it run on component mount
 
 async function handleTaskDroppedToArchived({ added, moved }) {
