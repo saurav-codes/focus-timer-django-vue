@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, computed} from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed, reactive} from 'vue';
 import { useIntervalFn } from '@vueuse/core';
 import { useCalendarStore } from '../../../stores/calendarStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTaskStore } from '../../../stores/taskstore';
-import { LucideCalendar, LucideLink, LucideUnlink } from 'lucide-vue-next';
+import { LucideCalendar, LucideLink, LucideUnlink, CheckCircle, Trash2 } from 'lucide-vue-next';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { ThirdPartyDraggable } from '@fullcalendar/interaction';
@@ -18,6 +18,11 @@ const authStore = useAuthStore();
 const isConnected = ref(false);
 const isLoading = ref(false);
 const showPopper = ref(false);
+const eventPopover = reactive({
+  show: false,
+  event: null,
+  position: { x: 0, y: 0 }
+});
 // Reference to FullCalendar instance
 const calendarRef = ref(null);
 
@@ -27,7 +32,7 @@ const { pause: stopPolling } = useIntervalFn(
       calendarRef.value.getApi().refetchEvents();
     }
   },
-  3 * 60 * 1000 // 3 minutes
+  2 * 60 * 1000 // 2 minutes
 );
 
 onBeforeUnmount(() => {
@@ -122,6 +127,23 @@ async function handleTaskDropped(dropInfo) {
       console.log("Task card removed from DOM");
     }
 
+    // Remove the specific event that was just added by the drag and drop
+    // we do this to avoid duplicate events as fetching from backend + frontend
+    // keeping old event in frontend will lead to duplicate events
+    if (calendarRef.value) {
+      const calendar = calendarRef.value.getApi();
+
+      // Find the event by ID and remove it before fetching from backend
+      const event = calendar.getEventById(droppedTask.id);
+      if (event) {
+        event.remove();
+        console.log("Event removed from calendar")
+      }
+
+      // Now fetch the clean data from backend
+      calendar.refetchEvents();
+    }
+
     return true;
 
   } catch (error) {
@@ -145,6 +167,72 @@ function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
   .catch(err => {
     failureCallback(err);
   });
+}
+
+function handleEventClick(info) {
+  // Prevent default behavior
+  info.jsEvent.preventDefault();
+  // Only show popover for our app's tasks, not Google Calendar events
+  if (info.event.extendedProps.source !== 'google') {
+    // Position the popover near the clicked event
+    eventPopover.event = info.event;
+    const rect = info.el.getBoundingClientRect();
+    eventPopover.position.x = rect.left + rect.width / 2;
+    eventPopover.position.y = rect.top;
+    eventPopover.show = true;
+  }
+}
+
+function _getTaskIdFromEvent(event) {
+  // Extract task ID from the event's extended properties
+  if (event.extendedProps.taskId) {
+    return event.extendedProps.taskId;
+  }
+  if (event.id) {
+    return event.id;
+  }
+  console.error("No valid task ID found in event properties:", event);
+}
+
+async function markTaskAsCompleted(event) {
+  const taskId = _getTaskIdFromEvent(event);
+  try {
+    if (taskId) {
+      await taskStore.toggleCompletion(taskId);
+      // Refresh calendar events
+      if (calendarRef.value) {
+        calendarRef.value.getApi().refetchEvents();
+        console.log("Calendar events refetched");
+      } else {
+        console.error("Calendar reference not found while marking task as completed");
+      }
+      // Close the popover
+      eventPopover.show = false;
+    } else {
+      console.error("No task ID found to mark as completed");
+    }
+  } catch (error) {
+    console.error('Error updating task completion status:', error);
+  }
+}
+
+async function deleteCalendarTask(event) {
+  const taskId = _getTaskIdFromEvent(event);
+  console.log("Deleting task:", taskId);
+  try {
+    await taskStore.deleteTask(taskId);
+    // Close the popover
+    eventPopover.show = false;
+    // Refresh calendar events
+    if (calendarRef.value) {
+      calendarRef.value.getApi().refetchEvents();
+      console.log("Calendar events refetched after deletion");
+    } else {
+      console.error("Calendar reference not found");
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+  }
 }
 
 async function handleCalendarEventUpdated( eventDropInfo ) {
@@ -188,7 +276,7 @@ const calendarOptions = ref({
   stickyHeaderDates: false,
   navLinks: false,
   dayMaxEvents: false,
-  // eventClick: handleEventClick,
+  eventClick: handleEventClick,
   // dateClick: handleDateClick,
   // datesSet: handleDatesSet,
   events: fetchCalendarEvents,
@@ -198,7 +286,7 @@ const calendarOptions = ref({
   droppable: true,
   // Other calendar options...
   drop: handleTaskDropped,
-  eventDrop: handleCalendarEventUpdated,
+  eventDrop: handleCalendarEventUpdated,  // event dragged to another time slot
   eventResize: handleCalendarEventUpdated,
 });
 </script>
@@ -244,7 +332,33 @@ const calendarOptions = ref({
       </div>
 
       <!-- Render FullCalendar component here -->
-      <FullCalendar v-else :options="calendarOptions" />
+      <FullCalendar v-else ref="calendarRef" :options="calendarOptions" />
+
+      <!-- Event Popover -->
+      <div
+        v-if="eventPopover.show"
+        class="event-popover"
+        :style="{
+          left: `${eventPopover.position.x}px`,
+          top: `${eventPopover.position.y + 20}px`
+        }">
+        <div class="event-popover-content">
+          <div class="event-popover-actions">
+            <button class="popover-action-btn" @click="markTaskAsCompleted(eventPopover.event)">
+              <CheckCircle size="16" :class="{ 'checked': eventPopover.event?.extendedProps.isCompleted }" />
+              {{ eventPopover.event?.extendedProps.isCompleted ? 'Mark as Incomplete' : 'Mark as Completed' }}
+            </button>
+            <button class="popover-action-btn delete" @click="deleteCalendarTask(eventPopover.event)">
+              <Trash2 size="16" />
+              Delete Task
+            </button>
+          </div>
+        </div>
+        <div class="event-popover-arrow" />
+      </div>
+
+      <!-- Backdrop to close popover when clicking outside -->
+      <div v-if="eventPopover.show" class="event-popover-backdrop" @click="eventPopover.show = false" />
     </div>
   </div>
 </template>
@@ -350,10 +464,95 @@ const calendarOptions = ref({
   background-color: var(--color-error-dark, #dc2626);
 }
 
+/* Event Popover Styles */
+.event-popover {
+  position: fixed;
+  z-index: 10;
+  background-color: var(--color-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 220px;
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border);
+}
+
+.event-popover-content {
+  padding: 12px;
+}
+
+.event-popover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popover-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.popover-action-btn:hover {
+  background-color: var(--color-background-hover);
+}
+
+.popover-action-btn.delete {
+  color: var(--color-error);
+}
+
+.popover-action-btn.delete:hover {
+  background-color: rgba(var(--color-error-rgb), 0.1);
+}
+
+.event-popover-arrow {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.event-popover-arrow::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--color-background-secondary);
+  transform: translateX(-50%) translateY(50%) rotate(45deg);
+  left: 50%;
+  border-left: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
+}
+
+.event-popover-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9;
+}
+
 .disabled-div {
   pointer-events: none;
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.checked {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--color-text-primary);
 }
 
 </style>

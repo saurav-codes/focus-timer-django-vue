@@ -152,8 +152,8 @@ const onTimePopupCancel = () => {
 };
 
 const taskData = ref('')
-watch(localTask, (new_task_array) => {
-  taskData.value = JSON.stringify(new_task_array)
+watch(localTask, (new_task) => {
+  taskData.value = JSON.stringify(new_task)
 }, {immediate:true, deep: true})
 
 
