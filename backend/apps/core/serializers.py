@@ -6,9 +6,17 @@ from dateutil.rrule import rrulestr
 from datetime import timedelta
 
 
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField()
     duration_display = serializers.SerializerMethodField()
+    project = ProjectSerializer(read_only=True)
 
     class Meta:
         model = Task
@@ -39,8 +47,3 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
             task.save()
         return task
 
-
-class ProjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = '__all__'
