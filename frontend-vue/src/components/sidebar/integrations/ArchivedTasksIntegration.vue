@@ -63,8 +63,8 @@ const completedTasksCount = computed(() => {
         Tasks will be auto-archived after 30 days
       </div>
       <div class="archived-count">
-        <LucideListCheck size="12" />
-        {{ completedTasksCount }} Completed
+        <LucideListCheck size="14" />
+        <span>{{ completedTasksCount }} Completed</span>
       </div>
     </div>
 
@@ -83,8 +83,8 @@ const completedTasksCount = computed(() => {
           <template #item="{element}">
             <div class="archived-card">
               <div class="archived-status">
-                <CheckCircle v-if="element.is_completed" size="16" class="completed-icon" />
-                <CircleDashed v-else size="16" />
+                <CheckCircle v-if="element.is_completed" size="18" class="completed-icon" />
+                <CircleDashed v-else size="18" />
               </div>
 
               <div class="archived-content">
@@ -160,6 +160,7 @@ const completedTasksCount = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--color-text-secondary, #a6adc8);
   position: absolute;
@@ -183,12 +184,9 @@ const completedTasksCount = computed(() => {
 .archived-date {
   display: flex;
   align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--color-text-secondary);
-}
-
-.archived-date svg {
-  margin-right: 6px;
 }
 
 .archived-card {
@@ -204,8 +202,10 @@ const completedTasksCount = computed(() => {
 }
 
 .archived-status {
-  margin-right: 12px;
-  padding-top: 2px;
+  margin-right: 10px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 1px;
 }
 
 .completed-icon {
@@ -234,12 +234,9 @@ const completedTasksCount = computed(() => {
 .archived-time, .archived-project {
   display: flex;
   align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--color-text-tertiary);
-}
-
-.archived-time svg {
-  margin-right: 4px;
 }
 
 .archived-meta .right-part {
@@ -258,15 +255,12 @@ const completedTasksCount = computed(() => {
 .archived-tag {
   display: flex;
   align-items: center;
+  gap: 4px;
   background-color: var(--color-background-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 11px;
   color: var(--color-text-tertiary);
-}
-
-.archived-tag svg {
-  margin-right: 4px;
 }
 
 .no-archived {
