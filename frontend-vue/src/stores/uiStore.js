@@ -9,8 +9,8 @@ export const useUIStore = defineStore('ui', () => {
   const activeIntegration = useLocalStorage('active-integration', 'calendar');
   const isFilterSidebarVisible = useLocalStorage('filter-sidebar-visible', false);
   const isPointerOverIntegration = ref(false);
-
-
+  // Multi-theme toggle state (light, dark, minecraft, notion, zed)
+  const currentTheme = useLocalStorage('current-theme', 'light');
 
   // Loading state for infinite scrolling
   const isLoadingMoreColumns = ref(false);
@@ -30,6 +30,14 @@ export const useUIStore = defineStore('ui', () => {
 
   function setActiveIntegration(integration) {
     activeIntegration.value = integration;
+  }
+
+  // Cycle through themes on each toggle click
+  function cycleTheme() {
+    const order = ['light', 'dark', 'minecraft', 'notion', 'zed'];
+    const idx = order.indexOf(currentTheme.value);
+    const next = order[(idx + 1) % order.length];
+    currentTheme.value = next;
   }
 
   function setLoadingMoreColumns(isLoading) {
@@ -53,5 +61,8 @@ export const useUIStore = defineStore('ui', () => {
     setLoadingMoreColumns,
     toggleFilterSidebar,
     setPointerOverIntegration,
+    // Export theme controls
+    currentTheme,
+    cycleTheme,
   };
 });

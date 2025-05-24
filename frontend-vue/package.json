@@ -11,7 +11,9 @@
   "dependencies": {
     "@floating-ui/vue": "^1.1.6",
     "@fontsource/inter": "^5.1.1",
-    "@fontsource/jetbrains-mono": "^5.1.2",
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "@fontsource/press-start-2p": "^5.2.5",
+    "@fontsource/shadows-into-light": "^5.2.5",
     "@formkit/auto-animate": "^0.8.2",
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",

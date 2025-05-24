@@ -1,16 +1,15 @@
 <script setup>
 
 import { ref, computed } from 'vue'
-import { useDark, useToggle } from "@vueuse/core";
+import { useUIStore } from '../stores/uiStore'
 import { useRouter, useRoute } from 'vue-router'
-import { Layers, Layers2, SquareDashedKanban, Calendar, LayoutDashboard, Settings, Sun, Moon } from 'lucide-vue-next'
+import { Layers, Layers2, SquareDashedKanban, Calendar, LayoutDashboard, Settings, Sun, Moon, Gamepad2, PencilLine, Zap } from 'lucide-vue-next'
 
 const isExpanded = ref(false)
 const dockRef = ref(null)
 const router = useRouter()
 const route = useRoute()
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
+const uiStore = useUIStore()
 const closeTimeout = ref(null)
 
 const handleMouseEnter = () => {
@@ -38,13 +37,21 @@ function handleDockItemClick(item) {
   }
 }
 
-const themeIcon = computed(() => isDark.value ? Sun : Moon)
+const themeIcon = computed(() => {
+  switch (uiStore.currentTheme) {
+    case 'dark': return Moon;
+    case 'minecraft': return Gamepad2;
+    case 'notion': return PencilLine;
+    case 'zed': return Zap;
+    default: return Sun;
+  }
+});
 
 const routes = [
   {
     id: 'theme-toggle',
     label: 'Toggle Theme',
-    action: toggleDark
+    action: uiStore.cycleTheme
   },
   { path: '/settings', icon: Settings, label: 'Settings' },
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

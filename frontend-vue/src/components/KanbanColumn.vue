@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch} from 'vue';
-import { BadgeCheck, Clock} from 'lucide-vue-next';
+import { BadgeCheck, Clock } from 'lucide-vue-next';
 import TaskCard from './TaskCard.vue';
 import Draggable from 'vuedraggable';
 import { useTaskStore } from '../stores/taskstore';
