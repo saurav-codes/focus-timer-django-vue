@@ -172,6 +172,8 @@
   --popper-theme-text-color: var(--color-text-selected);
 
   --fc-page-bg-color: transparent;
+  /* Shadow for integration sidebar separation */
+  --integration-sidebar-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Hide un-neccessary headers of full */
@@ -185,6 +187,8 @@
 
 /* Dark theme overrides */
 .dark {
+  /* Dark mode override for integration sidebar shadow - reduced glow */
+  --integration-sidebar-shadow: -2px 0 3px rgba(255, 255, 255, 0.05);
   /* Primary colors - Enhanced contrast for dark mode */
   --color-primary: #6366f1;
   --color-primary-light: #818cf8;

@@ -371,25 +371,40 @@ const calendarOptions = ref({
   flex: 1;
 }
 
+/* Styled header for calendar integration with improved spacing and separation */
 .integration-header {
-  margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
-  padding-left: 0.4rem;
-  padding-right: 0.4rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1rem;
 }
 
+/* Group title and date vertically */
+.left-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Title with icon aligned */
 .integration-header h3 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text, #cdd6f4);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
-.date-display {
-  font-size: 14px;
-  color: var(--color-text-secondary, #a6adc8);
+/* Secondary date label */
+.integration-header .date-display {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
 }
+
 .google-calendar-connect {
   background-color: var(--color-background);
   border-radius: 0.5rem;
@@ -435,7 +450,7 @@ const calendarOptions = ref({
 
 .connect-button, .disconnect-button {
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-text-secondary);
   border: none;
   border-radius: 0.375rem;
   padding: 0.75rem 1.5rem;
@@ -462,6 +477,7 @@ const calendarOptions = ref({
 
 .disconnect-button:hover {
   background-color: var(--color-error-dark, #dc2626);
+  color: white;
 }
 
 /* Event Popover Styles */
@@ -540,7 +556,7 @@ const calendarOptions = ref({
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 9;
+  z-index: 10;
 }
 
 .disabled-div {

@@ -103,6 +103,7 @@ const handleintegrationSidebarToggle = () => {
   display: flex;
   height: 100%;
   background-color: var(--color-background-secondary, #1e1e2e);
+  box-shadow: var(--integration-sidebar-shadow);
 }
 
 .integration-icons {
@@ -160,8 +161,11 @@ const handleintegrationSidebarToggle = () => {
 }
 
 .integration-icon-btn.active {
-  background-color: var(--color-primary-light, #45475a);
-  color: var(--color-primary, #89b4fa);
+  /* High-contrast background and icon for selected state */
+  background-color: var(--color-primary);
+  color: var(--color-text-selected);
+  /* Add a subtle ring to highlight selection */
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .add-integration {
