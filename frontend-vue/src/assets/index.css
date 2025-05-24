@@ -1,5 +1,9 @@
 /* Base theme variables */
 :root {
+  /* Primary fonts */
+  --font-primary: var(--font-family-sans);
+  --font-heading: var(--font-family-sans);
+
   /* Primary colors - Enhanced contrast indigo blue */
   --color-primary: #4338ca;
   --color-primary-light: #4f46e5;
@@ -241,7 +245,7 @@ body {
   color: var(--color-text-primary);
 
   /* fonts */
-  font-family: var(--font-family-sans);
+  font-family: var(--font-primary);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
@@ -364,4 +368,65 @@ body {
 
 .tag-pink {
   background-color: #ec4899;
+}
+
+/* Theme variable bundles */
+.theme-minecraft {
+  /* Typography overrides */
+  --font-primary: 'JetBrains Mono', monospace;
+  --font-heading: 'Press Start 2P', cursive;
+  /* Hacker-green pixelated theme */
+  --color-background: #1A1A1A;
+  --color-background-secondary: #2A2A2A;
+  --color-background-tertiary: #3A3A3A;
+  --color-text-primary: #E6E6E6;
+  --color-text-secondary: #C0C0C0;
+  --color-text-tertiary: #A0A0A0;
+  --color-border: #3A3A3A;
+  --color-primary: #39FF14;
+  --color-primary-light: #1EFF1E;
+  --color-primary-dark: #00CC00;
+  --color-secondary: #39FF14;
+}
+
+.theme-notion {
+  /* Typography overrides */
+  --font-primary: 'Inter', sans-serif;
+  --font-heading: 'Shadows Into Light', cursive;
+  /* Notion-style doodle theme */
+  --color-background: #F8F9FA;
+  --color-background-secondary: #FFFFFF;
+  --color-background-tertiary: #E0E0E0;
+  --color-text-primary: #202124;
+  --color-text-secondary: #5F6368;
+  --color-text-tertiary: #80868B;
+  --color-border: #DADCE0;
+  --color-primary: #5F83F0;
+  --color-primary-light: #A0BFFC;
+  --color-primary-dark: #3E5CC9;
+  --color-secondary: #5F83F0;
+}
+
+.theme-zed {
+  /* Zed theme with warm gold accents */
+  /* Uses default typography */
+  --color-background: #0E0E12;
+  --color-background-secondary: #27272A;
+  --color-background-tertiary: #3A3A3D;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #CCCCCC;
+  --color-text-tertiary: #888888;
+  --color-border: #3A3A3D;
+  --color-primary: #FFB800;
+  --color-primary-light: #FFD633;
+  --color-primary-dark: #E5A500;
+  --color-secondary: #FFB800;
+}
+
+/* Apply typography globally */
+body {
+  font-family: var(--font-primary);
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }
