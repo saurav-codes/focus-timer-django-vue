@@ -114,7 +114,7 @@ const addTask = async () => {
       tags: [],
       status: 'BRAINDUMP',
       user: authStore.userData.id,
-      project: selectedProjectId.value, // Add project ID if selected
+      project_id: selectedProjectId.value, // Add project ID if selected
     };
 
     // Add the task to the brain dump tasks (optimistic update)
@@ -126,8 +126,10 @@ const addTask = async () => {
     // Create task in backend
     const { data } = await taskStore.createTask(newTask);
 
-    // Update task ID with the one from backend
-    taskStore.brainDumpTasks[0].id = data.id;
+    // remove first task from the list
+    taskStore.brainDumpTasks.shift();
+    // Add the new task from backend response
+    taskStore.brainDumpTasks.unshift(data);
 
     // Update task order
     taskStore.updateTaskOrder(taskStore.brainDumpTasks);

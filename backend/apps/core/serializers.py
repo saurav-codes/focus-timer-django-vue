@@ -17,6 +17,12 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField()
     duration_display = serializers.SerializerMethodField()
     project = ProjectSerializer(read_only=True)
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        source='project',
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Task
