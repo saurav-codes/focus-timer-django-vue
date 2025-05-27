@@ -19,7 +19,7 @@ export const useCalendarStore = defineStore('calendar', {
         return this.isGoogleConnected;
       } catch (error) {
         console.error('Error checking Google connection:', error);
-        this.error("Error checking Google connection")
+        this.error = "Error checking Google connection"
         this.isGoogleConnected = false;
         return false;
       } finally {

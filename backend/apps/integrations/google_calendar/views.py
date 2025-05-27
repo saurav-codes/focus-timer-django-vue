@@ -26,13 +26,16 @@ def check_google_connection(request):
     """Check if the user has connected their Google Calendar."""
     try:
         credentials_instance = GoogleCalendarCredentials.objects.filter(user=request.user).first()
-        credentials_data = credentials_instance.get_credentials()
-        if isinstance(credentials_data, dict):
-            return Response(credentials_data, status=401)
+        if credentials_instance:
+            credentials_data = credentials_instance.get_credentials()
+            if isinstance(credentials_data, dict):
+                return Response({"connected": True}, status=200)
+        else:
+            return Response({
+                'connected': False,
+                'error': 'Google Calendar not connected'
+            }, status=404)
 
-        return Response({
-            'connected': True
-        })
     except Exception as e:
         logger.error(f"Error checking Google connection: {str(e)}")
         return Response({
