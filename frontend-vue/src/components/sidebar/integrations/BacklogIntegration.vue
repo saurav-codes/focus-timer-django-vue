@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { Clock, Tag, Calendar } from 'lucide-vue-next';
 import Draggable from 'vuedraggable';
 import { useTaskStore } from '../../../stores/taskstore';
@@ -22,18 +22,6 @@ const getTagColor = (tagName) => {
   return colors[hash % colors.length];
 };
 
-// Initialize with empty array
-const localTasks = ref([]);
-
-// Watch for changes to taskStore.backlogs and update localTasks
-watch(() => taskStore.backlogs, (newTasks) => {
-  // Create a deep copy of the tasks to avoid reference issues
-  localTasks.value = JSON.parse(JSON.stringify(newTasks));
-  localTasks.value.sort((a, b) => {
-    return a.order - b.order;
-  });
-}, { immediate: true, deep: true }); // immediate: true makes it run on component mount
-
 async function handleTaskDroppedToBacklog({ added, moved }) {
   // Handle when a task is added to the backlog list
   if (added) {
@@ -41,17 +29,17 @@ async function handleTaskDroppedToBacklog({ added, moved }) {
     // Update the task with backlog status
     element.status = "BACKLOG";
     await taskStore.updateTask(element);
-    await taskStore.updateTaskOrder(localTasks.value);
+    await taskStore.updateTaskOrder(taskStore.backlogs);
   }
 
   // If tasks are reordered within the backlog list
   if (moved) {
-    await taskStore.updateTaskOrder(localTasks.value);
+    await taskStore.updateTaskOrder(taskStore.backlogs);
   }
 }
 
 const backlogCount = computed(() => {
-  return localTasks.value.length;
+  return taskStore.backlogs.length;
 });
 
 
@@ -68,7 +56,7 @@ const backlogCount = computed(() => {
 
     <div class="backlog-list">
       <Draggable
-        v-model="localTasks"
+        v-model="taskStore.backlogs"
         drag-class="dragging"
         ghost-class="ghost-card"
         class="backlog-tasks-list"
@@ -105,8 +93,8 @@ const backlogCount = computed(() => {
           </div>
         </template>
       </Draggable>
-      
-      <div v-if="localTasks.length === 0" class="no-backlog">
+
+      <div v-if="backlogCount === 0" class="no-backlog">
         No backlog items found
       </div>
     </div>
