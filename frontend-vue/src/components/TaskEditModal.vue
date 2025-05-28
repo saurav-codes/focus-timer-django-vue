@@ -202,8 +202,7 @@ onUnmounted(() => {
             <label class="form-label">Project</label>
             <div class="project-selector">
               <ProjectDropdownPopup
-                :project-id="editedTask.project.id"
-                :project-title="editedTask.project.title"
+                :project="editedTask.project"
                 @project-selected="assignProject" />
             </div>
           </div>

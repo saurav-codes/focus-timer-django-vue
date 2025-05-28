@@ -8,13 +8,9 @@ import { useFloating, autoUpdate} from '@floating-ui/vue';
 
 
 const props = defineProps({
-  projectId: {
-    type: Number,
-    default: null
-  },
-  projectTitle: {
-    type: String,
-    default: null
+  project: {
+    type: Object,
+    default: () => ({ id: null, title: null })
   }
 });
 
@@ -45,9 +41,9 @@ const { floatingStyles: projectFloatingStyles } = useFloating(
 const newProjectTitle = ref('');
 const isCreatingNew = ref(false);
 // id to send to the backend
-const selectedProjectId = ref(props.projectId);
+const selectedProjectId = ref(props.project?.id || null);
 // title to display in the button
-const selectedProjectTitle = ref(props.projectTitle);
+const selectedProjectTitle = ref(props.project?.title || null);
 
 // close popup
 const closePopup = () => {
