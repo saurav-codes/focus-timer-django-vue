@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { CheckCircle, Calendar, Tag, Clock, CircleDashed, LucideListCheck } from 'lucide-vue-next';
 import Draggable from 'vuedraggable';
 import { useTaskStore } from '../../../stores/taskstore';
@@ -22,18 +22,6 @@ const getTagColor = (tagName) => {
   return colors[hash % colors.length];
 };
 
-// Initialize with empty array
-const localTasks = ref([]);
-
-// Watch for changes to taskStore.archivedTasks and update localTasks
-watch(() => taskStore.archivedTasks, (newTasks) => {
-  // Create a deep copy of the tasks to avoid reference issues
-  localTasks.value = JSON.parse(JSON.stringify(newTasks));
-  localTasks.value.sort((a, b) => {
-    return a.order - b.order;
-  });
-}, { immediate: true, deep: true }); // immediate: true makes it run on component mount
-
 async function handleTaskDroppedToArchived({ added, moved }) {
   // Handle when a task is added to the archived list
   if (added) {
@@ -41,17 +29,17 @@ async function handleTaskDroppedToArchived({ added, moved }) {
     // Update the task with archived status
     element.status = "ARCHIVED";
     await taskStore.updateTask(element);
-    await taskStore.updateTaskOrder(localTasks.value);
+    await taskStore.updateTaskOrder(taskStore.archivedTasks);
   }
 
   // If tasks are reordered within the archived list
   if (moved) {
-    await taskStore.updateTaskOrder(localTasks.value);
+    await taskStore.updateTaskOrder(taskStore.archivedTasks);
   }
 }
 
 const completedTasksCount = computed(() => {
-  return localTasks.value.filter(task => task.is_completed).length;
+  return taskStore.archivedTasks.filter(task => task.is_completed)?.length;
 });
 </script>
 
@@ -72,7 +60,7 @@ const completedTasksCount = computed(() => {
       class="archived-list">
       <div class="archived-group">
         <Draggable
-          v-model="localTasks"
+          v-model="taskStore.archivedTasks"
           drag-class="dragging"
           ghost-class="ghost-card"
           class="archived-tasks-list"
@@ -120,7 +108,7 @@ const completedTasksCount = computed(() => {
         </Draggable>
       </div>
 
-      <div v-if="localTasks.length === 0" class="no-archived">
+      <div v-if="completedTasksCount === 0" class="no-archived">
         No archived tasks found
       </div>
     </div>
