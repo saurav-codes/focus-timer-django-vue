@@ -18,8 +18,8 @@ export const useCalendarStore = defineStore('calendar', {
         this.isGoogleConnected = response.data.connected;
         return this.isGoogleConnected;
       } catch (error) {
-        console.error('Error checking Google connection:', error);
-        this.error = "Error checking Google connection"
+        // Set error message with details if available
+        this.error = error.response?.data?.error || "Error checking Google connection";
         this.isGoogleConnected = false;
         return false;
       } finally {
@@ -34,8 +34,8 @@ export const useCalendarStore = defineStore('calendar', {
         // Redirect to Google's authorization page
         window.location.href = response.data.auth_url;
       } catch (error) {
-        console.error('Error starting Google auth:', error);
-        this.error = 'Failed to connect to Google Calendar';
+        // Handle auth error with specific details if available
+        this.error = error.response?.data?.error || 'Failed to connect to Google Calendar';
       } finally {
         this.isLoading = false;
       }
@@ -50,8 +50,8 @@ export const useCalendarStore = defineStore('calendar', {
         this.events = response.data;
         return this.events;
       } catch (error) {
-        console.error('Error fetching events:', error);
-        this.error = 'Failed to fetch calendar events';
+        // Update error state with specific details if available
+        this.error = error.response?.data?.error || 'Failed to fetch calendar events';
         return [];
       } finally {
         this.isLoading = false;
@@ -66,8 +66,8 @@ export const useCalendarStore = defineStore('calendar', {
         this.events = [];
         return true;
       } catch (error) {
-        console.error('Error disconnecting Google Calendar:', error);
-        this.error = 'Failed to disconnect Google Calendar';
+        // Update error state with specific details if available
+        this.error = error.response?.data?.error || 'Failed to disconnect Google Calendar';
         return false;
       } finally {
         this.isLoading = false;
@@ -76,16 +76,23 @@ export const useCalendarStore = defineStore('calendar', {
     async updateGoogleCalendarEvent(eventId, updateData) {
       const authStore = useAuthStore();
       try {
-        this.loading = true
-        await authStore.axios_instance.put(`api/gcalendar/events/${eventId}/`, updateData)
-        return true
-      } catch (error ) {
-        console.log("error came while updating google cal event, ", error)
-        console.log("the eventId was - ", eventId)
-        this.error = error.response.data.error
-        return false
+        this.isLoading = true;
+        // Ensure the updateData contains all required fields in the correct format
+        // The API expects specific format for updating Google Calendar events
+
+        // Make the API call to update the event
+        await authStore.axios_instance.put(`api/gcalendar/events/${eventId}/`, updateData);
+        return true;
+      } catch (error) {
+        // Handle error and provide feedback
+        if (error.response && error.response.data) {
+          this.error = error.response.data.error || 'Failed to update Google Calendar event';
+        } else {
+          this.error = 'Network error while updating event';
+        }
+        return false;
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     }
   }
