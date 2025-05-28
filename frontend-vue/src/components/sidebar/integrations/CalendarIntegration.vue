@@ -449,8 +449,8 @@ const calendarOptions = ref({
 }
 
 .connect-button, .disconnect-button {
-  background-color: var(--color-primary);
-  color: var(--color-text-secondary);
+  background-color: var(--color-background-tertiary);
+  color: var(--color-text-primary);
   border: none;
   border-radius: 0.375rem;
   padding: 0.75rem 1.5rem;
@@ -460,7 +460,8 @@ const calendarOptions = ref({
 }
 
 .connect-button:hover, .disconnect-button:hover {
-  background-color: var(--color-primary-dark);
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .connect-button:disabled {
