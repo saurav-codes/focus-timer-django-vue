@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { X, Plus, Clock } from 'lucide-vue-next';
+import { X, Plus, Clock,PlusIcon } from 'lucide-vue-next';
 import { useTaskStore } from '../stores/taskstore';
 import { useAuthStore } from '../stores/authStore';
 import { onKeyStroke } from '@vueuse/core';
@@ -114,9 +114,10 @@ const addTask = async () => {
       tags: [],
       status: 'BRAINDUMP',
       user: authStore.userData.id,
-      project_id: selectedProjectId.value, // Add project ID if selected
     };
-
+    if (selectedProjectId.value) {
+      newTask.project_id = selectedProjectId.value;
+    }
     // Add the task to the brain dump tasks (optimistic update)
     taskStore.brainDumpTasks.unshift(newTask);
 
@@ -135,6 +136,7 @@ const addTask = async () => {
     taskStore.updateTaskOrder(taskStore.brainDumpTasks);
   } else {
     // Close popup if task is empty
+    console.log('Task title cannot be empty');
     emit('close');
   }
 };
@@ -202,6 +204,10 @@ onKeyStroke('Escape', () => {
 
             <!-- Project dropdown popup portal -->
             <ProjectDropdownPopup @project-selected="assignProject" />
+            <button class="create-task-button key" @click.stop="addTask">
+              Create Task
+              <PlusIcon size="16" />
+            </button>
           </div>
 
           <div class="shortcuts-hint">
@@ -349,10 +355,18 @@ onKeyStroke('Escape', () => {
   transition: all 0.2s;
 }
 
-.duration-button:hover {
+.duration-button:hover, .create-task-button:hover {
   background-color: var(--color-background-tertiary);
   border-color: var(--color-primary);
   color: var(--color-text-primary);
+}
+
+.create-task-button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  cursor: pointer;
 }
 
 .shortcuts-hint {
