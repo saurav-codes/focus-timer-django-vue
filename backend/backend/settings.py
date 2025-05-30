@@ -31,10 +31,8 @@ environ.Env.read_env(env_file_path)
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
-
-ALLOWED_HOSTS = []
-
+DEBUG = env('DEBUG', cast=bool, default=False)
+print(f"DEBUG mode is set to: {DEBUG}")
 
 # Application definition
 
@@ -190,9 +188,11 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
 
+
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:8000", "http://localhost:61883"]  # We add your frontend URL here.
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://localhost:8000', 'http://localhost:61883']  # We add your frontend URL here.
+CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS', cast=list)
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS', cast=list)
+ALLOWED_HOSTS = env('ALLOWED_HOSTS', cast=list)
 SESSION_COOKIE_SAMESITE = 'None'  # With HTTPS in production
 SESSION_COOKIE_SECURE = True  # Required with SameSite=None
 CSRF_COOKIE_SAMESITE = 'None'
