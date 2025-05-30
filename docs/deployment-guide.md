@@ -396,7 +396,8 @@ sudo certbot --nginx -d tymr.online -d www.tymr.online
 ```bash
 # Ensure Nginx can read static files
 sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/frontend-vue/dist
-sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/static
+sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/static
+sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/media
 sudo chmod -R o+x /home/focususer/focus-timer-django-vue/frontend-vue
 sudo chmod -R o+x /home/focususer/focus-timer-django-vue
 sudo chmod -R o+x /home/focususer
