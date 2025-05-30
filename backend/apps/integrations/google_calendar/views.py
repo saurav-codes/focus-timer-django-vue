@@ -29,7 +29,10 @@ def check_google_connection(request):
         if credentials_instance:
             credentials_data = credentials_instance.get_credentials()
             if isinstance(credentials_data, dict):
-                return Response({"connected": True}, status=200)
+                return Response(credentials_data, status=400)
+            return Response({
+                'connected': True
+            }, status=200)
         else:
             return Response({
                 'connected': False,
