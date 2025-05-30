@@ -98,3 +98,29 @@ def archive_old_tasks():
     print(f"Archived {count} old tasks")
     return f"Archived {count} old tasks"
 
+
+@app.task(name="move_old_tasks_to_backlogs")
+def move_old_tasks_to_backlogs():
+    """
+    Moves tasks that haven't been updated in 15 days to the backlogs.
+    This task runs daily at midnight.
+    """
+    print("Moving old tasks to backlogs...")
+
+    # Calculate the date 15 days ago
+    fifteen_days_ago = timezone.now() - datetime.timedelta(days=15)
+
+    # Find tasks that haven't been updated in 15 days and aren't already archived
+    old_tasks = Task.objects.filter(
+        updated_at__lt=fifteen_days_ago,
+        is_completed=False,
+    ).exclude(status=Task.ARCHIVED)
+
+    count = 0
+    for task in old_tasks:
+        task.status = Task.BACKLOG
+        task.save(update_fields=['status'])
+        count += 1
+
+    print(f"Moved {count} old tasks to backlogs")
+    return f"Moved {count} old tasks to backlogs"
