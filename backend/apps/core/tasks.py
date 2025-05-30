@@ -124,3 +124,30 @@ def move_old_tasks_to_backlogs():
 
     print(f"Moved {count} old tasks to backlogs")
     return f"Moved {count} old tasks to backlogs"
+
+
+@app.task(name="move_old_tasks_to_backlogs")
+def move_carry_over_tasks():
+    """
+    Move yesterday's tasks to today's date.
+    """
+    print("Moving carry-over tasks...")
+
+    # Calculate the date for yesterday
+    yesterday = timezone.now() - datetime.timedelta(days=1)
+
+    # Find tasks that were due yesterday and aren't already completed
+    old_tasks = Task.objects.filter(
+        status=Task.ON_BOARD,
+        is_completed=False,
+        column_date__date=yesterday.date(),
+    ).exclude(status=Task.ARCHIVED)
+
+    count = 0
+    for task in old_tasks:
+        task.column_date = timezone.now()
+        task.save(update_fields=['column_date'])
+        count += 1
+
+    print(f"Moved {count} old tasks to today's date")
+    return f"Moved {count} old tasks to today's date"
