@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '../stores/authStore';
 import { onMounted } from 'vue';
+import { Brain, BarChart2, Clock, Repeat, LogIn, UserPlus, ArrowRight, ChevronDown, Twitter } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
@@ -43,13 +44,18 @@ const goToRegister = () => {
         </div>
         <nav class="navigation">
           <div class="nav-links">
-            <a href="#features" class="nav-link">Features</a>
+            <a href="#features" class="nav-link">
+              <ChevronDown size="16" class="link-icon" />
+              Features
+            </a>
           </div>
           <div class="auth-links">
             <button class="login-btn" @click="goToLogin">
+              <LogIn size="16" class="button-icon" />
               Log In
             </button>
             <button class="signup-btn" @click="goToRegister">
+              <UserPlus size="16" class="button-icon" />
               Get Started
             </button>
           </div>
@@ -68,6 +74,7 @@ const goToRegister = () => {
           </p>
           <div class="hero-cta">
             <button class="cta-button" @click="goToRegister">
+              <ArrowRight size="16" class="button-icon" />
               Improve your Productivity
             </button>
           </div>
@@ -94,7 +101,7 @@ const goToRegister = () => {
         <div class="feature-grid">
           <div class="feature-card">
             <div class="feature-icon">
-              🧠
+              <Brain size="32" />
             </div>
             <h3 class="feature-title">
               Brain Dump
@@ -105,7 +112,7 @@ const goToRegister = () => {
           </div>
           <div class="feature-card">
             <div class="feature-icon">
-              📊
+              <BarChart2 size="32" />
             </div>
             <h3 class="feature-title">
               Visual Workflow
@@ -116,7 +123,7 @@ const goToRegister = () => {
           </div>
           <div class="feature-card">
             <div class="feature-icon">
-              ⏱️
+              <Clock size="32" />
             </div>
             <h3 class="feature-title">
               Time Tracking
@@ -127,7 +134,7 @@ const goToRegister = () => {
           </div>
           <div class="feature-card">
             <div class="feature-icon">
-              🔄
+              <Repeat size="32" />
             </div>
             <h3 class="feature-title">
               Seamless Integrations
@@ -196,7 +203,10 @@ const goToRegister = () => {
 
     <footer class="footer">
       <div class="footer-bottom">
-        <a href="https://x.com/saurav__codes" class="social-link">Contact on Twitter</a>
+        <a href="https://x.com/saurav__codes" class="social-link">
+          <Twitter size="16" class="link-icon" />
+          Contact on Twitter
+        </a>
         <p class="copyright">
           © 2025 FocusTimer. All rights reserved.
         </p>
