@@ -170,19 +170,12 @@ sudo apt install -y git build-essential curl libpq-dev
 sudo apt install -y postgresql postgresql-contrib
 
 # Create database and user
-sudo -u postgres psql <<EOF
-CREATE USER focusdbuser WITH PASSWORD 'StrongPassw0rd';
-CREATE DATABASE focusdb OWNER focusdbuser;
-\q
-EOF
+check ./setup.md for PostgreSQL setup
 
 # Secure PostgreSQL: only listen locally and enforce password auth
 sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/" /etc/postgresql/*/main/postgresql.conf
-sudo tee -a /etc/postgresql/*/main/pg_hba.conf <<EOF
 # Only allow local socket and password auth for TCP
-local   all             all                                     peer
 host    all             all             127.0.0.1/32            md5
-EOF
 sudo systemctl restart postgresql
 ```
 *Brief:* PostgreSQL is reliable and scalable for production.
@@ -190,7 +183,7 @@ sudo systemctl restart postgresql
 ## 4. Redis for Celery
 ```bash
 sudo apt install -y redis-server
-sudo systemctl enable --now redis
+sudo systemctl enable --now redis-server.service
 
 # Secure Redis: bind only to localhost, enable protected mode, optional password
 sudo sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf
@@ -203,9 +196,7 @@ sudo systemctl restart redis
 ## 5. Codebase Deployment
 ### 5.1 Clone Repository
 ```bash
-# Switch to unprivileged user
-sudo su - focususer
-cd ~
+# Switch to DIR where you want to keep your project 
 git clone https://github.com/your-repo/focus-timer-django-vue.git
 cd focus-timer-django-vue
 ```
@@ -214,18 +205,8 @@ cd focus-timer-django-vue
 *Why?* Keep secrets out of source code.
 ```bash
 # In project root, create .env
-cat > .env <<EOF
-SECRET_KEY=your_django_secret_key
-DEBUG=False
-DATABASE_NAME=focusdb
-DATABASE_USER=focusdbuser
-DATABASE_PASSWORD=StrongPassw0rd
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=5432
-ALLOWED_HOSTS=your.domain.com
-ALLOWED_ORIGINS=https://your.domain.com
-EOF
-
+touch .env
+# Populate .env with necessary variables
 # Secure .env file permissions
 chmod 600 .env
 ```
@@ -235,13 +216,16 @@ chmod 600 .env
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip setuptools wheel
+pip install uv
 pip install -r requirements.txt
 ```
 
 ## 7. Frontend Build (Vue.js)
 ```bash
 cd ../frontend-vue
+# install node
+curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s 22
+
 npm ci
 npm run build
 ```
@@ -269,7 +253,7 @@ After=network.target
 User=focususer
 Group=www-data
 WorkingDirectory=/home/focususer/focus-timer-django-vue/backend
-ExecStart=/home/focususer/focus-timer-django-vue/backend/.venv/bin/gunicorn \
+ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/gunicorn \
   backend.wsgi:application \
   --bind 127.0.0.1:8000 \
   --workers 4
@@ -294,13 +278,13 @@ Description=Celery worker service for Focus Timer
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
 User=focususer
 Group=www-data
 WorkingDirectory=/home/focususer/focus-timer-django-vue/backend
 EnvironmentFile=/home/focususer/focus-timer-django-vue/.env
-ExecStart=/home/focususer/focus-timer-django-vue/backend/.venv/bin/celery -A backend worker \
-  --loglevel=info --detach
+ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/celery -A backend worker \
+  --loglevel=info 
 Restart=on-failure
 
 [Install]
@@ -319,8 +303,9 @@ User=focususer
 Group=www-data
 WorkingDirectory=/home/focususer/focus-timer-django-vue/backend
 EnvironmentFile=/home/focususer/focus-timer-django-vue/.env
-ExecStart=/home/focususer/focus-timer-django-vue/backend/.venv/bin/celery -A backend beat \
-  --loglevel=info --detach
+ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/celery -A backend beat \
+  --loglevel=info  \
+  --scheduler django_celery_beat.schedulers:DatabaseScheduler
 Restart=on-failure
 
 [Install]
@@ -342,7 +327,7 @@ Install and configure `/etc/nginx/sites-available/focus-timer`:
 ```nginx
 server {
     listen 80;
-    server_name your.domain.com;
+    server_name tymr.online www.tymr.online;
 
     root /home/focususer/focus-timer-django-vue/frontend-vue/dist;
     index index.html;
@@ -351,11 +336,12 @@ server {
         try_files $uri $uri/ /index.html;
     }
     location /static/ {
-        alias /home/focususer/focus-timer-django-vue/backend/staticfiles/;
+        alias /home/focususer/focus-timer-django-vue/backend/static/;
     }
     location /api/    { proxy_pass http://127.0.0.1:8000/api/; include proxy_params; }
     location /auth/   { proxy_pass http://127.0.0.1:8000/auth/; include proxy_params; }
     location /admin/  { proxy_pass http://127.0.0.1:8000/admin/; include proxy_params; }
+
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -368,16 +354,6 @@ Enable and reload:
 ```bash
 sudo ln -s /etc/nginx/sites-available/focus-timer /etc/nginx/sites-enabled/
 sudo nginx -t
-sudo systemctl reload nginx
-
-# HTTP to HTTPS redirect (optional if not handled by certbot)
-sudo tee /etc/nginx/sites-available/focus-timer-redirect <<EOF
-server {
-    listen 80;
-    server_name your.domain.com;
-    return 301 https://$host$request_uri;
-}
-EOF
 sudo ln -s /etc/nginx/sites-available/focus-timer-redirect /etc/nginx/sites-enabled/
 sudo systemctl reload nginx
 ```
@@ -389,7 +365,7 @@ sudo systemctl reload nginx
 ## 12. SSL/TLS with Let's Encrypt
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your.domain.com
+sudo certbot --nginx -d tymr.online -d www.tymr.online
 ```
 *Brief:* Provides free, auto-renewing certificates.
 
@@ -419,4 +395,31 @@ sudo certbot --nginx -d your.domain.com
 # Sample summary of key commands (omitted for brevity)
 ```
 
-*End of deployment guide.* 
+# Few helpful commands to restart services after deployment
+
+# 1. Reload all systemd unit files (after any edits)
+sudo systemctl daemon-reload
+
+# 2. Restart your Django app (Gunicorn)
+sudo systemctl restart gunicorn
+sudo systemctl status  gunicorn   # check exit status immediately
+journalctl     -u gunicorn -f     # live logs
+
+# 3. Restart Celery worker & beat
+sudo systemctl restart celery celery-beat
+sudo systemctl status  celery     # check worker status
+sudo systemctl status  celery-beat
+journalctl     -u celery   -f     # live worker logs
+journalctl     -u celery-beat -f  # live beat logs
+
+# 4. Restart Nginx (reverse proxy & static files)
+sudo systemctl restart nginx
+sudo systemctl status  nginx
+sudo journalctl -u nginx -f
+
+# 5. (Optional) Restart backing services
+sudo systemctl restart redis-server postgresql
+sudo systemctl status  redis-server postgresql
+sudo journalctl -u redis-server -f
+sudo journalctl -u postgresql  -f
+
