@@ -23,12 +23,24 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/authStore'
 
+import * as Sentry from "@sentry/vue";
+
+
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(router)
 app.use(pinia)
 app.use(autoAnimatePlugin)
+
+Sentry.init({
+  app,
+  dsn: "https://8e7633e4e6c341b176c2c416d0b5fde1@o4509411491577856.ingest.de.sentry.io/4509411497607248",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true
+});
+
 
 app.component("Popper", Popper);
 
