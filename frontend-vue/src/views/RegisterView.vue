@@ -83,10 +83,10 @@ const goToHome = () => {
 <template>
   <div class="register-container">
     <div class="register-card">
+      <button class="back-button" @click="goToHome">
+        ← Back to Home
+      </button>
       <div class="card-header">
-        <button class="back-button" @click="goToHome">
-          ← Back to Home
-        </button>
         <h1 class="title">
           Create your account
         </h1>
@@ -234,8 +234,6 @@ const goToHome = () => {
 
 .back-button {
   position: absolute;
-  left: 0;
-  top: 0;
   background: none;
   border: none;
   color: var(--color-text-tertiary);

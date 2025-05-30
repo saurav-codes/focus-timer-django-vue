@@ -39,10 +39,10 @@ const goToHome = () => {
 <template>
   <div class="login-container">
     <div class="login-card">
+      <button class="back-button" @click="goToHome">
+        ← Back to Home
+      </button>
       <div class="card-header">
-        <button class="back-button" @click="goToHome">
-          ← Back to Home
-        </button>
         <h1 class="title">
           Log in to FocusTimer
         </h1>
@@ -142,8 +142,6 @@ const goToHome = () => {
 
 .back-button {
   position: absolute;
-  left: 0;
-  top: 0;
   background: none;
   border: none;
   color: var(--color-text-tertiary);
