@@ -203,7 +203,7 @@ const goToRegister = () => {
 
     <footer class="footer">
       <div class="footer-bottom">
-        <a href="https://x.com/saurav__codes" class="social-link">
+        <a href="https://x.com/saurav__codes" target="_blank" class="social-link">
           <Twitter size="16" class="link-icon" />
           Contact on Twitter
         </a>
