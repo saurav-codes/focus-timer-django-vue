@@ -220,10 +220,10 @@ GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
 GOOGLE_REDIRECT_URI = env('GOOGLE_REDIRECT_URI', default='http://localhost:8000/api/gcalendar/auth/callback/')
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
 
-
-sentry_sdk.init(
-    dsn="https://07ef3df6aac52b0b465cd98c5b0042f6@o4509411491577856.ingest.de.sentry.io/4509411656663120",
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
+if not DEBUG:
+    sentry_sdk.init(
+        dsn="https://07ef3df6aac52b0b465cd98c5b0042f6@o4509411491577856.ingest.de.sentry.io/4509411656663120",
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )
