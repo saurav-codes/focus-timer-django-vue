@@ -3,6 +3,8 @@
 # Script to restart all Focus Timer services
 
 set -euo pipefail
+echo "Building frontend..."
+( cd frontend-vue && npm ci && npm run build )
 
 echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
