@@ -6,7 +6,7 @@ import { useLocalStorage } from '@vueuse/core';
 const userDataLocalStorage = useLocalStorage('userData', {});
 const isAuthenticatedLocalStorage = useLocalStorage('isAuthenticated', false);
 // const BACKEND_BASE_URL = 'http://localhost:8000/'
-const BACKEND_BASE_URL = 'http://tymr.online/'
+const BACKEND_BASE_URL = 'https://tymr.online/'
 
 // setting this to allow cookies to be set by
 // backend using response headers
