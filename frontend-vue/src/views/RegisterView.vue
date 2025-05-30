@@ -178,7 +178,7 @@ const goToHome = () => {
             type="checkbox"
             required>
           <label for="agree-terms">
-            I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
+            I agree to the <a href="/terms-and-conditions" target="_blank" class="terms-link">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="terms-link">Privacy Policy</a>
           </label>
         </div>
 

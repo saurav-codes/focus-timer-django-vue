@@ -6,6 +6,8 @@ import SettingsView from '../views/Settings.vue'
 import HomePage from '../views/HomePage.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import PrivacyPolicyView from '../views/PrivacyPolicyView.vue'
+import TermsConditionsView from '../views/TermsConditionsView.vue'
 import { useAuthStore } from '../stores/authStore'
 
 const router = createRouter({
@@ -25,6 +27,16 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView
+    },
+    {
+      path: '/privacy-policy',
+      name: 'privacy-policy',
+      component: PrivacyPolicyView
+    },
+    {
+      path: '/terms-and-conditions',
+      name: 'terms-and-conditions',
+      component: TermsConditionsView
     },
     {
       path: '/kanban-planner',
