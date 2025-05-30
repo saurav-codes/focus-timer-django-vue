@@ -395,11 +395,13 @@ sudo certbot --nginx -d tymr.online -d www.tymr.online
 *Why?* Nginx needs access to static files and directories.
 ```bash
 # Ensure Nginx can read static files
+sudo chmod o+x /home/focususer
 sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/frontend-vue/dist
 sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/static
 sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/media
 sudo chmod -R o+x /home/focususer/focus-timer-django-vue/frontend-vue
-sudo chmod -R o+x /home/focususer/focus-timer-django-vue
+chmod +x /home/focususer/focus-timer-django-vue/.venv/bin/gunicorn
+chmod +x /home/focususer/focus-timer-django-vue/.venv/bin/celery
 chmod u+x restart_all.sh
 ```
 
