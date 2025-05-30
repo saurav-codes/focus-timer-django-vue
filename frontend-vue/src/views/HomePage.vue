@@ -37,15 +37,21 @@ const goToRegister = () => {
     <header class="header">
       <div class="container">
         <div class="logo-container">
-          <h1 class="logo">Focus<span>Timer</span></h1>
+          <h1 class="logo">
+            Focus<span>Timer</span>
+          </h1>
         </div>
         <nav class="navigation">
           <div class="nav-links">
             <a href="#features" class="nav-link">Features</a>
           </div>
           <div class="auth-links">
-            <button @click="goToLogin" class="login-btn">Log In</button>
-            <button @click="goToRegister" class="signup-btn">Get Started</button>
+            <button class="login-btn" @click="goToLogin">
+              Log In
+            </button>
+            <button class="signup-btn" @click="goToRegister">
+              Get Started
+            </button>
           </div>
         </nav>
       </div>
@@ -54,48 +60,78 @@ const goToRegister = () => {
     <section class="hero">
       <div class="container">
         <div class="hero-content">
-          <h1 class="hero-title">Plan and Focus Your Day</h1>
+          <h1 class="hero-title">
+            Plan and Focus Your Day
+          </h1>
           <p class="hero-subtitle">
             Create, organize, and track your tasks effortlessly.
           </p>
           <div class="hero-cta">
-            <button @click="goToRegister" class="cta-button">Improve your Productivity</button>
+            <button class="cta-button" @click="goToRegister">
+              Improve your Productivity
+            </button>
           </div>
         </div>
         <div class="hero-image">
-          <img src="@/assets/hero-image.svg" alt="FocusTimer app interface" class="hero-img placeholder" />
+          <div class="video-wrapper">
+            <video
+              src="@/assets/demo.mp4"
+              autoplay
+              loop
+              muted
+              playsinline
+              class="hero-img placeholder" />
+          </div>
         </div>
       </div>
     </section>
 
     <section id="features" class="features">
       <div class="container">
-        <h2 class="section-title">Why choose FocusTimer?</h2>
+        <h2 class="section-title">
+          Why choose FocusTimer?
+        </h2>
         <div class="feature-grid">
           <div class="feature-card">
-            <div class="feature-icon">🧠</div>
-            <h3 class="feature-title">Brain Dump</h3>
+            <div class="feature-icon">
+              🧠
+            </div>
+            <h3 class="feature-title">
+              Brain Dump
+            </h3>
             <p class="feature-description">
               Quickly capture thoughts and tasks without disrupting your flow. Move seamlessly from ideas to organized plans.
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3 class="feature-title">Visual Workflow</h3>
+            <div class="feature-icon">
+              📊
+            </div>
+            <h3 class="feature-title">
+              Visual Workflow
+            </h3>
             <p class="feature-description">
               Intuitive kanban boards help you visualize your work across days, making prioritization effortless.
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">⏱️</div>
-            <h3 class="feature-title">Time Tracking</h3>
+            <div class="feature-icon">
+              ⏱️
+            </div>
+            <h3 class="feature-title">
+              Time Tracking
+            </h3>
             <p class="feature-description">
               Built-in time tracking helps you understand where your hours go and improve your time estimates.
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">🔄</div>
-            <h3 class="feature-title">Seamless Integrations</h3>
+            <div class="feature-icon">
+              🔄
+            </div>
+            <h3 class="feature-title">
+              Seamless Integrations
+            </h3>
             <p class="feature-description">
               Connect with your favorite tools and bring all your tasks into one unified workspace.
             </p>
@@ -106,32 +142,50 @@ const goToRegister = () => {
 
     <section class="how-it-works">
       <div class="container">
-        <h2 class="section-title">Your perfect day, every day</h2>
+        <h2 class="section-title">
+          Your perfect day, every day
+        </h2>
         <div class="steps">
           <div class="step">
-            <div class="step-number">1</div>
-            <h3 class="step-title">Capture</h3>
+            <div class="step-number">
+              1
+            </div>
+            <h3 class="step-title">
+              Capture
+            </h3>
             <p class="step-description">
               Use the Brain Dump to quickly capture all your tasks and ideas without interrupting your flow.
             </p>
           </div>
           <div class="step">
-            <div class="step-number">2</div>
-            <h3 class="step-title">Organize</h3>
+            <div class="step-number">
+              2
+            </div>
+            <h3 class="step-title">
+              Organize
+            </h3>
             <p class="step-description">
               Drag and drop tasks into your daily planner to create a realistic, achievable schedule.
             </p>
           </div>
           <div class="step">
-            <div class="step-number">3</div>
-            <h3 class="step-title">Focus</h3>
+            <div class="step-number">
+              3
+            </div>
+            <h3 class="step-title">
+              Focus
+            </h3>
             <p class="step-description">
               Work through your tasks with complete concentration, tracking time and progress as you go.
             </p>
           </div>
           <div class="step">
-            <div class="step-number">4</div>
-            <h3 class="step-title">Reflect</h3>
+            <div class="step-number">
+              4
+            </div>
+            <h3 class="step-title">
+              Reflect
+            </h3>
             <p class="step-description">
               Review your productivity patterns and continuously improve your focus and efficiency.
             </p>
@@ -143,7 +197,9 @@ const goToRegister = () => {
     <footer class="footer">
       <div class="footer-bottom">
         <a href="https://x.com/saurav__codes" class="social-link">Contact on Twitter</a>
-        <p class="copyright">© 2025 FocusTimer. All rights reserved.</p>
+        <p class="copyright">
+          © 2025 FocusTimer. All rights reserved.
+        </p>
       </div>
     </footer>
   </div>
