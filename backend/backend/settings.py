@@ -176,8 +176,6 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = env('ALLOWED_ORIGINS', cast=list)
-
 # For development only - for real email use proper settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
