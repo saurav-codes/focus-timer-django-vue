@@ -390,9 +390,16 @@ sudo certbot --nginx -d tymr.online -d www.tymr.online
   ```
 - Review logs, monitor disk and memory.
 
-## Appendix: Quick Command Summary
+
+## 16. Nginx permissions
+*Why?* Nginx needs access to static files and directories.
 ```bash
-# Sample summary of key commands (omitted for brevity)
+# Ensure Nginx can read static files
+sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/frontend-vue/dist
+sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/static
+sudo chmod -R o+x /home/focususer/focus-timer-django-vue/frontend-vue
+sudo chmod -R o+x /home/focususer/focus-timer-django-vue
+sudo chmod -R o+x /home/focususer
 ```
 
 # Few helpful commands to restart services after deployment
