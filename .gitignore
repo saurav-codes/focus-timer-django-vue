@@ -36,3 +36,6 @@
 
 *db.sqlite3*
 .windsurf/
+
+backend/static/
+backend/media/
