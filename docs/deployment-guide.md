@@ -41,6 +41,15 @@ This guide provides a secure, production-ready deployment process for the Focus 
 # Add a user, no password login, add to sudo group
 adduser --disabled-password --gecos "" focususer
 usermod -aG sudo focususer
+# Set up SSH access for the new user
+# Copy root's authorized keys to the new user
+mkdir -p /home/focususer/.ssh
+cp /root/.ssh/authorized_keys /home/focususer/.ssh/authorized_keys
+# Set ownership and permissions
+chown -R focususer:focususer /home/focususer/.ssh
+chmod 700 /home/focususer/.ssh
+chmod 600 /home/focususer/.ssh/authorized_keys
+
 ```
 **Explanation:**
 - `adduser`: Creates a new Linux user with default settings.
@@ -122,6 +131,7 @@ logpath = /var/log/auth.log
 EOF
 sudo systemctl restart fail2ban
 ```
+<!-- TODO: write Jail for own app and nginx -->
 **Explanation:**
 - `ufw default deny incoming`: Blocks all incoming traffic by default.
 - `ufw default allow outgoing`: Allows all outbound traffic.
