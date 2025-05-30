@@ -44,7 +44,7 @@ const goToHome = () => {
       </button>
       <div class="card-header">
         <h1 class="title">
-          Log in to FocusTimer
+          Log in to Tymr Online
         </h1>
         <p class="subtitle">
           Enter your credentials to access your account

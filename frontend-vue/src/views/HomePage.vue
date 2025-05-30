@@ -39,7 +39,7 @@ const goToRegister = () => {
       <div class="container">
         <div class="logo-container">
           <h1 class="logo">
-            Focus<span>Timer</span>
+            Tymr<span> Online</span>
           </h1>
         </div>
         <nav class="navigation">
@@ -96,7 +96,7 @@ const goToRegister = () => {
     <section id="features" class="features">
       <div class="container">
         <h2 class="section-title">
-          Why choose FocusTimer?
+          Why choose Tymr Online?
         </h2>
         <div class="feature-grid">
           <div class="feature-card">
@@ -208,7 +208,7 @@ const goToRegister = () => {
           Contact on Twitter
         </a>
         <p class="copyright">
-          © 2025 FocusTimer. All rights reserved.
+          © 2025 Tymr Online. All rights reserved.
         </p>
       </div>
     </footer>

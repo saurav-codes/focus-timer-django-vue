@@ -91,7 +91,7 @@ const goToHome = () => {
           Create your account
         </h1>
         <p class="subtitle">
-          Join FocusTimer
+          Join Tymr Online
         </p>
       </div>
 
