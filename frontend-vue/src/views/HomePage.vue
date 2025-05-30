@@ -42,11 +42,8 @@ const goToRegister = () => {
         <nav class="navigation">
           <div class="nav-links">
             <a href="#features" class="nav-link">Features</a>
-            <!-- Pricing link removed -->
-            <!-- Removed Testimonials -->
           </div>
           <div class="auth-links">
-            <!-- Updated links to use router navigation -->
             <button @click="goToLogin" class="login-btn">Log In</button>
             <button @click="goToRegister" class="signup-btn">Get Started</button>
           </div>
@@ -62,8 +59,7 @@ const goToRegister = () => {
             Create, organize, and track your tasks effortlessly.
           </p>
           <div class="hero-cta">
-            <button @click="goToRegister" class="cta-button">Try For Free</button>
-            <!-- Demo link removed -->
+            <button @click="goToRegister" class="cta-button">Improve your Productivity</button>
           </div>
         </div>
         <div class="hero-image">
@@ -144,35 +140,10 @@ const goToRegister = () => {
       </div>
     </section>
 
-    <!-- Testimonials section removed -->
-
-    <section id="pricing" class="pricing">
-      <div class="container">
-        <h2 class="section-title">Free Beta Access</h2>
-        <p class="hero-subtitle">
-          FocusTimer is completely free while in beta. Enjoy unlimited access to all features and help shape the product.
-        </p>
-        <div class="hero-cta">
-          <button @click="goToRegister" class="cta-button">Join the Free Beta</button>
-        </div>
-      </div>
-    </section>
-
-
     <footer class="footer">
-      <div class="container">
-        <div class="footer-grid">
-          <div class="footer-brand">
-            <h2 class="footer-logo">Focus<span>Timer</span></h2>
-            <p class="footer-tagline">Master your day, one task at a time</p>
-            <div class="contact-links">
-              <a href="https://x.com/saurav__codes" class="social-link">Contact on Twitter</a>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p class="copyright">© 2025 FocusTimer. All rights reserved.</p>
-        </div>
+      <div class="footer-bottom">
+        <a href="https://x.com/saurav__codes" class="social-link">Contact on Twitter</a>
+        <p class="copyright">© 2025 FocusTimer. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -562,31 +533,6 @@ const goToRegister = () => {
 
 .cta-button.large:hover {
   background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Footer */
-.footer {
-  background-color: var(--color-background-secondary);
-  padding: 5rem 0 2rem;
-  color: var(--color-text-secondary);
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 3rem;
-  margin-bottom: 3rem;
-}
-
-.footer-logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 0.75rem;
-}
-
-.footer-logo span {
-  color: var(--color-primary);
 }
 
 .footer-tagline {
