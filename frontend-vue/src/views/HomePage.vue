@@ -31,6 +31,9 @@ const goToRegister = () => {
 
 <template>
   <div class="homepage">
+    <div class="notification-banner">
+      Collaborative timer has been temporarily disabled. It will be added back soon.
+    </div>
     <header class="header">
       <div class="container">
         <div class="logo-container">
@@ -39,8 +42,8 @@ const goToRegister = () => {
         <nav class="navigation">
           <div class="nav-links">
             <a href="#features" class="nav-link">Features</a>
-            <a href="#pricing" class="nav-link">Pricing</a>
-            <a href="#testimonials" class="nav-link">Testimonials</a>
+            <!-- Pricing link removed -->
+            <!-- Removed Testimonials -->
           </div>
           <div class="auth-links">
             <!-- Updated links to use router navigation -->
@@ -54,13 +57,13 @@ const goToRegister = () => {
     <section class="hero">
       <div class="container">
         <div class="hero-content">
-          <h1 class="hero-title">Master Your Day, <br>One Task at a Time</h1>
+          <h1 class="hero-title">Plan and Focus Your Day</h1>
           <p class="hero-subtitle">
-            The all-in-one productivity platform that combines deep focus with intelligent planning to transform how you work.
+            Create, organize, and track your tasks effortlessly.
           </p>
           <div class="hero-cta">
             <button @click="goToRegister" class="cta-button">Try For Free</button>
-            <a href="#features" class="secondary-link">See how it works <span class="arrow">→</span></a>
+            <!-- Demo link removed -->
           </div>
         </div>
         <div class="hero-image">
@@ -141,101 +144,20 @@ const goToRegister = () => {
       </div>
     </section>
 
-    <section id="testimonials" class="testimonials">
-      <div class="container">
-        <h2 class="section-title">What our users say</h2>
-        <div class="testimonial-grid">
-          <div class="testimonial-card">
-            <p class="testimonial-text">
-              "FocusTimer has transformed my workday. The Brain Dump feature alone has saved me countless hours of mental overhead."
-            </p>
-            <div class="testimonial-author">
-              <img src="" alt="" class="author-img placeholder" />
-              <div class="author-info">
-                <p class="author-name">Alex Johnson</p>
-                <p class="author-role">Product Manager</p>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial-card">
-            <p class="testimonial-text">
-              "As a freelancer, I juggle multiple projects daily. FocusTimer helps me stay on track and deliver consistently."
-            </p>
-            <div class="testimonial-author">
-              <img src="" alt="" class="author-img placeholder" />
-              <div class="author-info">
-                <p class="author-name">Sarah Chen</p>
-                <p class="author-role">UX Designer</p>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial-card">
-            <p class="testimonial-text">
-              "The time tracking feature has been eye-opening. I now understand where my time goes and have doubled my productivity."
-            </p>
-            <div class="testimonial-author">
-              <img src="" alt="" class="author-img placeholder" />
-              <div class="author-info">
-                <p class="author-name">Michael Rivera</p>
-                <p class="author-role">Software Engineer</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- Testimonials section removed -->
 
     <section id="pricing" class="pricing">
       <div class="container">
-        <h2 class="section-title">Simple, transparent pricing</h2>
-        <div class="pricing-options">
-          <div class="pricing-card">
-            <h3 class="pricing-tier">Free</h3>
-            <p class="pricing-price">$0<span>/month</span></p>
-            <ul class="pricing-features">
-              <li>Brain Dump feature</li>
-              <li>Basic kanban planning</li>
-              <li>3-day planning horizon</li>
-              <li>Up to 20 active tasks</li>
-            </ul>
-            <button @click="goToRegister" class="pricing-cta">Get Started</button>
-          </div>
-          <div class="pricing-card featured">
-            <div class="popular-badge">Most Popular</div>
-            <h3 class="pricing-tier">Pro</h3>
-            <p class="pricing-price">$9<span>/month</span></p>
-            <ul class="pricing-features">
-              <li>Everything in Free</li>
-              <li>Unlimited tasks</li>
-              <li>14-day planning horizon</li>
-              <li>Time tracking</li>
-              <li>Basic integrations</li>
-            </ul>
-            <button @click="goToRegister" class="pricing-cta">Start Free Trial</button>
-          </div>
-          <div class="pricing-card">
-            <h3 class="pricing-tier">Team</h3>
-            <p class="pricing-price">$19<span>/user/month</span></p>
-            <ul class="pricing-features">
-              <li>Everything in Pro</li>
-              <li>Team collaboration</li>
-              <li>Task delegation</li>
-              <li>Advanced integrations</li>
-              <li>Priority support</li>
-            </ul>
-            <button @click="goToRegister" class="pricing-cta">Contact Sales</button>
-          </div>
+        <h2 class="section-title">Free Beta Access</h2>
+        <p class="hero-subtitle">
+          FocusTimer is completely free while in beta. Enjoy unlimited access to all features and help shape the product.
+        </p>
+        <div class="hero-cta">
+          <button @click="goToRegister" class="cta-button">Join the Free Beta</button>
         </div>
       </div>
     </section>
 
-    <section class="cta-section">
-      <div class="container">
-        <h2 class="cta-title">Ready to transform your productivity?</h2>
-        <p class="cta-subtitle">Join thousands of professionals who have reclaimed their focus and mastered their time.</p>
-        <button @click="goToRegister" class="cta-button large">Get Started For Free</button>
-      </div>
-    </section>
 
     <footer class="footer">
       <div class="container">
@@ -243,42 +165,13 @@ const goToRegister = () => {
           <div class="footer-brand">
             <h2 class="footer-logo">Focus<span>Timer</span></h2>
             <p class="footer-tagline">Master your day, one task at a time</p>
-            <div class="social-links">
-              <a href="#" class="social-link">Twitter</a>
-              <a href="#" class="social-link">LinkedIn</a>
-              <a href="#" class="social-link">GitHub</a>
+            <div class="contact-links">
+              <a href="https://x.com/saurav__codes" class="social-link">Contact on Twitter</a>
             </div>
-          </div>
-          <div class="footer-links">
-            <h3 class="footer-heading">Product</h3>
-            <ul>
-              <li><a href="#">Features</a></li>
-              <li><a href="#">Pricing</a></li>
-              <li><a href="#">Integrations</a></li>
-              <li><a href="#">Roadmap</a></li>
-            </ul>
-          </div>
-          <div class="footer-links">
-            <h3 class="footer-heading">Resources</h3>
-            <ul>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">Tutorials</a></li>
-              <li><a href="#">Support</a></li>
-              <li><a href="#">API Docs</a></li>
-            </ul>
-          </div>
-          <div class="footer-links">
-            <h3 class="footer-heading">Company</h3>
-            <ul>
-              <li><a href="#">About Us</a></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="#">Privacy</a></li>
-              <li><a href="#">Terms</a></li>
-            </ul>
           </div>
         </div>
         <div class="footer-bottom">
-          <p class="copyright">© 2023 FocusTimer. All rights reserved.</p>
+          <p class="copyright">© 2025 FocusTimer. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -286,6 +179,13 @@ const goToRegister = () => {
 </template>
 
 <style scoped>
+.notification-banner {
+  background-color: var(--color-warning);
+  color: white;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
 /* Base styles */
 .container {
   max-width: 1200px;
@@ -529,55 +429,6 @@ const goToRegister = () => {
   line-height: 1.6;
 }
 
-/* Testimonials */
-.testimonials {
-  padding: 5rem 0;
-  background-color: var(--color-background-secondary);
-}
-
-.testimonial-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.testimonial-card {
-  background-color: var(--color-background);
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-sm);
-}
-
-.testimonial-text {
-  font-size: 1.125rem;
-  line-height: 1.6;
-  color: var(--color-text-primary);
-  margin-bottom: 1.5rem;
-  font-style: italic;
-}
-
-.testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.author-img {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background-color: var(--color-background-tertiary);
-}
-
-.author-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.author-role {
-  color: var(--color-text-tertiary);
-  font-size: 0.875rem;
-}
 
 /* Pricing section */
 .pricing {
