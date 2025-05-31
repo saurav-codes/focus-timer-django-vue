@@ -354,7 +354,7 @@
               <AlarmClock size="16" />
               <span>Start Time:</span>
             </div>
-            <input v-model="startTime" type="time" class="time-input" @change="updateStartTime" />
+            <input v-model="startTime" type="time" class="time-input" @change="updateStartTime">
           </div>
 
           <!-- Weekday Selector (only for weekly) -->
@@ -372,7 +372,9 @@
 
           <!-- End Options -->
           <div class="end-options">
-            <div class="end-option-label">Ends:</div>
+            <div class="end-option-label">
+              Ends:
+            </div>
             <div class="end-option-choices">
               <label class="end-option">
                 <input
@@ -383,7 +385,7 @@
                     count = null
                     until = null
                     updateRule()
-                  " />
+                  ">
                 <span>Never</span>
               </label>
 
@@ -395,7 +397,7 @@
                   @click="
                     handleEndAfterToggle()
                     updateRule()
-                  " />
+                  ">
                 <span>After</span>
                 <input
                   v-if="!!count"
@@ -403,7 +405,7 @@
                   type="number"
                   min="1"
                   class="small-input"
-                  @change="updateRule()" />
+                  @change="updateRule()">
                 <span v-if="!!count">times</span>
               </label>
 
@@ -416,9 +418,14 @@
                     until = until || formatDate(new Date())
                     count = null
                     updateRule()
-                  " />
+                  ">
                 <span>On</span>
-                <input v-if="!!until" v-model="until" type="date" class="date-input" @change="updateRule()" />
+                <input
+                  v-if="!!until"
+                  v-model="until"
+                  type="date"
+                  class="date-input"
+                  @change="updateRule()">
               </label>
             </div>
           </div>
