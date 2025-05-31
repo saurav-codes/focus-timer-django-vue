@@ -24,6 +24,7 @@ def _generate_rec_tasks_for_parent(
                 recurrence_rule=parent_task.recurrence_rule,
                 recurrence_parent=parent_task,
                 project=parent_task.project,
+                status=Task.ON_BOARD,  # TODO: what if task is on calendar?
             )
             if created:
                 # copy over tags
