@@ -128,8 +128,8 @@ def move_old_tasks_to_backlogs():
     return f"Moved {count} old tasks to backlogs"
 
 
-@app.task(name="move_old_tasks_to_backlogs")
-def move_carry_over_tasks():
+@app.task(name="move_yesterday_task_to_today")
+def move_yesterday_task_to_today():
     """
     Move yesterday's tasks to today's date.
     """
