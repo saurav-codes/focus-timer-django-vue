@@ -330,7 +330,7 @@
                 class="interval-button"
                 :disabled="interval <= 1"
                 @click="
-                  interval -= 1
+                  interval -= 1;
                   updateRule()
                 ">
                 -
@@ -339,7 +339,7 @@
               <button
                 class="interval-button"
                 @click="
-                  interval += 1
+                  interval += 1;
                   updateRule()
                 ">
                 +
@@ -382,9 +382,9 @@
                   name="end-type"
                   :checked="!count && !until"
                   @change="
-                    count = null
-                    until = null
-                    updateRule()
+                    count = null;
+                    until = null;
+                    updateRule();
                   ">
                 <span>Never</span>
               </label>
@@ -395,7 +395,7 @@
                   name="end-type"
                   :checked="Boolean(count)"
                   @click="
-                    handleEndAfterToggle()
+                    handleEndAfterToggle();
                     updateRule()
                   ">
                 <span>After</span>
@@ -415,9 +415,9 @@
                   name="end-type"
                   :checked="!!until"
                   @change="
-                    until = until || formatDate(new Date())
-                    count = null
-                    updateRule()
+                    until = until || formatDate(new Date());
+                    count = null;
+                    updateRule();
                   ">
                 <span>On</span>
                 <input
