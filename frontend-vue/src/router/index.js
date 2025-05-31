@@ -16,80 +16,79 @@ const router = createRouter({
     {
       path: '',
       name: 'home',
-      component: HomePage
+      component: HomePage,
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView
+      component: RegisterView,
     },
     {
       path: '/privacy-policy',
       name: 'privacy-policy',
-      component: PrivacyPolicyView
+      component: PrivacyPolicyView,
     },
     {
       path: '/terms-and-conditions',
       name: 'terms-and-conditions',
-      component: TermsConditionsView
+      component: TermsConditionsView,
     },
     {
       path: '/kanban-planner',
       name: 'kanban-planner-view',
       component: KanbanPlannerView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/cal-planner',
       name: 'cal-planner-view',
       component: CalendarPlannerView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/dashboard',
       name: 'dashboard-view',
       component: DashboardView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/settings',
       name: 'settings-view',
       component: SettingsView,
-      meta: { requiresAuth: true }
-    }
-  ]
+      meta: { requiresAuth: true },
+    },
+  ],
 })
 
 // Navigation guard to check authentication for protected routes
 router.beforeEach(async (to, from, next) => {
   // Check if the route requires authentication
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
 
   if (!requiresAuth) {
     // If the route doesn't require auth, allow navigation
-    console.log("route does not require auth, proceeding to route", to.path);
-    return next();
+    console.log('route does not require auth, proceeding to route', to.path)
+    return next()
   }
 
   // For protected routes, check if user is authenticated
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
 
   // Initialize auth if needed
   if (authStore.isAuthenticated) {
-    console.log("user is authenticated, proceeding to route", to.path);
+    console.log('user is authenticated, proceeding to route', to.path)
   } else {
-    console.log("user is not authenticated, initializing auth & redirecting to login");
-    authStore.initAuth();
+    console.log('user is not authenticated, initializing auth & redirecting to login')
+    authStore.initAuth()
     // redirect to login page
-    return next({ path: '/login' });
+    return next({ path: '/login' })
   }
-  return next();
-
-});
+  return next()
+})
 
 export default router

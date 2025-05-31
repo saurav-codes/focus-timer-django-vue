@@ -72,15 +72,15 @@
   --font-weight-bold: 700;
 
   /* Font sizes - follows a visual scale */
-  --font-size-xxs: 0.625rem;  /* 10px */
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.875rem;   /* 14px */
-  --font-size-base: 1rem;     /* 16px */
-  --font-size-lg: 1.125rem;   /* 18px */
-  --font-size-xl: 1.25rem;    /* 20px */
-  --font-size-2xl: 1.5rem;    /* 24px */
-  --font-size-3xl: 1.875rem;  /* 30px */
-  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-xxs: 0.625rem; /* 10px */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
 
   /* Line heights */
   --line-height-tight: 1.25;
@@ -106,11 +106,11 @@
   /* --ms-py: 0.5rem; */
   /* --ms-px: 0.875rem; */
   /* --ms-ring-width: 3px; */
-  --ms-ring-color: #10B98130;
+  --ms-ring-color: #10b98130;
   /* --ms-placeholder-color: #1550b5; */
   /* --ms-max-height: 10rem; */
 
-  --ms-spinner-color: #10B981;
+  --ms-spinner-color: #10b981;
   --ms-caret-color: var(--color-text-primary);
   --ms-clear-color: var(--color-text-primary);
   --ms-clear-color-hover: var(--color-text-primary);
@@ -118,7 +118,7 @@
   /* --ms-tag-font-size: 0.875rem; */
   /* --ms-tag-line-height: 1.25rem; */
   /* --ms-tag-font-weight: 600; */
-  --ms-tag-bg: #10B981;
+  --ms-tag-bg: #10b981;
   --ms-tag-bg-disabled: var(--color-background-secondary);
   --ms-tag-color: var(--color-text-primary);
   --ms-tag-color-disabled: var(--color-text-secondary);
@@ -146,31 +146,31 @@
   --ms-group-label-color: #374151;
   --ms-group-label-bg-pointed: #54b520;
   --ms-group-label-color-pointed: #374151;
-  --ms-group-label-bg-disabled: #F3F4F6;
-  --ms-group-label-color-disabled: #D1D5DB;
+  --ms-group-label-bg-disabled: #f3f4f6;
+  --ms-group-label-color-disabled: #d1d5db;
   --ms-group-label-bg-selected: #059669;
-  --ms-group-label-color-selected: #FFFFFF;
+  --ms-group-label-color-selected: #ffffff;
   --ms-group-label-bg-selected-pointed: #0c9e70;
-  --ms-group-label-color-selected-pointed: #FFFFFF;
+  --ms-group-label-color-selected-pointed: #ffffff;
   --ms-group-label-bg-selected-disabled: #75cfb1;
-  --ms-group-label-color-selected-disabled: #D1FAE5;
+  --ms-group-label-color-selected-disabled: #d1fae5;
 
   --ms-option-font-size: 1rem;
   --ms-option-line-height: 1.375;
-  --ms-option-bg-pointed: #FFFFFF;
-  --ms-option-color-pointed: #1F2937;
-  --ms-option-bg-selected: #10B981;
-  --ms-option-color-selected: #FFFFFF;
-  --ms-option-bg-disabled: #FFFFFF;
-  --ms-option-color-disabled: #D1D5DB;
-  --ms-option-bg-selected-pointed: #26C08E;
-  --ms-option-color-selected-pointed: #FFFFFF;
-  --ms-option-bg-selected-disabled: #FFFFFF;
-  --ms-option-color-selected-disabled: #D1FAE5;
+  --ms-option-bg-pointed: #ffffff;
+  --ms-option-color-pointed: #1f2937;
+  --ms-option-bg-selected: #10b981;
+  --ms-option-color-selected: #ffffff;
+  --ms-option-bg-disabled: #ffffff;
+  --ms-option-color-disabled: #d1d5db;
+  --ms-option-bg-selected-pointed: #26c08e;
+  --ms-option-color-selected-pointed: #ffffff;
+  --ms-option-bg-selected-disabled: #ffffff;
+  --ms-option-color-selected-disabled: #d1fae5;
   --ms-option-py: 0.5rem;
   --ms-option-px: 0.75rem;
 
-  --ms-empty-color: #4B5563;
+  --ms-empty-color: #4b5563;
   --ms-empty-bg: var(--color-background-secondary);
   --popper-theme-background-color: var(--ms-option-color-pointed);
   --popper-theme-text-color: var(--color-text-selected);
@@ -259,21 +259,46 @@ body {
 }
 
 /* Helper classes for applying typography consistently */
-.text-xs { font-size: var(--font-size-xs); }
-.text-sm { font-size: var(--font-size-sm); }
-.text-base { font-size: var(--font-size-base); }
-.text-lg { font-size: var(--font-size-lg); }
-.text-xl { font-size: var(--font-size-xl); }
-.text-2xl { font-size: var(--font-size-2xl); }
-.text-3xl { font-size: var(--font-size-3xl); }
-.text-4xl { font-size: var(--font-size-4xl); }
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+.text-base {
+  font-size: var(--font-size-base);
+}
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+.text-2xl {
+  font-size: var(--font-size-2xl);
+}
+.text-3xl {
+  font-size: var(--font-size-3xl);
+}
+.text-4xl {
+  font-size: var(--font-size-4xl);
+}
 
-.font-light { font-weight: var(--font-weight-light); }
-.font-normal { font-weight: var(--font-weight-normal); }
-.font-medium { font-weight: var(--font-weight-medium); }
-.font-semibold { font-weight: var(--font-weight-semibold); }
-.font-bold { font-weight: var(--font-weight-bold); }
-
+.font-light {
+  font-weight: var(--font-weight-light);
+}
+.font-normal {
+  font-weight: var(--font-weight-normal);
+}
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
+.font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+.font-bold {
+  font-weight: var(--font-weight-bold);
+}
 
 .tasks-list {
   display: flex;
@@ -287,12 +312,14 @@ body {
   background-color: var(--color-background) !important;
 }
 
-.fc-theme-standard td, .fc-theme-standard th {
+.fc-theme-standard td,
+.fc-theme-standard th {
   /* make border of time slots a bit transparent */
   border: 1px solid #dddddd7f;
 }
 
-.fc-timegrid-slot-minor, .fc-scrollgrid-shrink {
+.fc-timegrid-slot-minor,
+.fc-scrollgrid-shrink {
   border: none !important;
 }
 
@@ -337,7 +364,6 @@ body {
   display: none; /* Chrome, Safari, Opera */
 }
 
-
 .tag-purple {
   background-color: #9333ea;
 }
@@ -376,17 +402,17 @@ body {
   --font-primary: 'JetBrains Mono', monospace;
   --font-heading: 'Press Start 2P', cursive;
   /* Hacker-green pixelated theme */
-  --color-background: #1A1A1A;
-  --color-background-secondary: #2A2A2A;
-  --color-background-tertiary: #3A3A3A;
-  --color-text-primary: #E6E6E6;
-  --color-text-secondary: #C0C0C0;
-  --color-text-tertiary: #A0A0A0;
-  --color-border: #3A3A3A;
-  --color-primary: #39FF14;
-  --color-primary-light: #1EFF1E;
-  --color-primary-dark: #00CC00;
-  --color-secondary: #39FF14;
+  --color-background: #1a1a1a;
+  --color-background-secondary: #2a2a2a;
+  --color-background-tertiary: #3a3a3a;
+  --color-text-primary: #e6e6e6;
+  --color-text-secondary: #c0c0c0;
+  --color-text-tertiary: #a0a0a0;
+  --color-border: #3a3a3a;
+  --color-primary: #39ff14;
+  --color-primary-light: #1eff1e;
+  --color-primary-dark: #00cc00;
+  --color-secondary: #39ff14;
 }
 
 .theme-notion {
@@ -394,39 +420,44 @@ body {
   --font-primary: 'Inter', sans-serif;
   --font-heading: 'Shadows Into Light', cursive;
   /* Notion-style doodle theme */
-  --color-background: #F8F9FA;
-  --color-background-secondary: #FFFFFF;
-  --color-background-tertiary: #E0E0E0;
+  --color-background: #f8f9fa;
+  --color-background-secondary: #ffffff;
+  --color-background-tertiary: #e0e0e0;
   --color-text-primary: #202124;
-  --color-text-secondary: #5F6368;
-  --color-text-tertiary: #80868B;
-  --color-border: #DADCE0;
-  --color-primary: #5F83F0;
-  --color-primary-light: #A0BFFC;
-  --color-primary-dark: #3E5CC9;
-  --color-secondary: #5F83F0;
+  --color-text-secondary: #5f6368;
+  --color-text-tertiary: #80868b;
+  --color-border: #dadce0;
+  --color-primary: #5f83f0;
+  --color-primary-light: #a0bffc;
+  --color-primary-dark: #3e5cc9;
+  --color-secondary: #5f83f0;
 }
 
 .theme-zed {
   /* Zed theme with warm gold accents */
   /* Uses default typography */
-  --color-background: #0E0E12;
-  --color-background-secondary: #27272A;
-  --color-background-tertiary: #3A3A3D;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #CCCCCC;
+  --color-background: #0e0e12;
+  --color-background-secondary: #27272a;
+  --color-background-tertiary: #3a3a3d;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cccccc;
   --color-text-tertiary: #888888;
-  --color-border: #3A3A3D;
-  --color-primary: #FFB800;
-  --color-primary-light: #FFD633;
-  --color-primary-dark: #E5A500;
-  --color-secondary: #FFB800;
+  --color-border: #3a3a3d;
+  --color-primary: #ffb800;
+  --color-primary-light: #ffd633;
+  --color-primary-dark: #e5a500;
+  --color-secondary: #ffb800;
 }
 
 /* Apply typography globally */
 body {
   font-family: var(--font-primary);
 }
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
 }
