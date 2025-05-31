@@ -23,7 +23,7 @@ repos:
         entry: npx prettier
         language: node
         args: [--write, --print-width=120]
-        files: '\.(js|jsx?|ts|tsx|css|scss|less|html|json|vue)$'
+        files: '\.(js|jsx?|ts|tsx|css|scss|less|html|json)$'
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v9.21.0
     hooks:
