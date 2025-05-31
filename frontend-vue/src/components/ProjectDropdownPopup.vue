@@ -134,14 +134,14 @@ onClickOutside(projectPopupRef, () => {
 
           <!-- Existing projects -->
           <div
-            v-for="project in taskStore.projects"
-            :key="project.id"
+            v-for="proj in taskStore.projects"
+            :key="proj.id"
             class="project-option"
-            :class="{ 'selected': selectedProjectId === project.id }"
-            @click="selectProject(project.id, project.title)">
+            :class="{ 'selected': selectedProjectId === proj.id }"
+            @click="selectProject(proj.id, proj.title)">
             <FolderIcon size="14" />
-            <span class="project-content">{{ project.title }}
-              <LucideTrash class="delete-button" size="14" @click.stop="taskStore.deleteProject(project.id)" />
+            <span class="project-content">{{ proj.title }}
+              <LucideTrash class="delete-button" size="14" @click.stop="taskStore.deleteProject(proj.id)" />
             </span>
           </div>
 
