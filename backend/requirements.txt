@@ -34,3 +34,6 @@ google-api-python-client
 gunicorn
 psycopg
 sentry-sdk
+
+pre-commit
+ruff

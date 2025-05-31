@@ -21,7 +21,7 @@ CREATE ROLE focus_timer_user
        CREATEDB    -- needed so test runner can CREATE/DROP the test DB
        NOCREATEROLE  -- this user will not be able to create another user
        NOSUPERUSER;
-CREATE DATABASE focus_timer_django_vue_db 
+CREATE DATABASE focus_timer_django_vue_db
   OWNER = focus_timer_user;
 
 -- Grant the minimal CONNECT/TEMP/USAGE/CREATE rights on that DB & schema:
@@ -35,13 +35,13 @@ CREATE DATABASE focus_timer_django_vue_db
 -- sudo service postgresql restart
 -- then you will be able to connect to the database using the following command:
 -- psql -h 127.0.0.1 -U focus_timer_user -d focus_timer_django_vue_db
--- now after connecting, let's grant the necessary permissions: 
+-- now after connecting, let's grant the necessary permissions:
 GRANT CONNECT
-  ON DATABASE focus_timer_django_vue_db 
+  ON DATABASE focus_timer_django_vue_db
   TO focus_timer_user;
 
 GRANT TEMP
-  ON DATABASE focus_timer_django_vue_db 
+  ON DATABASE focus_timer_django_vue_db
   TO focus_timer_user;
 
 GRANT USAGE
@@ -62,4 +62,4 @@ GRANT CREATE
 ## Test Connection
 
 ```bash
-psql -h 127.0.0.1 -p 5432 -U focus_timer_user -d focus_timer_django_vue_db 
+psql -h 127.0.0.1 -p 5432 -U focus_timer_user -d focus_timer_django_vue_db

@@ -45,11 +45,11 @@ class TasksApiView(LoginRequiredMixin, APIView):
         """
         Update the Tasks in bulk
         """
-        action = request.data.get('action')
-        if action == 'update_order':
-            tasks = request.data.get('tasks')
+        action = request.data.get("action")
+        if action == "update_order":
+            tasks = request.data.get("tasks")
             for idx, task in enumerate(tasks, start=1):
-                task_obj = get_object_or_404(Task, pk=task['id'])
+                task_obj = get_object_or_404(Task, pk=task["id"])
                 with transaction.atomic():
                     task_obj.order = idx
                     task_obj.save()
@@ -87,22 +87,21 @@ class TaskApiView(LoginRequiredMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @login_required
 def toggle_task_completion(request, pk):
     """
     Toggle the completion status of a task
     best to use since we aren't sending/receiving any data unlike the TaskApiView
     """
-    task:Task = get_object_or_404(Task, pk=pk)
+    task: Task = get_object_or_404(Task, pk=pk)
     with transaction.atomic():
         task.is_completed = not task.is_completed
         task.save()
     return Response(status=status.HTTP_200_OK)
 
 
-
-@api_view(['POST'])
+@api_view(["POST"])
 @login_required
 def assign_project_to_task(request, task_id, project_id):
     """
@@ -117,7 +116,7 @@ def assign_project_to_task(request, task_id, project_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @login_required
 def get_all_projects(request):
     """
@@ -156,13 +155,13 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @login_required
 def create_project(request):
     """
     Create a new project
     """
-    serializer = ProjectSerializer(data={**request.data, 'user': request.user.id})
+    serializer = ProjectSerializer(data={**request.data, "user": request.user.id})
     if serializer.is_valid():
         with transaction.atomic():
             serializer.save()
@@ -170,22 +169,25 @@ def create_project(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @login_required
 def get_all_tags(request):
     """
     Get all tags that are used in tasks
     """
     # Get IDs of tasks owned by the current user
-    user_task_ids = Task.objects.filter(user=request.user).values_list('id', flat=True)
+    user_task_ids = Task.objects.filter(user=request.user).values_list("id", flat=True)
 
     # Get unique tags associated with those tasks
-    tag_ids = TaggedItem.objects.filter(
-        object_id__in=user_task_ids,
-        content_type__model='task'
-    ).values_list('tag_id', flat=True).distinct()
+    tag_ids = (
+        TaggedItem.objects.filter(
+            object_id__in=user_task_ids, content_type__model="task"
+        )
+        .values_list("tag_id", flat=True)
+        .distinct()
+    )
 
     # Get the actual tags with proper formatting
-    user_tags = Tag.objects.filter(id__in=tag_ids).values('name', 'id')
+    user_tags = Tag.objects.filter(id__in=tag_ids).values("name", "id")
 
     return Response(user_tags)

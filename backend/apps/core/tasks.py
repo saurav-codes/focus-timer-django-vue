@@ -6,7 +6,9 @@ import datetime
 from django.db import transaction
 
 
-def _generate_rec_tasks_for_parent(parent_task:Task, occurences_dates:list[datetime.datetime]):
+def _generate_rec_tasks_for_parent(
+    parent_task: Task, occurences_dates: list[datetime.datetime]
+):
     for occurence_date in occurences_dates:
         with transaction.atomic():
             child, created = Task.objects.update_or_create(
@@ -31,7 +33,7 @@ def _generate_rec_tasks_for_parent(parent_task:Task, occurences_dates:list[datet
         print(f"{action} task: {child.title} for date: {occurence_date}")
 
 
-def gen_rec_tasks_for_parent(parent_task:Task):
+def gen_rec_tasks_for_parent(parent_task: Task):
     # every rec task ( wether parent or child ) have a task.start_at
     if not parent_task.start_at:
         print("No start_at date for task so adding current date")
@@ -92,7 +94,7 @@ def archive_old_tasks():
     count = 0
     for task in old_tasks:
         task.status = Task.ARCHIVED
-        task.save(update_fields=['status'])
+        task.save(update_fields=["status"])
         count += 1
 
     print(f"Archived {count} old tasks")
@@ -119,7 +121,7 @@ def move_old_tasks_to_backlogs():
     count = 0
     for task in old_tasks:
         task.status = Task.BACKLOG
-        task.save(update_fields=['status'])
+        task.save(update_fields=["status"])
         count += 1
 
     print(f"Moved {count} old tasks to backlogs")
@@ -146,7 +148,7 @@ def move_carry_over_tasks():
     count = 0
     for task in old_tasks:
         task.column_date = timezone.now()
-        task.save(update_fields=['column_date'])
+        task.save(update_fields=["column_date"])
         count += 1
 
     print(f"Moved {count} old tasks to today's date")

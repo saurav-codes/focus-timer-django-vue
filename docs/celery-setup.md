@@ -148,4 +148,3 @@ Celery task results are stored in the database using the django-celery-results b
 - Implement task monitoring with Flower or similar tools
 - Add task retries with exponential backoff
 - add more debug info like logging
-

@@ -1,8 +1,7 @@
 <script setup>
-import { useAuthStore } from '../stores/authStore';
+  import { useAuthStore } from '../stores/authStore'
 
-const authStore = useAuthStore();
-
+  const authStore = useAuthStore()
 </script>
 
 <template>

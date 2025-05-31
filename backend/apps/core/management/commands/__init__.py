@@ -1,1 +1,1 @@
-# This file makes sure Django recognizes the commands directory. 
+# This file makes sure Django recognizes the commands directory.

@@ -4,20 +4,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='historicaltask',
-            name='status',
-            field=models.CharField(choices=[('BACKLOG', 'Backlog'), ('BRAINDUMP', 'Brain Dump'), ('ON_BOARD', 'On Board'), ('ON_CAL', 'ON CALENDAR'), ('COMPLETED', 'Completed'), ('ARCHIVED', 'Archived')], default='BRAINDUMP', help_text='Status of the task.', max_length=20),
+            model_name="historicaltask",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("BACKLOG", "Backlog"),
+                    ("BRAINDUMP", "Brain Dump"),
+                    ("ON_BOARD", "On Board"),
+                    ("ON_CAL", "ON CALENDAR"),
+                    ("COMPLETED", "Completed"),
+                    ("ARCHIVED", "Archived"),
+                ],
+                default="BRAINDUMP",
+                help_text="Status of the task.",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='status',
-            field=models.CharField(choices=[('BACKLOG', 'Backlog'), ('BRAINDUMP', 'Brain Dump'), ('ON_BOARD', 'On Board'), ('ON_CAL', 'ON CALENDAR'), ('COMPLETED', 'Completed'), ('ARCHIVED', 'Archived')], default='BRAINDUMP', help_text='Status of the task.', max_length=20),
+            model_name="task",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("BACKLOG", "Backlog"),
+                    ("BRAINDUMP", "Brain Dump"),
+                    ("ON_BOARD", "On Board"),
+                    ("ON_CAL", "ON CALENDAR"),
+                    ("COMPLETED", "Completed"),
+                    ("ARCHIVED", "Archived"),
+                ],
+                default="BRAINDUMP",
+                help_text="Status of the task.",
+                max_length=20,
+            ),
         ),
     ]

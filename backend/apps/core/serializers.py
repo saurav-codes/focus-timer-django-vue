@@ -1,16 +1,14 @@
 from rest_framework import serializers
 from .models import Task, Project
-from taggit.serializers import (TagListSerializerField,
-                                TaggitSerializer)
+from taggit.serializers import TagListSerializerField, TaggitSerializer
 from dateutil.rrule import rrulestr
 from datetime import timedelta
-
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = "__all__"
 
 
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -19,14 +17,14 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     project = ProjectSerializer(read_only=True)
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),
-        source='project',
+        source="project",
         write_only=True,
-        required=False
+        required=False,
     )
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = "__all__"
 
     def get_duration_display(self, obj):
         return obj.get_duration_display
@@ -52,4 +50,3 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
             task.end_at = task.start_at + task.duration
             task.save()
         return task
-

@@ -8,35 +8,36 @@ from django.utils.dateparse import parse_duration
 import random
 
 project_names = [
-   "Social Media Marketing",
-   "UI/UX Design",
-   "Backend Development",
-   "Frontend Development",
-   "Content Creation",
-   "SEO Optimization",
-   "LifeStyle",
-   "Health & Fitness"
+    "Social Media Marketing",
+    "UI/UX Design",
+    "Backend Development",
+    "Frontend Development",
+    "Content Creation",
+    "SEO Optimization",
+    "LifeStyle",
+    "Health & Fitness",
 ]
 
 User = get_user_model()
 
+
 class Command(BaseCommand):
-    help = 'Populate the database with fake tasks'
+    help = "Populate the database with fake tasks"
 
     def handle(self, *args, **options):
         # Remove all existing tasks
         Task.objects.all().delete()
         self.stdout.write(self.style.SUCCESS("Deleted all existing tasks."))
         # either create a new user or use the existing one
-        user = User.objects.filter(email='raju@gmail.com').first()
+        user = User.objects.filter(email="raju@gmail.com").first()
         if not user:
             print("didn't find user, creating one")
             user = User.objects.create_user(
-                first_name='raju test user',
-                email='raju@gmail.com',
-                password='raju123',
+                first_name="raju test user",
+                email="raju@gmail.com",
+                password="raju123",
                 is_superuser=True,
-                is_staff=True
+                is_staff=True,
             )
         else:
             print(f"found user {user.email} so using it to assign tasks")
@@ -47,7 +48,7 @@ class Command(BaseCommand):
             project = Project.objects.create(
                 title=project_name,
                 description=f"Description for {project_name}",
-                user=user
+                user=user,
             )
             self.stdout.write(self.style.SUCCESS(f"Created project: {project.title}"))
         today = datetime.now(pytz.utc)
@@ -81,7 +82,6 @@ class Command(BaseCommand):
                 "column_date": None,
                 "duration": "01:00:00",
             },
-
             # Regular Tasks
             {
                 "title": "Code review: Authentication module",
@@ -304,7 +304,7 @@ class Command(BaseCommand):
         ]
 
         # Insert sample tasks into the database
-        project_ids = Project.objects.values_list('id', flat=True)
+        project_ids = Project.objects.values_list("id", flat=True)
         for data in tasks_data:
             task = Task.objects.create(
                 title=data["title"],
@@ -321,8 +321,8 @@ class Command(BaseCommand):
                 tag, _ = Tag.objects.get_or_create(name=t)
                 task.tags.add(tag)
 
-            self.stdout.write(self.style.SUCCESS(
-                f"Created task: {task.title}"
-            ))
+            self.stdout.write(self.style.SUCCESS(f"Created task: {task.title}"))
 
-        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(tasks_data)} tasks!"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully created {len(tasks_data)} tasks!")
+        )

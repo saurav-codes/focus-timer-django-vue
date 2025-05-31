@@ -11,19 +11,15 @@ class GoogleCalendarCredentials(models.Model):
     """
     Model to store Google Calendar OAuth2 credentials for users.
     """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='google_calendar_credentials'
+        related_name="google_calendar_credentials",
     )
-    token = models.JSONField(
-        help_text="OAuth2 token and refresh token information"
-    )
+    token = models.JSONField(help_text="OAuth2 token and refresh token information")
     calendar_id = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-        help_text="Primary Google Calendar ID"
+        max_length=255, blank=True, null=True, help_text="Primary Google Calendar ID"
     )
     connected_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,12 +35,14 @@ class GoogleCalendarCredentials(models.Model):
     def is_expired(self):
         """Check if the access token is expired."""
         try:
-            expiry = self.token.get('expiry', None)
+            expiry = self.token.get("expiry", None)
             if not expiry:
                 return True
 
             # Convert expiry to datetime
-            expiry_datetime = datetime.datetime.fromisoformat(expiry.replace('Z', '+00:00'))
+            expiry_datetime = datetime.datetime.fromisoformat(
+                expiry.replace("Z", "+00:00")
+            )
 
             # get current time in UTC
             datetime_now = timezone.now().replace(tzinfo=None)
@@ -57,12 +55,12 @@ class GoogleCalendarCredentials(models.Model):
     @property
     def access_token(self):
         """Get the access token."""
-        return self.token.get('token', '')
+        return self.token.get("token", "")
 
     @property
     def refresh_token(self):
         """Get the refresh token."""
-        return self.token.get('refresh_token', '')
+        return self.token.get("refresh_token", "")
 
     def update_token(self, token_data):
         """
@@ -73,11 +71,11 @@ class GoogleCalendarCredentials(models.Model):
         """
         # If the new token doesn't have a refresh token but we have one stored,
         # make sure we keep it
-        if 'refresh_token' not in token_data and 'refresh_token' in self.token:
-            token_data['refresh_token'] = self.token['refresh_token']
+        if "refresh_token" not in token_data and "refresh_token" in self.token:
+            token_data["refresh_token"] = self.token["refresh_token"]
 
         self.token = token_data
-        self.save(update_fields=['token', 'updated_at'])
+        self.save(update_fields=["token", "updated_at"])
 
     def get_credentials(self):
         credentials = credentials_from_dict(self.token)
@@ -87,25 +85,27 @@ class GoogleCalendarCredentials(models.Model):
             if not credentials.refresh_token:
                 self.delete()
                 return {
-                    'error': 'Refresh token missing. Please reconnect your Google Calendar.',
+                    "error": "Refresh token missing. Please reconnect your Google Calendar.",
                 }
             try:
                 credentials.refresh(request=GoogleRequest())
             except RefreshError:
                 self.delete()
                 return {
-                    'error': 'Google Calendar authentication expired. Please reconnect.',
+                    "error": "Google Calendar authentication expired. Please reconnect.",
                 }
             # Update the stored token
             token_data = {
-                'token': credentials.token,
-                'refresh_token': credentials.refresh_token,
-                'token_uri': credentials.token_uri,
-                'client_id': credentials.client_id,
-                'client_secret': credentials.client_secret,
-                'scopes': credentials.scopes,
-                'expiry': credentials.expiry.isoformat() if credentials.expiry else None
+                "token": credentials.token,
+                "refresh_token": credentials.refresh_token,
+                "token_uri": credentials.token_uri,
+                "client_id": credentials.client_id,
+                "client_secret": credentials.client_secret,
+                "scopes": credentials.scopes,
+                "expiry": credentials.expiry.isoformat()
+                if credentials.expiry
+                else None,
             }
             self.token = token_data
-            self.save(update_fields=['token'])
+            self.save(update_fields=["token"])
         return credentials

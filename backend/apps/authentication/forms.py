@@ -4,10 +4,11 @@ from .models import User as UserModelType
 
 User = get_user_model()
 
+
 class CreateUserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['email', 'password']
+        fields = ["email", "password"]
 
     def save(self, commit=True) -> UserModelType:
         user = super().save(commit=False)

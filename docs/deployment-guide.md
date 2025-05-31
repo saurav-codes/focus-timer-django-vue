@@ -196,7 +196,7 @@ sudo systemctl restart redis
 ## 5. Codebase Deployment
 ### 5.1 Clone Repository
 ```bash
-# Switch to DIR where you want to keep your project 
+# Switch to DIR where you want to keep your project
 git clone https://github.com/your-repo/focus-timer-django-vue.git
 cd focus-timer-django-vue
 ```
@@ -284,7 +284,7 @@ Group=www-data
 WorkingDirectory=/home/focususer/focus-timer-django-vue/backend
 EnvironmentFile=/home/focususer/focus-timer-django-vue/.env
 ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/celery -A backend worker \
-  --loglevel=info 
+  --loglevel=info
 Restart=on-failure
 
 [Install]
@@ -432,4 +432,3 @@ sudo systemctl restart redis-server postgresql
 sudo systemctl status  redis-server postgresql
 sudo journalctl -u redis-server -f
 sudo journalctl -u postgresql  -f
-
