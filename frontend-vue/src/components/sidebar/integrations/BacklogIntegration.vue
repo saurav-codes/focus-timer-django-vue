@@ -1,6 +1,6 @@
 <script setup>
   import { computed } from 'vue'
-  import { Clock, Tag, Calendar } from 'lucide-vue-next'
+  import { Clock, Tag, Calendar, ListTodo } from 'lucide-vue-next'
   import Draggable from 'vuedraggable'
   import { useTaskStore } from '../../../stores/taskstore'
   import { useTimeAgo } from '@vueuse/core'
@@ -47,7 +47,13 @@
   <div class="backlog-integration">
     <div class="integration-header">
       <h3>Backlog</h3>
-      <div class="backlog-count">{{ backlogCount }} items</div>
+      <div class="backlog-subtitle">
+        Tasks will be auto-archived after 30 days
+      </div>
+      <div class="backlog-count">
+        <ListTodo size="14" />
+        <span>{{ backlogCount }} Tasks</span>
+      </div>
     </div>
 
     <div class="backlog-list">
@@ -105,9 +111,9 @@
 
   .integration-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 20px;
+    position: relative;
   }
 
   .integration-header h3 {
@@ -117,9 +123,23 @@
     color: var(--color-text, #cdd6f4);
   }
 
+  .backlog-subtitle {
+    font-size: 12px;
+    color: var(--color-text-tertiary, #7f849c);
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+
   .backlog-count {
-    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
     color: var(--color-text-secondary, #a6adc8);
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 
   .backlog-list {
