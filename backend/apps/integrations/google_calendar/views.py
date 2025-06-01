@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import uuid
 import logging
+from django.utils.dateparse import parse_datetime
 from googleapiclient.errors import HttpError
 from django.views.decorators.csrf import csrf_protect
 
@@ -150,6 +151,18 @@ def get_calendar_events(request):
         if not start or not end:
             return Response(
                 {"error": "start and end parameters are required"}, status=400
+            )
+
+        # Validate ISO8601 format and timezone awareness
+        try:
+            start_dt = parse_datetime(start)
+            end_dt = parse_datetime(end)
+            if not start_dt or not end_dt:
+                raise ValueError("Invalid ISO8601 datetime")
+        except Exception as e:
+            return Response(
+                {"error": f"start/end must be valid ISO8601 datetime: {str(e)}"},
+                status=400,
             )
 
         # Get the credentials for the user
