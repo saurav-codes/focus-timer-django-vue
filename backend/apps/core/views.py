@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from .filters import TaskFilter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
 from taggit.models import Tag, TaggedItem
 from django.db import transaction
 import logging
@@ -106,6 +107,7 @@ class TaskApiView(LoginRequiredMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@csrf_protect
 @api_view(["POST"])
 @login_required
 def toggle_task_completion(request, pk):
@@ -124,6 +126,7 @@ def toggle_task_completion(request, pk):
     return Response(status=status.HTTP_200_OK)
 
 
+@csrf_protect
 @api_view(["POST"])
 @login_required
 def assign_project_to_task(request, task_id, project_id):
@@ -185,6 +188,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@csrf_protect
 @api_view(["POST"])
 @login_required
 def create_project(request):

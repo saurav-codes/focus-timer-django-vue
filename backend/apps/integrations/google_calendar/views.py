@@ -6,6 +6,7 @@ from rest_framework.response import Response
 import uuid
 import logging
 from googleapiclient.errors import HttpError
+from django.views.decorators.csrf import csrf_protect
 
 from .models import GoogleCalendarCredentials
 from .utils import (
@@ -232,6 +233,7 @@ def get_calendar_events(request):
         return Response({"error": str(e)}, status=500)
 
 
+@csrf_protect
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def disconnect_google_calendar(request):
@@ -251,6 +253,7 @@ def disconnect_google_calendar(request):
         return Response({"error": str(e)}, status=500)
 
 
+@csrf_protect
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_calendar_event(request, event_id):

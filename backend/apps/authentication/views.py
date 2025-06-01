@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import json
 from .serializers import UserSerializer
 
@@ -26,6 +26,7 @@ def set_csrf_token(request):
     return JsonResponse({"message": "CSRF cookie set"})
 
 
+@csrf_protect
 @require_http_methods(["POST"])
 def login_view(request):
     try:
@@ -65,6 +66,7 @@ def user(request):
     return JsonResponse({"message": "Not logged in"}, status=401)
 
 
+@csrf_protect
 @require_http_methods(["POST"])
 def register(request):
     data = json.loads(request.body.decode("utf-8"))
