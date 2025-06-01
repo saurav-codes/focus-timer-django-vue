@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 from django.utils.dateparse import parse_duration
 import random
+from django.conf import settings
 
 project_names = [
     "Social Media Marketing",
@@ -25,6 +26,13 @@ class Command(BaseCommand):
     help = "Populate the database with fake tasks"
 
     def handle(self, *args, **options):
+        if settings.DEBUG:
+            self.stdout.write(
+                self.style.ERROR(
+                    "This command is not meant to be run in production as it deletes all existing tasks and projects."
+                )
+            )
+            return False
         # Remove all existing tasks
         Task.objects.all().delete()
         self.stdout.write(self.style.SUCCESS("Deleted all existing tasks."))
