@@ -31,8 +31,12 @@ class TasksApiView(LoginRequiredMixin, APIView):
         tasks = Task.objects.filter(user=request.user)
         # Apply filtering
         filterset = TaskFilter(request.GET, queryset=tasks)
-        if filterset.is_valid():
-            tasks = filterset.qs
+        if not filterset.is_valid():
+            logger.warning(
+                f"TaskFilter invalid for user_id={request.user.id}, errors={filterset.errors}"
+            )
+        tasks = filterset.qs if filterset.is_valid() else tasks
+        logger.info(f"Found {tasks.count()} tasks for user_id={request.user.id}")
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
