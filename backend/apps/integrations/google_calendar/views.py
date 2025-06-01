@@ -71,6 +71,7 @@ def start_google_auth(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def google_auth_callback(request):
     """Handle the callback from Google OAuth2 flow."""
     try:
