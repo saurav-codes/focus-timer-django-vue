@@ -3,6 +3,14 @@
 # Script to restart all Focus Timer services
 
 set -euo pipefail
+echo "Installing backend requirements..."
+.venv/bin/uv pip install -r backend/requirements.txt
+
+echo "Applying database migrations..."
+.venv/bin/python backend/manage.py migrate --noinput
+
+echo "Collecting static files..."
+.venv/bin/python backend/manage.py collectstatic --noinput
 echo "Building frontend..."
 ( cd frontend-vue && npm ci && npm run build )
 
