@@ -48,7 +48,7 @@
     <div class="integration-header">
       <h3>Backlog</h3>
       <div class="backlog-subtitle">
-        Tasks will be auto-archived after 30 days
+        Tasks will be automatically added to the backlog after 15 days of inactivity
       </div>
       <div class="backlog-count">
         <ListTodo size="14" />
