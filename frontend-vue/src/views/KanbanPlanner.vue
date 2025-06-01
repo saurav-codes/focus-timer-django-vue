@@ -1,6 +1,7 @@
 <script setup>
   import { onMounted, useTemplateRef, onUnmounted } from 'vue'
   import BrainDump from '../components/BrainDump.vue'
+  import { useIntervalFn } from '@vueuse/core'
   import KanbanColumn from '../components/KanbanColumn.vue'
   import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue'
   import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue'
@@ -56,6 +57,16 @@
     }, 1000)
   }
 
+  const { pause: stopAutoFetchTasks } = useIntervalFn(
+    () => {
+      // auto fetch tasks every 5 minutes
+      console.log('Fetching tasks every 5 minutes')
+      taskStore.fetchTasks()
+      console.log("task fetched every 5 min completed")
+    },
+    5 * 60 * 1000 // 5 minutes
+  )
+
   // Run animation when component mounts and hide the indicator after animation
   onMounted(() => {
     // Small delay to ensure content is rendered
@@ -82,6 +93,8 @@
     if (kanbanColumnsWrapper.value) {
       kanbanColumnsWrapper.value.removeEventListener('scroll', checkScrollPosition)
     }
+    // Stop the interval for auto-fetching tasks
+    stopAutoFetchTasks()
   })
 </script>
 
