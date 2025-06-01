@@ -3,6 +3,9 @@ from .models import Task, Project
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 from dateutil.rrule import rrulestr
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -35,9 +38,9 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
         try:
             # test‑parse the string
             rrulestr(value)
-            print(f"value {value} is valid rrule")
+            logger.info(f"Valid recurrence rule: rule={value}")
         except Exception as e:
-            print(e)
+            logger.error(f"Invalid recurrence rule '{value}': {e}")
             raise serializers.ValidationError(f"Invalid RRULE: {e}")
         return value
 

@@ -39,7 +39,9 @@ class Command(BaseCommand):
         # either create a new user or use the existing one
         user = User.objects.filter(email="raju@gmail.com").first()
         if not user:
-            print("didn't find user, creating one")
+            self.stdout.write(
+                self.style.WARNING("No existing user found, creating one")
+            )
             user = User.objects.create_user(
                 first_name="raju test user",
                 email="raju@gmail.com",
@@ -48,7 +50,11 @@ class Command(BaseCommand):
                 is_staff=True,
             )
         else:
-            print(f"found user {user.email} so using it to assign tasks")
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Found existing user: id={user.id}, using it to assign tasks"
+                )
+            )
         Project.objects.all().delete()
         self.stdout.write(self.style.SUCCESS("Deleted all existing projects."))
         # Create sample projects

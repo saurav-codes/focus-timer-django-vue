@@ -14,6 +14,9 @@ from pathlib import Path
 import environ
 import os
 import sentry_sdk
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 env = environ.Env()
@@ -33,7 +36,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG", cast=bool, default=False)
-print(f"DEBUG mode is set to: {DEBUG}")
+logger.info(f"DEBUG mode is set to: {DEBUG}")
 
 # Application definition
 

@@ -3,7 +3,10 @@ from backend.celery import app
 from dateutil.rrule import rrulestr
 from .models import Task
 import datetime
+import logging
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_rec_tasks_for_parent(
@@ -31,20 +34,26 @@ def _generate_rec_tasks_for_parent(
                 child.tags.set(parent_task.tags.all())
 
         action = "created" if created else "updated"
-        print(f"{action} task: {child.title} for date: {occurence_date}")
+        logger.info(
+            f"Recurring task {action}: parent_task_id={parent_task.id} child_task_id={child.id} date={occurence_date}"
+        )
 
 
 def gen_rec_tasks_for_parent(parent_task: Task):
     # every rec task ( wether parent or child ) have a task.start_at
     if not parent_task.start_at:
-        print("No start_at date for task so adding current date")
+        logger.warning(
+            f"No start_at for parent_task_id={parent_task.id}, setting to now"
+        )
         parent_task.start_at = timezone.now()
         parent_task.save()
 
     try:
         rule = rrulestr(parent_task.recurrence_rule, dtstart=parent_task.start_at)
     except Exception as e:
-        print(f"Error parsing rule for task {parent_task.title}: {e}")
+        logger.error(
+            f"Error parsing recurrence rule for parent_task_id={parent_task.id}: {e}"
+        )
         return
 
     last_task_date = timezone.now()
@@ -53,7 +62,7 @@ def gen_rec_tasks_for_parent(parent_task: Task):
     if nxt_task_date:
         _generate_rec_tasks_for_parent(parent_task, [nxt_task_date])
     else:
-        print(f"No dates to create for task {parent_task.title}")
+        logger.info(f"No upcoming recurrence for parent_task_id={parent_task.id}")
 
 
 @app.task(name="generate_recurring_tasks")
@@ -63,7 +72,7 @@ def generate_recurring_tasks():
     recurrence_parent is null), parse the rule, find the next up-to-5
     occurrences after now (that haven't already been cloned), and create them.
     """
-    print("Generating recurring tasks...")
+    logger.info("Starting generate_recurring_tasks task")
 
     # 1) Grab only the *original* recurring tasks (no parents, with an RRULE)
     templates_tasks = Task.objects.filter(
@@ -82,7 +91,7 @@ def archive_old_tasks():
     Archives tasks that haven't been updated in 30 days.
     This task runs daily at midnight.
     """
-    print("Archiving old tasks...")
+    logger.info("Starting archive_old_tasks task")
 
     # Calculate the date 30 days ago
     thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
@@ -98,7 +107,7 @@ def archive_old_tasks():
         task.save(update_fields=["status"])
         count += 1
 
-    print(f"Archived {count} old tasks")
+    logger.info(f"Archived {count} old tasks")
     return f"Archived {count} old tasks"
 
 
@@ -108,7 +117,7 @@ def move_old_tasks_to_backlogs():
     Moves tasks that haven't been updated in 15 days to the backlogs.
     This task runs daily at midnight.
     """
-    print("Moving old tasks to backlogs...")
+    logger.info("Starting move_old_tasks_to_backlogs task")
 
     # Calculate the date 15 days ago
     fifteen_days_ago = timezone.now() - datetime.timedelta(days=15)
@@ -125,7 +134,7 @@ def move_old_tasks_to_backlogs():
         task.save(update_fields=["status"])
         count += 1
 
-    print(f"Moved {count} old tasks to backlogs")
+    logger.info(f"Moved {count} old tasks to backlogs")
     return f"Moved {count} old tasks to backlogs"
 
 
@@ -134,7 +143,7 @@ def move_yesterday_task_to_today():
     """
     Move yesterday's tasks to today's date.
     """
-    print("Moving carry-over tasks...")
+    logger.info("Starting move_yesterday_task_to_today task")
 
     # Calculate the date for yesterday
     yesterday = timezone.now() - datetime.timedelta(days=1)
@@ -152,5 +161,5 @@ def move_yesterday_task_to_today():
         task.save(update_fields=["column_date"])
         count += 1
 
-    print(f"Moved {count} old tasks to today's date")
+    logger.info(f"Moved {count} old tasks to today's date")
     return f"Moved {count} old tasks to today's date"

@@ -5,6 +5,9 @@ import datetime
 from google.auth.transport.requests import Request as GoogleRequest
 from .utils import credentials_from_dict
 from google.auth.exceptions import RefreshError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleCalendarCredentials(models.Model):
@@ -82,17 +85,25 @@ class GoogleCalendarCredentials(models.Model):
 
         # Check if the credentials are expired and try to refresh
         if self.is_expired:
+            logger.info(f"Access token expired for user_id={self.user_id}")
             if not credentials.refresh_token:
+                logger.error(
+                    f"No refresh token for user_id={self.user_id}, deleting credentials"
+                )
                 self.delete()
                 return {
-                    "error": "Refresh token missing. Please reconnect your Google Calendar.",
+                    "error": "Refresh token missing. Please reconnect your Google Calendar."
                 }
             try:
                 credentials.refresh(request=GoogleRequest())
+                logger.info(f"Access token refreshed for user_id={self.user_id}")
             except RefreshError:
+                logger.error(
+                    f"Token refresh failed for user_id={self.user_id}, deleting credentials"
+                )
                 self.delete()
                 return {
-                    "error": "Google Calendar authentication expired. Please reconnect.",
+                    "error": "Google Calendar authentication expired. Please reconnect."
                 }
             # Update the stored token
             token_data = {

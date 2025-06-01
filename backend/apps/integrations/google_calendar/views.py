@@ -180,10 +180,9 @@ def get_calendar_events(request):
                 .execute()
             )
 
-            print("fetched events are -")
-            from pprint import pprint
-
-            pprint(events_result)
+            logger.info(
+                f"Google events fetched count={len(events_result.get('items', []))} for user_id={request.user.id} calendar_id={calendar_id} time_range=({start},{end})"
+            )
             events = events_result.get("items", [])
 
             # Transform to FullCalendar format

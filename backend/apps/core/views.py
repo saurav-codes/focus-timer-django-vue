@@ -11,6 +11,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from taggit.models import Tag, TaggedItem
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 # Create your views here.
 
 
@@ -22,6 +25,9 @@ class TasksApiView(LoginRequiredMixin, APIView):
         """
         Get all tasks
         """
+        logger.info(
+            f"Fetching tasks for user_id={request.user.id} filters={request.GET.dict()}"
+        )
         tasks = Task.objects.filter(user=request.user)
         # Apply filtering
         filterset = TaskFilter(request.GET, queryset=tasks)
@@ -38,6 +44,9 @@ class TasksApiView(LoginRequiredMixin, APIView):
         if serializer.is_valid():
             with transaction.atomic():
                 serializer.save()
+                logger.info(
+                    f"Task created: task_id={serializer.instance.id} by user_id={request.user.id}"
+                )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -48,6 +57,9 @@ class TasksApiView(LoginRequiredMixin, APIView):
         action = request.data.get("action")
         if action == "update_order":
             tasks = request.data.get("tasks")
+            logger.info(
+                f"Bulk update order by user_id={request.user.id} for task_ids={[t['id'] for t in tasks]}"
+            )
             for idx, task in enumerate(tasks, start=1):
                 task_obj = get_object_or_404(Task, pk=task["id"])
                 with transaction.atomic():
@@ -62,6 +74,7 @@ class TaskApiView(LoginRequiredMixin, APIView):
         """
         Get a task by id
         """
+        logger.info(f"Fetching task: task_id={pk} by user_id={request.user.id}")
         task = Task.objects.get(pk=pk)
         serializer = TaskSerializer(task)
         return Response(serializer.data)
@@ -72,6 +85,7 @@ class TaskApiView(LoginRequiredMixin, APIView):
         use `toggle_task_completion` for toggling the completion status and this
         one for updating other fields.
         """
+        logger.info(f"Updating task: task_id={pk} by user_id={request.user.id}")
         task = get_object_or_404(Task, pk=pk)
         serializer = TaskSerializer(task, data=request.data)
         if serializer.is_valid():
@@ -81,6 +95,7 @@ class TaskApiView(LoginRequiredMixin, APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
+        logger.info(f"Deleting task: task_id={pk} by user_id={request.user.id}")
         task = get_object_or_404(Task, pk=pk)
         with transaction.atomic():
             task.delete()
@@ -95,9 +110,13 @@ def toggle_task_completion(request, pk):
     best to use since we aren't sending/receiving any data unlike the TaskApiView
     """
     task: Task = get_object_or_404(Task, pk=pk)
+    logger.info(
+        f"Toggling completion: task_id={pk} old_status={task.is_completed} by user_id={request.user.id}"
+    )
     with transaction.atomic():
         task.is_completed = not task.is_completed
         task.save()
+    logger.info(f"New completion status: task_id={pk} new_status={task.is_completed}")
     return Response(status=status.HTTP_200_OK)
 
 
@@ -107,11 +126,13 @@ def assign_project_to_task(request, task_id, project_id):
     """
     Assign a project to a task
     """
+    logger.info(
+        f"Assigning project to task: task_id={task_id} project_id={project_id} by user_id={request.user.id}"
+    )
     task = get_object_or_404(Task, pk=task_id)
     project = get_object_or_404(Project, pk=project_id)
     task.project = project
     task.save()  # save() returns None, so we don't assign it
-    # Use the task object directly after saving
     serializer = TaskSerializer(task)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -122,7 +143,9 @@ def get_all_projects(request):
     """
     Get all projects
     """
+    logger.info(f"Fetching projects for user_id={request.user.id}")
     projects = Project.objects.filter(user=request.user)
+    logger.info(f"Found {projects.count()} projects for user_id={request.user.id}")
     serializer = ProjectSerializer(projects, many=True)
     return Response(serializer.data)
 
@@ -132,6 +155,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         """
         Get a project by id
         """
+        logger.info(f"Fetching project: project_id={pk} by user_id={request.user.id}")
         project = get_object_or_404(Project, pk=pk)
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
@@ -140,6 +164,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         """
         Update a project
         """
+        logger.info(f"Updating project: project_id={pk} by user_id={request.user.id}")
         project = get_object_or_404(Project, pk=pk)
         serializer = ProjectSerializer(project, data=request.data)
         if serializer.is_valid():
@@ -149,6 +174,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
+        logger.info(f"Deleting project: project_id={pk} by user_id={request.user.id}")
         project = get_object_or_404(Project, pk=pk)
         with transaction.atomic():
             project.delete()
@@ -161,6 +187,7 @@ def create_project(request):
     """
     Create a new project
     """
+    logger.info(f"Creating project by user_id={request.user.id}")
     serializer = ProjectSerializer(data={**request.data, "user": request.user.id})
     if serializer.is_valid():
         with transaction.atomic():
@@ -175,6 +202,7 @@ def get_all_tags(request):
     """
     Get all tags that are used in tasks
     """
+    logger.info(f"Fetching tags for user_id={request.user.id}")
     # Get IDs of tasks owned by the current user
     user_task_ids = Task.objects.filter(user=request.user).values_list("id", flat=True)
 
