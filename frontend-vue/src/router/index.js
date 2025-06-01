@@ -4,6 +4,7 @@ import CalendarPlannerView from '../views/CalendarPlanner.vue'
 import DashboardView from '../views/Dashboard.vue'
 import SettingsView from '../views/Settings.vue'
 import HomePage from '../views/HomePage.vue'
+import NotFound from '../views/NotFound.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import PrivacyPolicyView from '../views/PrivacyPolicyView.vue'
@@ -61,6 +62,14 @@ const router = createRouter({
       name: 'settings-view',
       component: SettingsView,
       meta: { requiresAuth: true },
+    },
+    {
+      // return 404 for any unmatched routes
+      // This should be the last route in the array
+      path: '/:catchAll(.*)',
+      name: 'NotFound',
+      component: NotFound,
+      meta: { requiresAuth: false },
     },
   ],
 })
