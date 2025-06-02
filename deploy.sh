@@ -3,6 +3,16 @@
 # Script to restart all Focus Timer services
 
 set -euo pipefail
+
+# Parse options
+SKIP_FRONTEND=false
+for arg in "$@"; do
+  case $arg in
+    --skip-frontend)
+      SKIP_FRONTEND=true
+      ;;
+  esac
+done
 echo "Installing backend requirements..."
 .venv/bin/uv pip install -r backend/requirements.txt
 
@@ -11,8 +21,12 @@ echo "Applying database migrations..."
 
 echo "Collecting static files..."
 .venv/bin/python backend/manage.py collectstatic --noinput
-echo "Building frontend..."
-( cd frontend-vue && npm ci && npm run build )
+if [ "$SKIP_FRONTEND" = false ]; then
+  echo "Building frontend..."
+  ( cd frontend-vue && npm ci && npm run build )
+else
+  echo "Skipping frontend build due to --skip-frontend option"
+fi
 
 echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
