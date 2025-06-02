@@ -242,9 +242,13 @@ LOGGING = {
             "filename": LOGGING_FILE_PATH,
             "formatter": "app",
         },
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
     },
     "loggers": {
-        "django": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "django": {"handlers": ["file", "console"], "level": "INFO", "propagate": True},
     },
     "formatters": {
         "app": {
