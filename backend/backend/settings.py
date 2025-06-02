@@ -206,7 +206,9 @@ CSRF_COOKIE_SECURE = True
 
 
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_TASK_TRACK_STARTED = True
+# https://docs.celeryq.dev/en/2.3-archived/reference/celery.app.task.html#celery.app.task.BaseTask.track_started
+CELERY_TRACK_STARTED = True
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 
