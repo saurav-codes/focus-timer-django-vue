@@ -212,11 +212,11 @@
     emit('update:value', ruleString)
     if (show_snackbar) {
       snackbarRef.value.addSnackbarItem(
-        `Task Repeat Schedule Updated`,
+        `Task Repeat Schedule Updated. A new copy of this task will be created ${ruleDescription.value} @ ${startTime.value}`,
         'OK',
         () => {},
         () => {},
-        2000
+        4000
       )
     }
   }
