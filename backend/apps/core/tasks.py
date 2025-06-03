@@ -34,9 +34,10 @@ def _generate_rec_tasks_for_parent(
                 child.tags.set(parent_task.tags.all())
 
         action = "created" if created else "updated"
-        logger.info(
-            f"Recurring task {action}: parent_task_id={parent_task.id} child_task_id={child.id} date={occurence_date}"
-        )
+        result = f"Recurring task {action}: parent_task_id={parent_task.id} child_task_id={child.id} date={occurence_date}"
+        logger.info(result)
+        return result
+    return f"No new occurrences generated for parent_task_id={parent_task.id}, dates={occurences_dates}"
 
 
 def gen_rec_tasks_for_parent(parent_task: Task):
@@ -51,16 +52,17 @@ def gen_rec_tasks_for_parent(parent_task: Task):
     try:
         rule = rrulestr(parent_task.recurrence_rule, dtstart=parent_task.start_at)
     except Exception as e:
-        logger.error(
+        result = (
             f"Error parsing recurrence rule for parent_task_id={parent_task.id}: {e}"
         )
-        return
+        logger.error(result)
+        return result
 
     last_task_date = timezone.now()
     nxt_task_date = rule.after(last_task_date, inc=False)
 
     if nxt_task_date:
-        _generate_rec_tasks_for_parent(parent_task, [nxt_task_date])
+        return _generate_rec_tasks_for_parent(parent_task, [nxt_task_date])
     else:
         logger.info(f"No upcoming recurrence for parent_task_id={parent_task.id}")
 
