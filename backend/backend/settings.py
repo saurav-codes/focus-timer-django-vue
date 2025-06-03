@@ -15,6 +15,7 @@ import environ
 import os
 import sentry_sdk
 import logging
+import logfire
 
 logger = logging.getLogger(__name__)
 
@@ -259,3 +260,9 @@ LOGGING = {
         },
     },
 }
+
+# keep this at the end of the file
+if not DEBUG:
+    # send all the logs to logfire
+    logfire.configure()
+    logfire.instrument_django()
