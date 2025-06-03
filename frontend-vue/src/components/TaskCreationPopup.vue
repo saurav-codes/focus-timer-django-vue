@@ -112,7 +112,6 @@
         order: 0,
         tags: [],
         status: 'BRAINDUMP',
-        user: authStore.userData.id,
       }
       if (selectedProjectId.value) {
         newTask.project_id = selectedProjectId.value

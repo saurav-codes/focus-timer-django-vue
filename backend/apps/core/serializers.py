@@ -9,9 +9,20 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Project
         fields = "__all__"
+        read_only_fields = ["user"]
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
 
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -24,25 +35,33 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Task
         fields = "__all__"
+        read_only_fields = ["user"]
 
     def get_duration_display(self, obj):
         return obj.get_duration_display
 
     def validate_recurrence_rule(self, value):
-        if not value:
-            return value
-        try:
-            # test‑parse the string
-            rrulestr(value)
-            logger.info(f"Valid recurrence rule: rule={value}")
-        except Exception as e:
-            logger.error(f"Invalid recurrence rule '{value}': {e}")
-            raise serializers.ValidationError(f"Invalid RRULE: {e}")
+        if value:
+            try:
+                rrulestr(value)
+                logger.info(f"Valid recurrence rule: rule={value}")
+            except Exception as e:
+                logger.error(f"Invalid recurrence rule '{value}': {e}")
+                raise serializers.ValidationError(f"Invalid RRULE: {e}")
         return value
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
     def save(self, **kwargs):
         task = super().save(**kwargs)

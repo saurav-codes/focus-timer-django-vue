@@ -45,7 +45,7 @@ class TasksApiView(LoginRequiredMixin, APIView):
         """
         Create a new task
         """
-        serializer = TaskSerializer(data=request.data)
+        serializer = TaskSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             with transaction.atomic():
                 serializer.save()
@@ -66,7 +66,7 @@ class TasksApiView(LoginRequiredMixin, APIView):
                 f"Bulk update order by user_id={request.user.id} for task_ids={[t['id'] for t in tasks]}"
             )
             for idx, task in enumerate(tasks, start=1):
-                task_obj = get_object_or_404(Task, pk=task["id"])
+                task_obj = get_object_or_404(Task, pk=task["id"], user=request.user)
                 with transaction.atomic():
                     task_obj.order = idx
                     task_obj.save()
@@ -74,13 +74,13 @@ class TasksApiView(LoginRequiredMixin, APIView):
         return Response({"error": "unknown action"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TaskApiView(LoginRequiredMixin, APIView):
+class TaskDetailApiView(LoginRequiredMixin, APIView):
     def get(self, request, pk):
         """
         Get a task by id
         """
         logger.info(f"Fetching task: task_id={pk} by user_id={request.user.id}")
-        task = Task.objects.get(pk=pk)
+        task = get_object_or_404(Task, pk=pk, user=request.user)
         serializer = TaskSerializer(task)
         return Response(serializer.data)
 
@@ -91,8 +91,10 @@ class TaskApiView(LoginRequiredMixin, APIView):
         one for updating other fields.
         """
         logger.info(f"Updating task: task_id={pk} by user_id={request.user.id}")
-        task = get_object_or_404(Task, pk=pk)
-        serializer = TaskSerializer(task, data=request.data)
+        task = get_object_or_404(Task, pk=pk, user=request.user)
+        serializer = TaskSerializer(
+            task, data=request.data, context={"request": request}, partial=True
+        )
         if serializer.is_valid():
             with transaction.atomic():
                 serializer.save()
@@ -101,7 +103,7 @@ class TaskApiView(LoginRequiredMixin, APIView):
 
     def delete(self, request, pk):
         logger.info(f"Deleting task: task_id={pk} by user_id={request.user.id}")
-        task = get_object_or_404(Task, pk=pk)
+        task = get_object_or_404(Task, pk=pk, user=request.user)
         with transaction.atomic():
             task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -115,7 +117,7 @@ def toggle_task_completion(request, pk):
     Toggle the completion status of a task
     best to use since we aren't sending/receiving any data unlike the TaskApiView
     """
-    task: Task = get_object_or_404(Task, pk=pk)
+    task: Task = get_object_or_404(Task, pk=pk, user=request.user)
     logger.info(
         f"Toggling completion: task_id={pk} old_status={task.is_completed} by user_id={request.user.id}"
     )
@@ -136,8 +138,9 @@ def assign_project_to_task(request, task_id, project_id):
     logger.info(
         f"Assigning project to task: task_id={task_id} project_id={project_id} by user_id={request.user.id}"
     )
-    task = get_object_or_404(Task, pk=task_id)
-    project = get_object_or_404(Project, pk=project_id)
+    # filter by user to ensure the task and project belong to the same user
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    project = get_object_or_404(Project, pk=project_id, user=request.user)
     task.project = project
     task.save()  # save() returns None, so we don't assign it
     serializer = TaskSerializer(task)
@@ -163,7 +166,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         Get a project by id
         """
         logger.info(f"Fetching project: project_id={pk} by user_id={request.user.id}")
-        project = get_object_or_404(Project, pk=pk)
+        project = get_object_or_404(Project, pk=pk, user=request.user)
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
 
@@ -172,8 +175,10 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
         Update a project
         """
         logger.info(f"Updating project: project_id={pk} by user_id={request.user.id}")
-        project = get_object_or_404(Project, pk=pk)
-        serializer = ProjectSerializer(project, data=request.data)
+        project = get_object_or_404(Project, pk=pk, user=request.user)
+        serializer = ProjectSerializer(
+            project, data=request.data, context={"request": request}
+        )
         if serializer.is_valid():
             with transaction.atomic():
                 serializer.save()
@@ -182,7 +187,7 @@ class ProjectDetailApiView(LoginRequiredMixin, APIView):
 
     def delete(self, request, pk):
         logger.info(f"Deleting project: project_id={pk} by user_id={request.user.id}")
-        project = get_object_or_404(Project, pk=pk)
+        project = get_object_or_404(Project, pk=pk, user=request.user)
         with transaction.atomic():
             project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
