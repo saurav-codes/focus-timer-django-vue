@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("control-room1/", admin.site.urls),
     # Djoser auth endpoints
     re_path(r"^auth/", include("apps.authentication.urls")),
     # Core app endpoints
