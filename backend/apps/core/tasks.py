@@ -64,7 +64,9 @@ def gen_rec_tasks_for_parent(parent_task: Task):
     if nxt_task_date:
         return _generate_rec_tasks_for_parent(parent_task, [nxt_task_date])
     else:
-        logger.info(f"No upcoming recurrence for parent_task_id={parent_task.id}")
+        result = f"No upcoming recurrence for parent_task_id={parent_task.id}"
+        logger.info(result)
+        return result
 
 
 @app.task(name="generate_recurring_tasks")
@@ -82,9 +84,11 @@ def generate_recurring_tasks():
         recurrence_parent__isnull=True,
     )
 
+    results = []
+
     for parent in templates_tasks:
-        gen_rec_tasks_for_parent(parent)
-    return "done"
+        results.append(gen_rec_tasks_for_parent(parent))
+    return f"Generated recurring tasks results array containing data of every rec task -> : {results}"
 
 
 @app.task(name="archive_old_tasks")
