@@ -67,11 +67,13 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 ssh-copy-id focususer@your.domain.com
 
 # On server, edit /etc/ssh/sshd_config:
-#   Port 22
-#   PermitRootLogin no
-#   PasswordAuthentication no
-#   ChallengeResponseAuthentication no
-#   UsePAM yes
+```bash
+  Port 22
+  PermitRootLogin no
+  PasswordAuthentication no
+  ChallengeResponseAuthentication no
+  UsePAM yes
+```
 
 sudo systemctl reload ssh
 ```
@@ -131,7 +133,7 @@ logpath = /var/log/auth.log
 EOF
 sudo systemctl restart fail2ban
 ```
-<!-- TODO: write Jail for own app and nginx -->
+
 **Explanation:**
 - `ufw default deny incoming`: Blocks all incoming traffic by default.
 - `ufw default allow outgoing`: Allows all outbound traffic.
@@ -197,6 +199,7 @@ sudo systemctl restart redis
 ### 5.1 Clone Repository
 ```bash
 # Switch to DIR where you want to keep your project
+# ( using a sample project name, replace with your actual repo )
 git clone https://github.com/your-repo/focus-timer-django-vue.git
 cd focus-timer-django-vue
 ```
@@ -226,7 +229,6 @@ cd ../frontend-vue
 # install node
 curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s 22
 
-npm ci
 npm run build
 ```
 *Brief:* Outputs static assets in `dist/`.
@@ -432,3 +434,70 @@ sudo systemctl restart redis-server postgresql
 sudo systemctl status  redis-server postgresql
 sudo journalctl -u redis-server -f
 sudo journalctl -u postgresql  -f
+
+
+# 6. (Optional) I made a script to restart all services at once. Feel free to tweak it as it fits your needs.
+```bash
+#!/usr/bin/env bash
+
+# Script to restart all Focus Timer services
+
+set -euo pipefail
+
+# Parse options
+SKIP_FRONTEND=false
+for arg in "$@"; do
+  case $arg in
+    --skip-frontend)
+      SKIP_FRONTEND=true
+      ;;
+  esac
+done
+echo "Installing backend requirements..."
+.venv/bin/uv pip install -r backend/requirements.txt
+
+echo "Applying database migrations..."
+.venv/bin/python backend/manage.py migrate --noinput
+
+echo "Collecting static files..."
+.venv/bin/python backend/manage.py collectstatic --noinput
+if [ "$SKIP_FRONTEND" = false ]; then
+  echo "Building frontend..."
+  ( cd frontend-vue && npm ci && npm run build )
+else
+  echo "Skipping frontend build due to --skip-frontend option"
+fi
+
+echo "Reloading systemd daemon..."
+sudo systemctl daemon-reload
+
+services=(
+  gunicorn
+  celery
+  celery-beat
+  nginx
+  redis-server
+  postgresql
+)
+
+for service in "${services[@]}"; do
+  echo "Restarting $service..."
+  sudo systemctl restart "$service"
+done
+
+echo "Waiting for services to settle..."
+sleep 2
+
+echo "Services status:"
+for service in "${services[@]}"; do
+  echo "===== $service ====="
+  sudo systemctl status "$service" --no-pager
+done
+
+echo "All services restarted."
+```
+
+**Save this script as `deploy.sh` and make it executable:**
+```bash
+chmod +x deploy.sh
+```
