@@ -37,5 +37,3 @@ sentry-sdk
 
 pre-commit
 ruff
-
-logfire[django]

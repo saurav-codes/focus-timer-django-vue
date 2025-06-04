@@ -15,7 +15,6 @@ import environ
 import os
 import sentry_sdk
 import logging
-import logfire
 
 logger = logging.getLogger(__name__)
 
@@ -225,13 +224,14 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 
 if not DEBUG:
     sentry_sdk.init(
-        dsn="https://07ef3df6aac52b0b465cd98c5b0042f6@o4509411491577856.ingest.de.sentry.io/4509411656663120",
+        dsn=env("SENTRY_DSN", default=""),
         # Add data like request headers and IP for users,
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         send_default_pii=True,
     )
 
-LOGGING_FILE_PATH = BASE_DIR / "focus_timer_django_vue.log"
+LOGGING_FILE_PATH = BASE_DIR / "logs" / "focus_timer_django_vue.log"
+os.makedirs(os.path.dirname(LOGGING_FILE_PATH), exist_ok=True)
 
 LOGGING = {
     "version": 1,
@@ -240,9 +240,11 @@ LOGGING = {
     "handlers": {
         "file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": LOGGING_FILE_PATH,
             "formatter": "app",
+            "maxBytes": 1024 * 1024 * 1,  # 1 MB
+            "backupCount": 20,  # Keep 20 backup files
         },
         "console": {
             "level": "INFO",
@@ -251,6 +253,12 @@ LOGGING = {
     },
     "loggers": {
         "django": {"handlers": ["file", "console"], "level": "INFO", "propagate": True},
+        "celery": {"handlers": ["file", "console"], "level": "INFO", "propagate": True},
+        "celery.beat": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
     },
     "formatters": {
         "app": {
@@ -261,9 +269,3 @@ LOGGING = {
         },
     },
 }
-
-# keep this at the end of the file
-if not DEBUG:
-    # send all the logs to logfire
-    logfire.configure()
-    logfire.instrument_django()
