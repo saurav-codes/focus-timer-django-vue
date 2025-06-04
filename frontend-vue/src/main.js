@@ -14,7 +14,7 @@ import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 import Popper from 'vue3-popper'
 import { watch } from 'vue'
 import { useUIStore } from './stores/uiStore'
-import posthogPlugin from './plugins/posthog' //import the plugin.
+import posthogPlugin from './../plugins/posthog' //import the plugin.
 
 import './assets/index.css'
 import '@vueform/multiselect/themes/default.css'
