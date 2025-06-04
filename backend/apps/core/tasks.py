@@ -5,8 +5,23 @@ from .models import Task
 import datetime
 import logging
 from django.db import transaction
+from celery.signals import worker_init, beat_init
+import logfire
 
 logger = logging.getLogger(__name__)
+
+
+# LOGGING SETUP
+@worker_init.connect()
+def init_worker(*args, **kwargs):
+    logfire.configure(service_name="worker")
+    logfire.instrument_celery()
+
+
+@beat_init.connect()
+def init_beat(*args, **kwargs):
+    logfire.configure(service_name="beat")
+    logfire.instrument_celery()
 
 
 def _generate_rec_tasks_for_parent(
