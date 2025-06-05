@@ -33,6 +33,7 @@ app.use(autoAnimatePlugin)
 
 console.log('import.meta.env.PROD', import.meta.env.PROD)
 if (import.meta.env.PROD) {
+  app.use(posthogPlugin) //install posthog plugin in production mode
   Sentry.init({
     app,
     dsn: 'https://8e7633e4e6c341b176c2c416d0b5fde1@o4509411491577856.ingest.de.sentry.io/4509411497607248',
@@ -68,5 +69,4 @@ watch(
   { immediate: true }
 )
 
-app.use(posthogPlugin) //install the plugin
 app.mount('#app')
