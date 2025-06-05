@@ -196,7 +196,7 @@ def get_calendar_events(request):
             )
 
             logger.info(
-                f"Google events fetched count={len(events_result.get('items', []))} for user_id={request.user.id} calendar_id={calendar_id} time_range=({start},{end})"
+                f"Google events fetched count={len(events_result.get('items', []))} for user_id={request.user.id} time_range=({start},{end})"
             )
             events = events_result.get("items", [])
 
