@@ -5,6 +5,7 @@ from dateutil.rrule import rrulestr
 from .models import Task
 import datetime
 from django.db import transaction
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -147,25 +148,35 @@ def move_old_tasks_to_backlogs():
 @app.task(name="move_yesterday_task_to_today")
 def move_yesterday_task_to_today():
     """
-    Move yesterday's tasks to today's date.
+    Move yesterday's tasks to today's date using each user's timezone.
     """
     logger.info("Starting move_yesterday_task_to_today task")
+    User = get_user_model()
+    total_moved = 0
 
-    # Calculate the date for yesterday
-    yesterday = timezone.now() - datetime.timedelta(days=1)
+    # Iterate through all users and adjust based on their local midnight
+    for user in User.objects.all():
+        now_local = timezone.now().astimezone(user.timezone)
+        yesterday_date = (now_local - datetime.timedelta(days=1)).date()
 
-    # Find tasks that were due yesterday and aren't already completed
-    old_tasks = Task.objects.filter(
-        status=Task.ON_BOARD,
-        is_completed=False,
-        column_date__date=yesterday.date(),
-    ).exclude(status=Task.ARCHIVED)
+        old_tasks = Task.objects.filter(
+            user=user,
+            status=Task.ON_BOARD,
+            is_completed=False,
+            column_date__date=yesterday_date,
+        ).exclude(status=Task.ARCHIVED)
 
-    count = 0
-    for task in old_tasks:
-        task.column_date = timezone.now()
-        task.save(update_fields=["column_date"])
-        count += 1
+        moved = 0
+        for task in old_tasks:
+            task.column_date = now_local
+            task.save(update_fields=["column_date"])
+            moved += 1
 
-    logger.info(f"Moved {count} old tasks to today's date")
-    return f"Moved {count} old tasks to today's date"
+        if moved:
+            logger.info(
+                f"Moved {moved} tasks for user_id={user.id} for date={yesterday_date}"
+            )
+        total_moved += moved
+
+    logger.info(f"Total moved tasks: {total_moved}")
+    return f"Moved {total_moved} tasks across all users"
