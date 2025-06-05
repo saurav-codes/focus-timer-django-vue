@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 import logging
 
 logger = logging.getLogger(__name__)
@@ -81,3 +82,27 @@ def register(request):
         errors = form.errors.as_json()
         logger.warning("User registration failed: validation errors")
         return JsonResponse({"error": errors}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_timezone(request):
+    """
+    Update the authenticated user's timezone
+    """
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        tz = data.get("timezone")
+        user_serializer = UserSerializer(
+            request.user, data={"timezone": tz}, partial=True
+        )
+        if user_serializer.is_valid():
+            user_serializer.save()
+            logger.info(
+                f"User timezone updated: user_id={request.user.id}, timezone={tz}"
+            )
+            return JsonResponse(user_serializer.data, status=200)
+        return JsonResponse({"error": user_serializer.errors}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating timezone for user_id={request.user.id}: {e}")
+        return JsonResponse({"error": str(e)}, status=400)

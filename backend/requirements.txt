@@ -37,3 +37,4 @@ sentry-sdk
 
 pre-commit
 ruff
+django-timezone-field

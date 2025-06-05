@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
+from timezone_field import TimeZoneField
 
 
 class CustomUserManager(BaseUserManager):
@@ -47,6 +48,7 @@ class User(AbstractUser):
     # This will help us to know if the user was created from a specific source
     # like a referral link or a specific marketing campaign
     joined_from_source = models.CharField(max_length=255, null=True, blank=True)
+    timezone = TimeZoneField(default="UTC")
     objects = CustomUserManager()
     history = HistoricalRecords()
 

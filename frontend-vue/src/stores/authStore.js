@@ -157,6 +157,17 @@ export const useAuthStore = defineStore('authStore', {
       }
     },
 
+    async updateUserTimezone(timezone) {
+      try {
+        const { data } = await axios_instance.post('auth/user/timezone/', { timezone })
+        this.userData = data
+        return data
+      } catch (error) {
+        console.error('Error updating timezone:', error)
+        throw error
+      }
+    },
+
     // Initialize auth state, to be called when app starts
     initAuth() {
       // Set up interceptors
