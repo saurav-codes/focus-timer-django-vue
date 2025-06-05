@@ -8,10 +8,11 @@ User = get_user_model()
 class CreateUserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["email", "password"]
+        fields = ["email", "password", "timezone"]
 
     def save(self, commit=True) -> UserModelType:
         user = super().save(commit=False)
+        user.timezone = self.cleaned_data["timezone"]
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()

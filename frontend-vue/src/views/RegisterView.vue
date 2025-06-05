@@ -15,6 +15,8 @@
   const confirmPasswordError = ref('')
   const showPassword = ref(false)
   const agreeToTerms = ref(false)
+  // Browser timezone
+  const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   // Password validation
   const passwordStrength = computed(() => {
@@ -66,7 +68,7 @@
       return
     }
 
-    await authStore.register(email.value, password.value)
+    await authStore.register(email.value, password.value, browserTimezone)
   }
 
   // Navigate to login page

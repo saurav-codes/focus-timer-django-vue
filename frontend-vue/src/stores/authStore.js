@@ -109,12 +109,13 @@ export const useAuthStore = defineStore('authStore', {
       console.log('CSRF token set')
     },
 
-    async register(email, password) {
+    async register(email, password, timezone) {
       this.isLoading = true
       try {
         await axios_instance.post('auth/register/', {
           email,
           password,
+          timezone,
         })
         return await this.login(email, password)
       } catch (error) {
