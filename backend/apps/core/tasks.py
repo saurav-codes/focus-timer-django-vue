@@ -81,8 +81,8 @@ def generate_recurring_tasks():
 
     # 1) Grab only the *original* recurring tasks (no parents, with an RRULE)
     templates_tasks = Task.objects.filter(
-        recurrence_rule__isnull=False,
-        recurrence_parent__isnull=True,
+        recurrence_rule__isnull=False,  # has a recurrence rule
+        recurrence_parent__isnull=True,  # is a parent task
     )
 
     results = []
@@ -164,6 +164,7 @@ def move_yesterday_task_to_today():
             status=Task.ON_BOARD,
             is_completed=False,
             column_date__date=yesterday_date,
+            recurrence_rule__isnull=True,  # isn't a recurring task
         ).exclude(status=Task.ARCHIVED)
 
         moved = 0
