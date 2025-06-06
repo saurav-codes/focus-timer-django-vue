@@ -1,99 +1,96 @@
 <script setup>
-  import { onMounted, useTemplateRef, onUnmounted } from 'vue'
-  import BrainDump from '../components/BrainDump.vue'
+  import { onMounted, ref, useTemplateRef, onUnmounted } from 'vue'
   import { useIntervalFn } from '@vueuse/core'
+  import BrainDump from '../components/BrainDump.vue'
   import KanbanColumn from '../components/KanbanColumn.vue'
   import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue'
   import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue'
   import FilterSidebar from '../components/sidebar/FilterSidebar.vue'
-  import { useScroll } from '@vueuse/core'
 
   import { useTaskStore } from '../stores/taskstore'
   import { useUIStore } from '../stores/uiStore'
 
+  // Ref for the scroll container
+  const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper')
   const taskStore = useTaskStore()
   const uiStore = useUIStore()
+  const hasScrolledRight = ref(false)
+  const scrollThreshold = 100
 
-  // need this reference to scroll the kanban columns wrapper when the page loads
-  const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper')
-  const scroll_data = useScroll(kanbanColumnsWrapper, { behavior: 'smooth' })
-  const hasHorizontalScrollbar = () => {
-    if (!kanbanColumnsWrapper.value) return false
-    return kanbanColumnsWrapper.value.scrollWidth > kanbanColumnsWrapper.value.clientWidth
-  }
+  const hasHorizontalScrollbar = () =>
+    kanbanColumnsWrapper.value
+      ? kanbanColumnsWrapper.value.scrollWidth > kanbanColumnsWrapper.value.clientWidth
+      : false
 
-  // Load more columns when near right edge
-  const checkScrollPosition = async () => {
-    if (!kanbanColumnsWrapper.value) return
+  // Simple native scroll handler
+  const onScroll = async () => {
+    const wrapper = kanbanColumnsWrapper.value
+    if (!wrapper) return
+    const { scrollLeft, scrollWidth, clientWidth } = wrapper
 
-    // Calculate if we're near the right edge
-    const { scrollLeft, scrollWidth, clientWidth } = kanbanColumnsWrapper.value
-    const scrollThreshold = 300 // Pixel threshold before the end to trigger loading more columns
-    const noScrollbar = !hasHorizontalScrollbar()
-    const nearEdge = scrollWidth - (scrollLeft + clientWidth) < scrollThreshold
+    // 1) Track right scroll to enable backward load
+    if (scrollLeft > scrollThreshold) {
+      hasScrolledRight.value = true
+    }
 
-    if (nearEdge || noScrollbar) {
-      // We're near the right edge, load more columns if not already loading
-      if (!uiStore.isLoadingMoreColumns) {
-        uiStore.setLoadingMoreColumns(true)
-        try {
-          // Wait for the columns to be added and tasks to be fetched
-          await taskStore.addMoreColumns(3)
-        } catch (error) {
-          console.error('Error loading more columns:', error)
-        } finally {
-          // Always reset loading state after completion (success or error)
-          uiStore.setLoadingMoreColumns(false)
-        }
+    // 2) Backward load: at left edge after right scroll
+    if (
+      scrollLeft === 0 &&
+      hasScrolledRight.value &&
+      !uiStore.isLoadingEarlierColumns
+    ) {
+      hasScrolledRight.value = false
+      uiStore.setLoadingEarlierColumns(true)
+      try {
+        await taskStore.addEarlierColumns(7)
+      } catch (e) {
+        console.error(e)
+      } finally {
+        uiStore.setLoadingEarlierColumns(false)
+      }
+    }
+
+    // 3) Forward load: if near right edge or no scrollbar
+    if (
+      (scrollWidth - (scrollLeft + clientWidth) < scrollThreshold ||
+        !hasHorizontalScrollbar()) &&
+      !uiStore.isLoadingMoreColumns
+    ) {
+      uiStore.setLoadingMoreColumns(true)
+      try {
+        await taskStore.addMoreColumns(3)
+      } catch (e) {
+        console.error(e)
+      } finally {
+        uiStore.setLoadingMoreColumns(false)
       }
     }
   }
 
-  const animateScroll = () => {
-    // scroll to right by 500
-    scroll_data.x.value = 500
-    setTimeout(() => {
-      scroll_data.x.value = 310
-    }, 1000)
-  }
-
+  // Auto-fetch tasks every 5 minutes
   const { pause: stopAutoFetchTasks } = useIntervalFn(
     () => {
-      // auto fetch tasks every 5 minutes
-      console.log('Fetching tasks every 5 minutes')
       taskStore.fetchTasks()
-      console.log("task fetched every 5 min completed")
     },
-    5 * 60 * 1000 // 5 minutes
+    5 * 60 * 1000
   )
 
-  // Run animation when component mounts and hide the indicator after animation
-  onMounted(() => {
-    // Small delay to ensure content is rendered
-    setTimeout(() => {
-      animateScroll()
-    }, 100)
-
-    // Initial check after a short delay to ensure columns are rendered
-    setTimeout(checkScrollPosition, 500)
-
-    // Fetch tasks, projects, and tags when component mounts
-    taskStore.fetchTasks()
+  onMounted(async () => {
+    await taskStore.fetchTasks()
     taskStore.fetchProjects()
     taskStore.fetchTags()
-
-    // Add scroll event listener to detect end of scroll for infinite loading
-    if (kanbanColumnsWrapper.value) {
-      kanbanColumnsWrapper.value.addEventListener('scroll', checkScrollPosition)
+    const wrapper = kanbanColumnsWrapper.value
+    if (wrapper) {
+      wrapper.scrollLeft = 0
+      wrapper.addEventListener('scroll', onScroll)
     }
   })
 
-  // Clean up event listener when component is unmounted
   onUnmounted(() => {
-    if (kanbanColumnsWrapper.value) {
-      kanbanColumnsWrapper.value.removeEventListener('scroll', checkScrollPosition)
+    const wrapper = kanbanColumnsWrapper.value
+    if (wrapper) {
+      wrapper.removeEventListener('scroll', onScroll)
     }
-    // Stop the interval for auto-fetching tasks
     stopAutoFetchTasks()
   })
 </script>
@@ -107,6 +104,8 @@
     <!-- Scrollable columns container -->
     <div ref="kanbanColumnsWrapper" class="kanban-columns-wrapper">
       <div class="kanban-columns">
+        <!-- Loading skeleton for backward infinite scroll -->
+        <LoadingColumnsSkeleton v-if="uiStore.isLoadingEarlierColumns" />
         <div v-for="column in taskStore.kanbanColumns" :key="column.title + column.dateString">
           <KanbanColumn
             :date-string="column.dateString"

@@ -14,6 +14,8 @@ export const useUIStore = defineStore('ui', () => {
 
   // Loading state for infinite scrolling
   const isLoadingMoreColumns = ref(false)
+  // Loading state for backward infinite scrolling
+  const isLoadingEarlierColumns = ref(false)
 
   // Toggle functions
   function toggleBrainDump() {
@@ -44,6 +46,10 @@ export const useUIStore = defineStore('ui', () => {
     isLoadingMoreColumns.value = isLoading
   }
 
+  function setLoadingEarlierColumns(isLoading) {
+    isLoadingEarlierColumns.value = isLoading
+  }
+
   function setPointerOverIntegration(isOver) {
     isPointerOverIntegration.value = isOver
   }
@@ -53,12 +59,14 @@ export const useUIStore = defineStore('ui', () => {
     isIntegrationSidebarVisible,
     activeIntegration,
     isLoadingMoreColumns,
+    isLoadingEarlierColumns,
     isFilterSidebarVisible,
     isPointerOverIntegration,
     toggleBrainDump,
     toggleIntegrationSidebar,
     setActiveIntegration,
     setLoadingMoreColumns,
+    setLoadingEarlierColumns,
     toggleFilterSidebar,
     setPointerOverIntegration,
     // Export theme controls
