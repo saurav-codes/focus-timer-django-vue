@@ -77,6 +77,8 @@ export const useTaskStore = defineStore('taskStore', {
     ],
     brainDumpTasks: [],
     lastDate: addDays(today, 2), // Track the last date we've added
+    minDate: addDays(today, -7), // Lower bound: don't load earlier than 7 days ago
+    firstDate: addDays(today, -1), // Track the first date we've loaded
     // Add filter-related state
     projects: [],
     tags: [],
@@ -107,6 +109,9 @@ export const useTaskStore = defineStore('taskStore', {
             params.append('tags', tag)
           })
         }
+
+        params.append('start_date', this.firstDate.toISOString().split('T')[0])
+        params.append('end_date', this.lastDate.toISOString().split('T')[0])
 
         const { data } = await this.axios_instance.get(`api/tasks/?${params}`)
 
@@ -229,6 +234,24 @@ export const useTaskStore = defineStore('taskStore', {
       // After adding columns, fetch tasks for the new columns
       // Return the promise so the caller knows when it's done
       return this.fetchTasks()
+    },
+
+    // Add earlier date columns for backward infinite scroll
+    async addEarlierColumns(count = 3) {
+      let added = 0
+      for (let i = 0; i < count; i++) {
+        const prevDate = addDays(this.firstDate, -1)
+        if (prevDate < this.minDate) break
+        this.kanbanColumns.unshift(createDateColumn(prevDate))
+        this.firstDate = prevDate
+        added++
+      }
+      if (added > 0) {
+        // After adding columns, fetch tasks for the new columns
+        return this.fetchTasks()
+      }
+      // No columns added; skip backend fetch
+      return Promise.resolve()
     },
 
     async toggleCompletion(taskId) {
