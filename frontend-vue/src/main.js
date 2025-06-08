@@ -59,7 +59,7 @@ watch(
   (theme) => {
     const root = document.documentElement
     // Remove all theme classes
-    root.classList.remove('dark', 'theme-minecraft', 'theme-notion', 'theme-zed')
+    root.classList.remove('dark', 'theme-minecraft', 'theme-notion', 'theme-zed', 'theme-podcast')
     if (theme === 'dark') {
       root.classList.add('dark')
     } else if (theme && theme !== 'light') {

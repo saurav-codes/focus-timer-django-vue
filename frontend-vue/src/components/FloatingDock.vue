@@ -14,6 +14,7 @@
     Gamepad2,
     PencilLine,
     Zap,
+    MicVocal,
   } from 'lucide-vue-next'
 
   const isExpanded = ref(false)
@@ -58,6 +59,8 @@
         return PencilLine
       case 'zed':
         return Zap
+      case 'podcast':
+        return MicVocal
       default:
         return Sun
     }

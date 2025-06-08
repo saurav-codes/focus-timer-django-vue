@@ -36,7 +36,7 @@ export const useUIStore = defineStore('ui', () => {
 
   // Cycle through themes on each toggle click
   function cycleTheme() {
-    const order = ['light', 'dark', 'minecraft', 'notion', 'zed']
+    const order = ['light', 'dark', 'minecraft', 'notion', 'zed', 'podcast']
     const idx = order.indexOf(currentTheme.value)
     const next = order[(idx + 1) % order.length]
     currentTheme.value = next

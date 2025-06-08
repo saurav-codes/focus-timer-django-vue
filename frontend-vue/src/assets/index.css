@@ -449,6 +449,30 @@ body {
   --color-secondary: #ffb800;
 }
 
+/* Podcast theme for vibrant site launch */
+.theme-podcast {
+  --podcast-bg-start: #00ffff;
+  --podcast-bg-end: #ff00ff;
+  --color-background: var(--podcast-bg-start);
+  --color-background-secondary: var(--podcast-bg-end);
+  --color-background-tertiary: #ffffff;
+  --color-primary: #00ffff;
+  --color-primary-light: #33ffff;
+  --color-primary-dark: #00cccc;
+  --color-secondary: #ff00ff;
+  --color-secondary-light: #ff33ff;
+  --color-secondary-dark: #cc00cc;
+  --color-text-primary: #000000;
+  --color-text-secondary: #000000a0;
+  --color-text-tertiary: #00000080;
+  --color-border: #000000;
+}
+
+/* Apply gradient background under podcast theme */
+.theme-podcast body {
+  background: linear-gradient(135deg, var(--podcast-bg-start), var(--podcast-bg-end));
+}
+
 /* Apply typography globally */
 body {
   font-family: var(--font-primary);
