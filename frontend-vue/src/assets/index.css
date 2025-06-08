@@ -449,28 +449,55 @@ body {
   --color-secondary: #ffb800;
 }
 
-/* Podcast theme for vibrant site launch */
 .theme-podcast {
-  --podcast-bg-start: #00ffff;
-  --podcast-bg-end: #ff00ff;
-  --color-background: var(--podcast-bg-start);
-  --color-background-secondary: var(--podcast-bg-end);
-  --color-background-tertiary: #ffffff;
-  --color-primary: #00ffff;
-  --color-primary-light: #33ffff;
-  --color-primary-dark: #00cccc;
-  --color-secondary: #ff00ff;
-  --color-secondary-light: #ff33ff;
-  --color-secondary-dark: #cc00cc;
-  --color-text-primary: #000000;
-  --color-text-secondary: #000000a0;
-  --color-text-tertiary: #00000080;
-  --color-border: #000000;
+  /* PostHog-inspired dark theme */
+  --color-background: #121419;
+  --color-background-secondary: #1e222a;
+  --color-background-tertiary: #272a34;
+
+  --color-primary: #e6572c; /* PostHog brand red */
+  --color-primary-light: #f0784f;
+  --color-primary-dark: #b24a1f;
+
+  --color-secondary: #c5a880; /* neutral gold accent */
+  --color-secondary-light: #dcc2a4;
+  --color-secondary-dark: #a28760;
+
+  --color-text-primary: #e3e6ea;
+  --color-text-secondary: rgba(227, 230, 234, 0.7);
+  --color-text-tertiary: rgba(227, 230, 234, 0.5);
+
+  --color-border: #2e3038;
+  /* Button shadows */
+  --button-shadow-dark: rgba(0, 0, 0, 0.4);
+  --button-shadow-light: rgba(0, 0, 0, 0.2);
 }
 
-/* Apply gradient background under podcast theme */
+/* Apply background */
 .theme-podcast body {
-  background: linear-gradient(135deg, var(--podcast-bg-start), var(--podcast-bg-end));
+  background-color: var(--color-background);
+}
+
+.theme-podcast button:hover,
+.theme-podcast .cta-button:hover,
+.theme-podcast .login-btn:hover,
+.theme-podcast .signup-btn:hover,
+.theme-podcast .archive-button:hover,
+.theme-podcast .delete-button:hover,
+.theme-podcast .save-button:hover,
+.theme-podcast .pricing-cta:hover {
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 var(--button-shadow-dark),
+    0 8px 12px var(--button-shadow-light);
+}
+
+.theme-podcast .feature-card:hover,
+.theme-podcast .task-item:hover,
+.theme-podcast .kanban-column:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Apply typography globally */
