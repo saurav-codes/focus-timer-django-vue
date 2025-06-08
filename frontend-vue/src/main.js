@@ -7,6 +7,8 @@ import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/700.css'
 import '@fontsource/press-start-2p/400.css'
 import '@fontsource/shadows-into-light/400.css'
+import '@fontsource/plus-jakarta-sans/400.css'
+import '@fontsource/plus-jakarta-sans/700.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

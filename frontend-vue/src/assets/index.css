@@ -451,6 +451,8 @@ body {
 
 .theme-podcast {
   /* PostHog-inspired dark theme */
+  --font-primary: 'Plus Jakarta Sans', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
   --color-background: #121419;
   --color-background-secondary: #1e222a;
   --color-background-tertiary: #272a34;
@@ -491,13 +493,6 @@ body {
   box-shadow:
     0 6px 0 var(--button-shadow-dark),
     0 8px 12px var(--button-shadow-light);
-}
-
-.theme-podcast .feature-card:hover,
-.theme-podcast .task-item:hover,
-.theme-podcast .kanban-column:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Apply typography globally */
