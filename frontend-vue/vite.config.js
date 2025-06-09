@@ -13,9 +13,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
-        './public/favicon.ico',
-        './src/assets/meta/apple-icon-180.png',
-        './src/assets/meta/manifest-icon-512.maskable.png',
+        'favicon.ico',
+        'apple-icon-180.png',
+        'manifest-icon-512.maskable.png',
+        'manifest-icon-192.maskable.png',
       ],
       manifest: {
         name: 'Tymr Online',
@@ -24,25 +25,25 @@ export default defineConfig({
         theme_color: '#ffffff',
         icons: [
           {
-            src: './src/assets/meta/manifest-icon-192.maskable.png',
+            src: 'manifest-icon-192.maskable.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: './src/assets/meta/manifest-icon-192.maskable.png',
+            src: 'manifest-icon-192.maskable.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: './src/assets/meta/manifest-icon-512.maskable.png',
+            src: 'manifest-icon-512.maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: './src/assets/meta/manifest-icon-512.maskable.png',
+            src: 'manifest-icon-512.maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
