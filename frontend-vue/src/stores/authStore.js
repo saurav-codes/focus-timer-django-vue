@@ -91,12 +91,13 @@ export const useAuthStore = defineStore('authStore', {
         })
 
         router.push('/kanban-planner')
-        this.isAuthenticated = true
         this.userData = await this.fetchUserData()
+        this.isAuthenticated = true
         return true
       } catch (error) {
         console.error('Login error:', error)
         parseErrors(error.response?.data, this.loginErrors, 'login')
+        this.isAuthenticated = false
         return false
       } finally {
         this.isLoading = false

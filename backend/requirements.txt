@@ -38,3 +38,5 @@ sentry-sdk
 pre-commit
 ruff
 django-timezone-field
+channels-redis[cryptography]
+uvicorn[standard]

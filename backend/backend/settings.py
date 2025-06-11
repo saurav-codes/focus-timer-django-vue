@@ -57,6 +57,7 @@ THIRD_PARTY_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "simple_history",
+    "channels",
 ]
 
 LOCAL_APPS = [
@@ -98,7 +99,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.wsgi.application"
+ASGI_APPLICATION = "backend.asgi.application"
 
 
 # Database
@@ -212,7 +213,8 @@ CELERY_TRACK_STARTED = True
 CELERY_RESULT_EXTENDED = True  # Store extended result metadata
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_RESULT_BACKEND = "django-db"
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+REDIS_CONNECTION_URL = env("REDIS_CONNECTION_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = REDIS_CONNECTION_URL
 
 # Google Calendar Integration
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
@@ -266,6 +268,16 @@ LOGGING = {
                 "%(asctime)s [%(levelname)-8s] (%(module)s.%(funcName)s) %(message)s"
             ),
             "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_CONNECTION_URL],
+            "symmetric_encryption_keys": [SECRET_KEY],
         },
     },
 }
