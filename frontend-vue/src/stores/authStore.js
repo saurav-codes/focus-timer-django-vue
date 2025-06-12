@@ -169,6 +169,20 @@ export const useAuthStore = defineStore('authStore', {
         throw error
       }
     },
+    /**
+     * Update authenticated user's full_name
+     * @param {string} fullName
+     */
+    async updateUserProfile(fullName) {
+      try {
+        const { data } = await axios_instance.post('auth/user/profile/', { full_name: fullName })
+        this.userData = data
+        return data
+      } catch (error) {
+        console.error('Error updating profile:', error)
+        throw error
+      }
+    },
 
     // Initialize auth state, to be called when app starts
     initAuth() {

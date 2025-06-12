@@ -106,3 +106,32 @@ def update_timezone(request):
     except Exception as e:
         logger.error(f"Error updating timezone for user_id={request.user.id}: {e}")
         return JsonResponse({"error": str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_profile(request):
+    """
+    Update authenticated user's full name via full_name field
+    """
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        full = data.get("full_name", "")
+        serializer = UserSerializer(
+            request.user,
+            data={"full_name": full},
+            partial=True,
+        )
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(
+                f"User profile updated: user_id={request.user.id}, full_name={full}"
+            )
+            return JsonResponse(serializer.data, status=200)
+        logger.warning(
+            f"Profile update validation errors for user_id={request.user.id}: {serializer.errors}"
+        )
+        return JsonResponse({"error": serializer.errors}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating profile for user_id={request.user.id}: {e}")
+        return JsonResponse({"error": str(e)}, status=400)
