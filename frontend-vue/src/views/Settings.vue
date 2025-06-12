@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '../stores/authStore'
-import { LogOut } from 'lucide-vue-next'
+import { LogOut, LucidePencil } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 
@@ -68,12 +69,51 @@ function applySuggestedTimezone() {
   saveTimezone()
 }
 
+// Editable full name state and save action
+const fullName = ref(authStore.userData.full_name || '')
+
+const inputEditable = ref(false)
+const fullnameinputbox = ref(null)
+
+onClickOutside(fullnameinputbox, ()=> {
+  inputEditable.value = false
+})
+
+async function saveProfile() {
+  try {
+    await authStore.updateUserProfile(fullName.value)
+    console.log('Profile updated to', fullName.value)
+  } catch (err) {
+    console.error('Failed to update profile', err)
+  } finally {
+    inputEditable.value = false
+  }
+}
+
 </script>
 
 <template>
   <div class="settings-container">
     <main class="settings-main">
       <h2>Settings</h2>
+      <!-- User profile details -->
+      <div class="profile-info">
+        <div class="profile-row">
+          <span class="label">Email:</span>
+          <span class="value">{{ authStore.userData.email }}</span>
+        </div>
+        <div class="profile-row">
+          <span class="label">Full Name:</span>
+          <input
+            v-if="inputEditable"
+            ref="fullnameinputbox"
+            v-model="fullName"
+            class="full-name-input"
+            @blur="saveProfile">
+          <span v-else>{{ fullName }}</span>
+          <LucidePencil :size="14" @click="inputEditable = true" />
+        </div>
+      </div>
       <div class="current-time">
         <label>Local Time ({{ selectedTimezone }}):</label>
         <span>{{ localizedTime }}</span>
@@ -158,5 +198,30 @@ function applySuggestedTimezone() {
 
 .suggested-link {
   cursor: pointer;
+}
+
+.profile-info {
+  padding: 1rem;
+  background: var(--color-background-secondary);
+  border-radius: 0.5rem;
+}
+.profile-info .profile-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.profile-info .label {
+  font-weight: 500;
+}
+.profile-info .value {
+  color: var(--color-text-secondary);
+}
+.full-name-input {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 0.25rem;
 }
 </style>
