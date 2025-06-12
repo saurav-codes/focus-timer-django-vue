@@ -104,14 +104,16 @@ async function saveProfile() {
         </div>
         <div class="profile-row">
           <span class="label">Full Name:</span>
-          <input
-            v-if="inputEditable"
-            ref="fullnameinputbox"
-            v-model="fullName"
-            class="full-name-input"
-            @blur="saveProfile">
-          <span v-else>{{ fullName }}</span>
-          <LucidePencil :size="14" @click="inputEditable = true" />
+          <div class="edit-field">
+            <input
+              v-if="inputEditable"
+              ref="fullnameinputbox"
+              v-model="fullName"
+              class="full-name-input"
+              @blur="saveProfile">
+            <span v-else class="value">{{ fullName }}</span>
+            <LucidePencil v-if="!inputEditable" :size="16" class="edit-icon" @click="inputEditable = true" />
+          </div>
         </div>
       </div>
       <div class="current-time">
@@ -200,6 +202,21 @@ async function saveProfile() {
   cursor: pointer;
 }
 
+/* New edit-field & icon styling */
+.edit-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.edit-icon {
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-base);
+}
+.edit-icon:hover {
+  color: var(--color-primary);
+}
+
 .profile-info {
   padding: 1rem;
   background: var(--color-background-secondary);
@@ -207,8 +224,9 @@ async function saveProfile() {
 }
 .profile-info .profile-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 .profile-info .label {
   font-weight: 500;
@@ -217,11 +235,17 @@ async function saveProfile() {
   color: var(--color-text-secondary);
 }
 .full-name-input {
-  width: 100%;
-  padding: 0.4rem;
+  flex: 1;
+  padding: 0.5rem;
   border: 1px solid var(--color-border);
   border-radius: 4px;
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
   font-size: 1rem;
-  margin-top: 0.25rem;
+  transition: border-color var(--transition-base);
+}
+.full-name-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 </style>
