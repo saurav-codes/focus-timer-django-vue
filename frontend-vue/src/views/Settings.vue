@@ -111,7 +111,7 @@ async function saveProfile() {
               v-model="fullName"
               class="full-name-input"
               @blur="saveProfile">
-            <span v-else class="value">{{ fullName }}</span>
+            <span v-else class="value" @click="inputEditable=true">{{ fullName }}</span>
             <LucidePencil v-if="!inputEditable" :size="16" class="edit-icon" @click="inputEditable = true" />
           </div>
         </div>
