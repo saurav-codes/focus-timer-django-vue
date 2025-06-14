@@ -201,7 +201,7 @@ def create_project(request):
     Create a new project
     """
     logger.info(f"Creating project by user_id={request.user.id}")
-    serializer = ProjectSerializer(data={**request.data, "user": request.user.id})
+    serializer = ProjectSerializer(data={**request.data}, context={"request": request})
     if serializer.is_valid():
         with transaction.atomic():
             serializer.save()
