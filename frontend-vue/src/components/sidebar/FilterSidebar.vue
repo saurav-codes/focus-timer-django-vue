@@ -1,14 +1,15 @@
 <script setup>
   import { ref, onMounted, computed, watch } from 'vue'
   import { XIcon, SearchIcon } from 'lucide-vue-next'
-  import { useTaskStore } from '../../stores/taskstore'
+  import { useTagsProjectStore} from '../../stores/tagsProjectStore'
   import { useUIStore } from '../../stores/uiStore'
 
-  const taskStore = useTaskStore()
+  const tagsProjectStore = useTagsProjectStore()
   const uiStore = useUIStore()
 
   const searchQuery = ref('')
-  const selectedProjectId = ref(null)
+  // support multiple project selection like tags
+  const selectedProjectIds = ref([])
   const selectedTags = ref([])
 
   // Computed property to check if sidebar is visible
@@ -29,7 +30,7 @@
   // Function to load filter data
   const loadFilterData = async () => {
     try {
-      await Promise.all([taskStore.fetchProjects(), taskStore.fetchTags()])
+      await Promise.all([tagsProjectStore.fetchProjects(), tagsProjectStore.fetchTags()])
     } catch (error) {
       console.error('Error loading filter data:', error)
     }
@@ -40,15 +41,16 @@
     uiStore.toggleFilterSidebar()
   }
 
-  // Function to filter tasks by project
+  // Toggle a project in selection list
   const selectProject = (projectId) => {
-    if (selectedProjectId.value === projectId) {
-      selectedProjectId.value = null
-      taskStore.setSelectedProjects([])
+    const idx = selectedProjectIds.value.indexOf(projectId)
+    if (idx === -1) {
+      selectedProjectIds.value.push(projectId)
     } else {
-      selectedProjectId.value = projectId
-      taskStore.setSelectedProjects([projectId])
+      selectedProjectIds.value.splice(idx, 1)
     }
+    // update store
+    tagsProjectStore.setSelectedProjects([...selectedProjectIds.value])
   }
 
   // Function to toggle tag selection
@@ -59,40 +61,38 @@
     } else {
       selectedTags.value.splice(index, 1)
     }
-    taskStore.setSelectedTags(selectedTags.value)
+    tagsProjectStore.setSelectedTags(selectedTags.value)
   }
 
   // Function to clear all filters
   const clearFilters = () => {
-    selectedProjectId.value = null
+    selectedProjectIds.value = []
     selectedTags.value = []
-    taskStore.clearFilters()
+    tagsProjectStore.clearFilters()
   }
 
-  // Function to select all filters
+  // Select all available projects and tags
   const selectAll = () => {
-    // Select all projects (since UI only allows single project selection, select the first one)
-    if (filteredProjects.value.length > 0) {
-      const firstProject = filteredProjects.value[0]
-      selectedProjectId.value = firstProject.id
-      taskStore.setSelectedProjects([firstProject.id])
-    }
+    // all project ids
+    const projIds = filteredProjects.value.map(p => p.id)
+    selectedProjectIds.value = projIds
+    tagsProjectStore.setSelectedProjects([...projIds])
 
-    // Select all tags
+    // all tags
     const tagNames = filteredTags.value.map((tag) => tag.name)
     selectedTags.value = tagNames
-    taskStore.setSelectedTags(tagNames)
+    tagsProjectStore.setSelectedTags(tagNames)
   }
 
   // Computed properties for filtered lists
   const filteredProjects = computed(() => {
-    if (!searchQuery.value) return taskStore.projects
-    return taskStore.projects.filter((project) => project.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    if (!searchQuery.value) return tagsProjectStore.projects
+    return tagsProjectStore.projects.filter((project) => project.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
   })
 
   const filteredTags = computed(() => {
-    if (!searchQuery.value) return taskStore.tags
-    return taskStore.tags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    if (!searchQuery.value) return tagsProjectStore.tags
+    return tagsProjectStore.tags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
   })
 
   // Load projects and tags on component mount
@@ -129,10 +129,10 @@
             v-for="project in filteredProjects"
             :key="project.id"
             class="filter-item"
-            :class="{ selected: selectedProjectId === project.id }"
+            :class="{ selected: selectedProjectIds.includes(project.id) }"
             @click="selectProject(project.id)">
             <div class="checkbox-wrapper">
-              <input type="checkbox" :checked="selectedProjectId === project.id" @click.stop />
+              <input type="checkbox" :checked="selectedProjectIds.includes(project.id)" @click.stop />
               <span class="checkmark" />
             </div>
             <span>{{ project.title }}</span>
