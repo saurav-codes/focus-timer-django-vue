@@ -3,13 +3,13 @@
   import { Plus, BrainCircuitIcon, BadgeCheck, ChevronLeft, ChevronRight, Filter, Keyboard } from 'lucide-vue-next'
   import TaskCard from './TaskCard.vue'
   import { useUIStore } from '../stores/uiStore'
-  import { useTaskStore } from '../stores/taskstore'
+  import { useTaskStoreWs } from '../stores/taskStoreWs'
   import TaskCreationPopup from './TaskCreationPopup.vue'
   import Popper from 'vue3-popper'
   import Draggable from 'vuedraggable'
 
   const uiStore = useUIStore()
-  const taskStore = useTaskStore()
+  const taskStore = useTaskStoreWs()
 
   // Add state for controlling the scroll indicator visibility
   const showScrollIndicator = ref(true)
@@ -62,13 +62,8 @@
   const toggleBrainDump = () => uiStore.toggleBrainDump()
 
   async function handleTaskDeleted(taskId) {
-    // let's store the deleted task in a variable to put it back if the user undoes the deletion
-    const deletedTask = taskStore.brainDumpTasks.find((task) => task.id === taskId)
     // remove task from braindumpTasks because we already handling the DB update in the store
     taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter((task) => task.id !== taskId)
-    // now reorder the tasks since the task was deleted and the order is not updated in the store
-    await taskStore.deleteTask(deletedTask.id)
-    await taskStore.updateTaskOrder(taskStore.brainDumpTasks)
   }
 
   function handleTaskUpdated(updatedTask) {
@@ -80,7 +75,7 @@
     taskStore.brainDumpTasks = taskStore.brainDumpTasks.filter((task) => task.id !== taskId)
   }
 
-  async function handleTaskDroppedToBrainDump({ added, moved, removed }) {
+  async function handleTaskDroppedToBrainDump({ added, moved }) {
     if (uiStore.isPointerOverIntegration) {
       return
     }
@@ -89,8 +84,8 @@
       const element = added.element
       console.log('task added. to braindump')
       console.log('added element', element)
-      await taskStore.taskDroppedToBrainDump(element)
-      await taskStore.updateTaskOrder(taskStore.brainDumpTasks)
+      await taskStore.braindumpTaskWs(element)
+      await taskStore.updateTaskOrderWs(taskStore.brainDumpTasks)
     }
 
     // Handle when a task is moved within the same column
@@ -111,7 +106,7 @@
       return
     }
     task.tags = updated_tags_list
-    await taskStore.updateTask(task)
+    await taskStore.updateTaskWs(task)
   }
 </script>
 

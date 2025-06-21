@@ -5,7 +5,6 @@ from django.utils.duration import _get_duration_components
 from django.contrib.auth import get_user_model
 from simple_history.models import HistoricalRecords
 
-
 User = get_user_model()
 
 
@@ -27,6 +26,16 @@ class Task(models.Model):
     COMPLETED = "COMPLETED"
     ARCHIVED = "ARCHIVED"
     ON_CAL = "ON_CAL"
+    # fields that will be checked to update future siblings
+    # if one parent or sibling is updated
+    SERIES_FIELDS_TO_MONITOR = [
+        "recurrence_rule",
+        "start_at",
+        "duration",
+        "title",
+        "description",
+        "project_id",
+    ]
 
     TASK_STATUS_CHOICES = (
         (BACKLOG, "Backlog"),
@@ -36,6 +45,9 @@ class Task(models.Model):
         (COMPLETED, "Completed"),
         (ARCHIVED, "Archived"),
     )
+    # when saving task from frontend, we will generate a random id for it
+    # this id will be used to identify the task in frontend
+    frontend_id = models.PositiveBigIntegerField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -56,11 +68,11 @@ class Task(models.Model):
     start_at = models.DateTimeField(blank=True, null=True)
     end_at = models.DateTimeField(blank=True, null=True)
     ############### recuring task data ###############
-    # 1) Raw RFC‑5545 string, e.g. "FREQ=DAILY;INTERVAL=2"
+    # Raw RFC‑5545 string, e.g. "FREQ=DAILY;INTERVAL=2"
     recurrence_rule = models.TextField(
         blank=True, null=True, help_text="RRULE string (RFC-5545)."
     )
-    # 2) Points at the “template” task
+    # Points at the “template” task
     recurrence_parent = models.ForeignKey(
         "self",
         null=True,
@@ -98,8 +110,8 @@ class Task(models.Model):
         return None
 
     @cached_property
-    def is_original(self):
+    def is_rec_task_parent(self):
         """
         Check if the task is an original task (not a recurrence child).
         """
-        return self.recurrence_parent is None
+        return bool(self.recurrence_parent is None and self.recurrence_rule)

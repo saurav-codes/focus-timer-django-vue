@@ -1,296 +1,115 @@
 <script setup>
-  import { ref, computed, watch, useTemplateRef } from 'vue'
-  import { RRule } from 'rrule'
-  import {
-    Calendar,
-    LucideRepeat,
-    CircleDot,
-    Calendar1,
-    CalendarDays,
-    Clock,
-    X,
-    CalendarRange,
-    CalendarClock,
-    AlarmClock,
-  } from 'lucide-vue-next'
-  import Snackbar from './Snackbar.vue'
+/**
+ * RecurringTaskEditor ⏰
+ * ---------------------
+ * UI wrapper around the head-less `useRecurrenceRule` composable.  This file is
+ * intentionally light: all the heavy-lifting (parsing/generating RRULE strings,
+ * syncing `editableTask`, helpers, etc.) lives in the composable so the template
+ * can stay declarative.  If you want to tweak the business-logic reach for
+ * `useRecurrenceRule.js` – *not* this component.
+ */
+import { ref, watch } from 'vue'
+import { RRule } from 'rrule'
+import {
+  Calendar,
+  LucideRepeat,
+  LucideRepeat2,
+  LucideMinus,
+  LucidePlus,
+  CircleDot,
+  Clock,
+  X,
+} from 'lucide-vue-next'
+import { useTaskStoreWs } from '../stores/taskStoreWs'
+import { useRecurrenceRule } from '../composables/useRecurrenceRule'
 
-  const snackbarRef = useTemplateRef('snackbarRef')
+const emit = defineEmits(['close-modal'])
+const taskStore = useTaskStoreWs()
 
-  const props = defineProps({
-    value: {
-      type: String,
-      default: '',
-    },
-    startAt: {
-      type: String,
-      default: '',
-    },
-  })
+const props = defineProps({
+  task: { type: Object, required: true },
+})
 
-  const emit = defineEmits(['update:value', 'update:startAt'])
-  const isOpen = ref(Boolean(props.value))
+// Local editable copy of the task
+const editableTask = ref({ ...props.task })
 
-  const getStartTime = (dateObj) => {
-    if (!dateObj) {
-      dateObj = new Date()
-    }
-    const d = new Date(dateObj)
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+/* ------------------------------------------------------------------
+ *  Recurrence-rule composable
+ * -----------------------------------------------------------------*/
+const {
+  frequency,
+  interval,
+  weekdaysOptions,
+  selectedWeekDays,
+  count,
+  until,
+  ruleDescription,
+  currentFrequencyLabel,
+  frequenciesOptions,
+  handleFrequencyOptionClicked,
+  toggleWeekday,
+  handleEndAfterToggle,
+  formatDate,
+  assignRecRule,
+} = useRecurrenceRule(editableTask)
+
+/* ------------------------------------------------------------------
+ *  UI-level state
+ * -----------------------------------------------------------------*/
+const isOpen = ref(false)
+// for first time opening of task modal, open the rec modal too incase
+// there is already an rec rule.
+watch(editableTask, ()=>{
+  if (editableTask.value.recurrence_rule) {
+    isOpen.value = true
   }
+}, {immediate: true})
 
-  // Start time for the recurring task
-  const startTime = ref(getStartTime(props.startAt))
-
-  const toggleRecurringEditor = () => {
-    isOpen.value = !isOpen.value
-    if (isOpen.value === true) {
-      // assign a basic rrule if rrule string is not provided
-      if (!props.value) {
-        frequency.value = RRule.DAILY
-        interval.value = 1
-        updateRule(false) // emit a update event with rrule string based on form values
-        snackbarRef.value.addSnackbarItem(
-          '✅ Task Repeat on - A recurring task will be automatically created later based on the selected options.',
-          'OK',
-          () => {},
-          () => {},
-          4000
-        )
-      }
-    } else {
-      // close the editor
-      // and remove the recurrence rule
-      emit('update:value', null)
-      snackbarRef.value.addSnackbarItem(
-        'Task Repeat off',
-        'OK',
-        () => {},
-        () => {},
-        1000
-      )
-    }
+function toggleRecurringEditor() {
+  isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    // just update rec rule since user
+    // we have dedicated buttons for saving
+    // rec task series.
+    assignRecRule()
+  } else {
+    // update the backend since user closed
+    // rec editor
+    editableTask.value.recurrence_rule = null
+    taskStore.turnOffRepeat(editableTask.value.id)
   }
+}
 
-  // Frequency options with more user-friendly labels
-  const frequenciesOptions = [
-    { value: RRule.DAILY, label: 'Daily', label2: 'Day', icon: CalendarDays },
-    { value: RRule.WEEKLY, label: 'Weekly', label2: 'Week', icon: CalendarRange },
-    { value: RRule.MONTHLY, label: 'Monthly', label2: 'Month', icon: CalendarClock },
-    { value: RRule.YEARLY, label: 'Yearly', label2: 'Year', icon: Calendar1 },
-  ]
-
-  function handleFrequencyOptionClicked(option) {
-    frequency.value = option.value
-    if (option.value === RRule.WEEKLY) {
-      // add initial one weekday by default
-      if (selectedWeekDays.value.length === 0) {
-        selectedWeekDays.value.push(weekdaysOptions[0].value.weekday)
-      }
-    }
-    updateRule()
+/* ------------------------------------------------------------------
+ *  Backend commit
+ * -----------------------------------------------------------------*/
+async function commitSeries(scope) {
+  try {
+    editableTask.value.series_scope = scope;
+    await taskStore.updateTaskWs(editableTask.value)
+    emit('close-modal')
+  } catch (err) {
+    /* eslint-disable no-console */
+    console.error('Error committing recurring task', err)
   }
+}
 
-  // Weekday options
-  const weekdaysOptions = [
-    { value: RRule.MO, label: 'M', fullLabel: 'Monday' },
-    { value: RRule.TU, label: 'T', fullLabel: 'Tuesday' },
-    { value: RRule.WE, label: 'W', fullLabel: 'Wednesday' },
-    { value: RRule.TH, label: 'T', fullLabel: 'Thursday' },
-    { value: RRule.FR, label: 'F', fullLabel: 'Friday' },
-    { value: RRule.SA, label: 'S', fullLabel: 'Saturday' },
-    { value: RRule.SU, label: 'S', fullLabel: 'Sunday' },
-  ]
-
-  // Form state variables that will be used to generate RFC string (iCal format)
-  // These variables work together to create a recurring schedule pattern
-
-  // Which type of recurrence: daily (0), weekly (1), monthly (2), or yearly (3)
-  const frequency = ref(RRule.DAILY)
-
-  // How many units of frequency to skip
-  // Example: interval of 2 with DAILY means "every 2 days"
-  const interval = ref(1)
-
-  // Only used for weekly frequency
-  // Contains array of selected weekdays (0 = Monday to 6 = Sunday)
-  // Example: [0,2,4] means "every Monday, Wednesday, and Friday"
-  const selectedWeekDays = ref([])
-
-  // Two ways to end a recurring pattern (can't use both):
-  // 1. count: Stop after this many occurrences
-  // Example: count = 10 means "repeat 10 times then stop"
-  const count = ref(null)
-
-  // 2. until: Stop on this date
-  // Example: until = "2024-12-31" means "repeat until December 31, 2024"
-  const until = ref(null)
-
-  function getSelectedWeekDays(byweekday) {
-    if (!byweekday) return []
-    return Array.isArray(byweekday)
-      ? byweekday.slice() // make a shallow copy of the array
-      : [byweekday] // wrap single object in array
-  }
-
-  // Parse existing rule if provided
-  const parseRule = () => {
-    if (!props.value) {
-      return
-    }
-    // this usually triggers when user open a task card to edit &
-    // that task has a recurrence rule
-    // this will parse the rule string and assign values to form state variables
-    // so that user can see the current recurrence rule in the form
-    try {
-      const rruleObj = RRule.fromString(props.value)
-      // assign frequency based on rule string
-      frequency.value = rruleObj.options.freq
-      // assign interval based on rule string
-      interval.value = rruleObj.options.interval || 1
-
-      // assign selectedWeekDays based on rule string
-      // Grab the byweekday option from the parsed rule
-      const byweekday = rruleObj.options.byweekday
-      selectedWeekDays.value = getSelectedWeekDays(byweekday)
-
-      count.value = rruleObj.options.count || null
-      until.value = rruleObj.options.until ? formatDate(rruleObj.options.until) : null
-    } catch (e) {
-      console.error('Error parsing RRULE:', e)
-    }
-  }
-
-  // Format date for until input
-  const formatDate = (date) => {
-    // remove time from date
-    // output format: YYYY-MM-DD
-    if (!date) return null
-    const d = new Date(date)
-    return d.toISOString().split('T')[0]
-  }
-
-  const toggleWeekday = (day) => {
-    // either remove or add weekday to selectedWeekDays ref array
-    const index = selectedWeekDays.value.indexOf(day)
-    if (index === -1) {
-      selectedWeekDays.value.push(day)
-    } else {
-      if (selectedWeekDays.value.length > 1) {
-        selectedWeekDays.value.splice(index, 1)
-      }
-    }
-    updateRule()
-  }
-
-  const _rrule_obj = computed(() => {
-    // this function Generate RRULE string from form values
-    const options = {
-      freq: frequency.value,
-      interval: interval.value,
-    }
-
-    // Add weekdays for weekly frequency
-    if (frequency.value === RRule.WEEKLY && selectedWeekDays.value.length > 0) {
-      options.byweekday = selectedWeekDays.value
-    }
-
-    // Add count or until if specified
-    if (count.value) {
-      options.count = parseInt(count.value)
-    } else if (until.value) {
-      options.until = new Date(until.value)
-    }
-
-    return new RRule(options)
-  })
-
-  const updateRule = (show_snackbar = true) => {
-    // this function Generate RRULE string from form values
-    const ruleString = _rrule_obj.value.toString()
-    console.log('updateRule', ruleString)
-    emit('update:value', ruleString)
-    if (show_snackbar) {
-      snackbarRef.value.addSnackbarItem(
-        `Task Repeat Schedule Updated. A new copy of this task will be created ${ruleDescription.value} @ ${startTime.value}`,
-        'OK',
-        () => {},
-        () => {},
-        4000
-      )
-    }
-  }
-
-  // Human-readable description of the rule
-  const ruleDescription = computed(() => {
-    return _rrule_obj.value.toText()
-  })
-
-  // Get current frequency label
-  const currentFrequencyLabel = computed(() => {
-    const found = frequenciesOptions.find((f) => f.value === frequency.value)
-    const label = found ? found.label2 : 'Daily'
-    if (interval.value > 1 && label) {
-      return label + 's'
-    }
-    return label
-  })
-
-  function handleEndAfterToggle() {
-    // user have just clicked on end after radio button
-    // so we will set count to 10 as initial value
-    // because the visibility of endAfter is controlled by count variable
-    if (!count.value) {
-      count.value = 10
-    }
-    // also set until to null because count and until can't be used together
-    // to form a recurrence rule string
-    until.value = null
-  }
-
-  // Update start time and emit event
-  const updateStartTime = () => {
-    // Parse the time input
-    const currentDate = new Date()
-    const [hours, minutes] = startTime.value.split(':').map(Number)
-
-    // Set the local time
-    currentDate.setHours(hours, minutes, 0, 0)
-
-    // This will automatically convert to UTC when we call toISOString()
-    // For example, if user is in India (UTC+5:30) and enters 17:30,
-    // this will convert to 12:00 UTC in the ISO string
-    emit('update:startAt', currentDate.toISOString())
-  }
-
-  // Initialize form when component mounts or value changes
-  watch(
-    () => props.value,
-    () => {
-      parseRule()
-    },
-    { immediate: true, deep: true }
-  )
-
-  // Watch for changes in startAt prop
-  watch(
-    () => props.startAt,
-    (newStartAt) => {
-      if (newStartAt) {
-        startTime.value = getStartTime(newStartAt)
-      }
-    },
-    { immediate: true }
-  )
+/* ------------------------------------------------------------------
+ *  Keep editableTask synced with incoming prop
+ * -----------------------------------------------------------------*/
+watch(
+  () => props.task,
+  (t) => (editableTask.value = { ...t }),
+  { deep: true }
+)
 </script>
 <template>
-  <Snackbar ref="snackbarRef" />
   <!-- Recurring Task Button -->
   <div class="form-group">
     <button class="recurring-button" @click="toggleRecurringEditor">
       <LucideRepeat size="16" />
       Repeat Task
-      <CircleDot :class="{ green: Boolean(props.value) }" size="16" />
+      <CircleDot :class="{ green: Boolean(editableTask.recurrence_rule) }" size="16" />
     </button>
   </div>
 
@@ -329,43 +148,28 @@
               <button
                 class="interval-button"
                 :disabled="interval <= 1"
-                @click="
-                  interval -= 1;
-                  updateRule()
-                ">
-                -
+                @click="interval -= 1">
+                <LucideMinus :size="16" />
               </button>
               <span class="interval-value">{{ interval }}</span>
               <button
                 class="interval-button"
-                @click="
-                  interval += 1;
-                  updateRule()
-                ">
-                +
+                @click="interval += 1">
+                <LucidePlus :size="16" />
               </button>
             </div>
             <span>{{ currentFrequencyLabel }}</span>
           </div>
 
-          <!-- Start Time Selector -->
-          <div class="start-time-selector">
-            <div class="start-time-label">
-              <AlarmClock size="16" />
-              <span>Start Time:</span>
-            </div>
-            <input v-model="startTime" type="time" class="time-input" @change="updateStartTime">
-          </div>
-
           <!-- Weekday Selector (only for weekly) -->
-          <div v-if="frequency === 2" class="weekday-selector">
+          <div v-if="frequency === RRule.WEEKLY" class="weekday-selector">
             <button
               v-for="day in weekdaysOptions"
-              :key="day.value.weekday"
+              :key="day.dayObj.weekday"
               class="weekday-button"
-              :class="{ selected: selectedWeekDays.includes(day.value.weekday) }"
+              :class="{ selected: selectedWeekDays.includes(day.dayObj.weekday)}"
               :title="day.fullLabel"
-              @click="toggleWeekday(day.value.weekday)">
+              @click="toggleWeekday(day.dayObj.weekday)">
               {{ day.label }}
             </button>
           </div>
@@ -381,11 +185,7 @@
                   type="radio"
                   name="end-type"
                   :checked="!count && !until"
-                  @change="
-                    count = null;
-                    until = null;
-                    updateRule();
-                  ">
+                  @change="count = null;until = null;">
                 <span>Never</span>
               </label>
 
@@ -394,18 +194,14 @@
                   type="radio"
                   name="end-type"
                   :checked="Boolean(count)"
-                  @click="
-                    handleEndAfterToggle();
-                    updateRule()
-                  ">
+                  @click="handleEndAfterToggle()">
                 <span>After</span>
                 <input
                   v-if="!!count"
                   v-model.number="count"
                   type="number"
                   min="1"
-                  class="small-input"
-                  @change="updateRule()">
+                  class="small-input">
                 <span v-if="!!count">times</span>
               </label>
 
@@ -416,16 +212,13 @@
                   :checked="!!until"
                   @change="
                     until = until || formatDate(new Date());
-                    count = null;
-                    updateRule();
-                  ">
+                    count = null">
                 <span>On</span>
                 <input
                   v-if="!!until"
                   v-model="until"
                   type="date"
-                  class="date-input"
-                  @change="updateRule()">
+                  class="date-input">
               </label>
             </div>
           </div>
@@ -434,6 +227,23 @@
           <div class="rule-summary">
             <Clock size="14" />
             <span>{{ ruleDescription }}</span>
+          </div>
+          <!-- Recurrence scope buttons -->
+          <div v-if="!!editableTask.recurrence_parent" class="left-action-btn-group">
+            <button class="save-button" @click="commitSeries('single')">
+              <LucideRepeat2 :size="16" />
+              Save this only
+            </button>
+            <button class="save-button" @click="commitSeries('future')">
+              <LucideRepeat2 :size="16" />
+              Save this &amp; update future Tasks
+            </button>
+          </div>
+          <div v-else>
+            <button class="save-button" @click="commitSeries('future')">
+              <LucideRepeat2 :size="16" />
+              Generate Recurring Tasks
+            </button>
           </div>
         </div>
       </div>
@@ -768,32 +578,4 @@
     transform: scale(1.05);
   }
 
-  input {
-    color: var(--color-text-primary);
-  }
-  .start-time-selector {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0.75rem 0;
-    padding: 0.5rem;
-    background-color: var(--color-background-secondary);
-    border-radius: 0.375rem;
-  }
-
-  .start-time-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-  }
-
-  .time-input {
-    padding: 0.375rem 0.5rem;
-    border-radius: 0.25rem;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-input-background);
-    font-size: var(--font-size-sm);
-  }
 </style>

@@ -1,8 +1,7 @@
 <script setup>
   import { ref, watch } from 'vue'
   import { X, Plus, Clock, PlusIcon } from 'lucide-vue-next'
-  import { useTaskStore } from '../stores/taskstore'
-  import { useAuthStore } from '../stores/authStore'
+  import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { onKeyStroke } from '@vueuse/core'
   import TimeDropdownPopup from './TimeDropdownPopup.vue'
   import ProjectDropdownPopup from './ProjectDropdownPopup.vue'
@@ -18,8 +17,7 @@
 
   const emit = defineEmits(['close'])
 
-  const taskStore = useTaskStore()
-  const authStore = useAuthStore()
+  const taskStore = useTaskStoreWs()
 
   const newTaskTitle = ref('')
   const inputRef = ref(null)
@@ -104,7 +102,7 @@
 
       // Create new task object
       const newTask = {
-        id: Date.now(),
+        frontend_id: Date.now(),
         title: newTaskTitle.value,
         is_completed: false,
         duration: durationString, // Format for backend
@@ -123,15 +121,7 @@
       resetTaskData()
 
       // Create task in backend
-      const { data } = await taskStore.createTask(newTask)
-
-      // remove first task from the list
-      taskStore.brainDumpTasks.shift()
-      // Add the new task from backend response
-      taskStore.brainDumpTasks.unshift(data)
-
-      // Update task order
-      taskStore.updateTaskOrder(taskStore.brainDumpTasks)
+      taskStore.createTaskWs(newTask)
     } else {
       // Close popup if task is empty
       console.log('Task title cannot be empty')
@@ -175,7 +165,7 @@
               type="text"
               placeholder="What needs to be done?"
               class="task-input"
-              @keydown="handleKeyDown" />
+              @keydown="handleKeyDown">
           </div>
 
           <!-- Task duration selector -->

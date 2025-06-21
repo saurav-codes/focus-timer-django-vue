@@ -28,6 +28,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField()
     duration_display = serializers.SerializerMethodField()
+    is_rec_task_parent = serializers.SerializerMethodField()
     project = ProjectSerializer(read_only=True)
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),
@@ -44,6 +45,9 @@ class TaskSerializer(TaggitSerializer, serializers.ModelSerializer):
 
     def get_duration_display(self, obj):
         return obj.get_duration_display
+
+    def get_is_rec_task_parent(self, obj: Task):
+        return obj.is_rec_task_parent
 
     def validate_recurrence_rule(self, value):
         if value:

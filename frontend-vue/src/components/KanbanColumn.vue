@@ -3,10 +3,10 @@
   import { BadgeCheck, Clock } from 'lucide-vue-next'
   import TaskCard from './TaskCard.vue'
   import Draggable from 'vuedraggable'
-  import { useTaskStore } from '../stores/taskstore'
+  import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { useUIStore } from '../stores/uiStore'
 
-  const taskStore = useTaskStore()
+  const taskStore = useTaskStoreWs()
   const uiStore = useUIStore()
 
   const props = defineProps({
@@ -74,7 +74,7 @@
     }
   })
 
-  async function handleTaskDroppedToKanban({ added, moved }) {
+  function handleTaskDroppedToKanban({ added, moved }) {
     if (uiStore.isPointerOverIntegration) {
       return false
     }
@@ -84,29 +84,25 @@
       // Update the task with the new column date and status
       element.column_date = props.dateObj.toISOString()
       element.status = 'ON_BOARD'
-      await taskStore.updateTask(element)
+      taskStore.updateTaskWs(element)
       // Task added, updating order
-      await taskStore.updateTaskOrder(localTasks.value)
+      taskStore.updateTaskOrderWs(localTasks.value)
     }
 
     // Handle when a task is moved within the same column
     if (moved) {
       // Just update the order since the task is staying in the same column
       // Task moved, updating order
-      await taskStore.updateTaskOrder(localTasks.value)
+      taskStore.updateTaskOrderWs(localTasks.value)
     }
 
     // We don't need to handle removed here as the source column will handle it
   }
 
-  async function handleTaskDeleted(taskId) {
-    // let's store the deleted task in a variable to put it back if the user undoes the deletion
-    const deletedTask = localTasks.value.find((task) => task.id === taskId)
+  function handleTaskDeleted(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
     localTasks.value = localTasks.value.filter((task) => task.id !== taskId)
-    // now reorder the tasks since the task was deleted and the order is not updated in the store
-    await taskStore.deleteTask(deletedTask.id)
-    await taskStore.updateTaskOrder(localTasks.value)
+    taskStore.updateTaskOrderWs(localTasks.value)
   }
 
   function handleTaskUpdated(updatedTask) {
@@ -119,6 +115,7 @@
   function handleTaskArchived(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
     localTasks.value = localTasks.value.filter((task) => task.id !== taskId)
+    taskStore.updateTaskOrderWs(localTasks.value)
   }
 
   async function handleTagRemoved(updated_tags_list, taskId) {
@@ -129,7 +126,7 @@
       return
     }
     task.tags = updated_tags_list
-    await taskStore.updateTask(task)
+    taskStore.updateTaskWs(task)
   }
 </script>
 

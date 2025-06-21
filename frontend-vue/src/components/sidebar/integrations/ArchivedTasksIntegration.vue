@@ -2,10 +2,10 @@
   import { computed } from 'vue'
   import { CheckCircle, Calendar, Tag, Clock, CircleDashed, LucideListCheck } from 'lucide-vue-next'
   import Draggable from 'vuedraggable'
-  import { useTaskStore } from '../../../stores/taskstore'
+  import { useTaskStoreWs } from '../../../stores/taskStoreWs'
   import { useTimeAgo } from '@vueuse/core'
 
-  const taskStore = useTaskStore()
+  const taskStore = useTaskStoreWs()
 
   // Format the created_at date
   const timeAgo = (timestamp) => {
@@ -28,13 +28,13 @@
       const element = added.element
       // Update the task with archived status
       element.status = 'ARCHIVED'
-      await taskStore.updateTask(element)
-      await taskStore.updateTaskOrder(taskStore.archivedTasks)
+      await taskStore.updateTaskWs(element)
+      await taskStore.updateTaskOrderWs(taskStore.archivedTasks)
     }
 
     // If tasks are reordered within the archived list
     if (moved) {
-      await taskStore.updateTaskOrder(taskStore.archivedTasks)
+      await taskStore.updateTaskOrderWs(taskStore.archivedTasks)
     }
   }
 

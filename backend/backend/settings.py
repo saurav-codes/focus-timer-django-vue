@@ -238,7 +238,7 @@ os.makedirs(os.path.dirname(LOGGING_FILE_PATH), exist_ok=True)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "root": {"level": "INFO", "handlers": ["file"]},
+    "root": {"level": "INFO", "handlers": ["file", "console"]},
     "handlers": {
         "file": {
             "level": "INFO",

@@ -3,7 +3,7 @@
   import { useIntervalFn } from '@vueuse/core'
   import { useCalendarStore } from '../../../stores/calendarStore'
   import { useAuthStore } from '../../../stores/authStore'
-  import { useTaskStore } from '../../../stores/taskstore'
+  import { useTagsProjectStore } from '../../../stores/tagsProjectStore'
   import { LucideCalendar, LucideLink, LucideUnlink, CheckCircle, Trash2 } from 'lucide-vue-next'
   import dayGridPlugin from '@fullcalendar/daygrid'
   import timeGridPlugin from '@fullcalendar/timegrid'
@@ -13,7 +13,7 @@
   import Popper from 'vue3-popper'
 
   const calendarStore = useCalendarStore()
-  const taskStore = useTaskStore()
+  const tagsProjectStore = useTagsProjectStore()
   const authStore = useAuthStore()
   const isConnected = ref(false)
   const isLoading = ref(false)

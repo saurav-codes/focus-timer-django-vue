@@ -1,76 +1,18 @@
 import { defineStore } from 'pinia'
 import { useWebSocket } from '@vueuse/core'
 import { ref, computed, watch } from 'vue'
-import { useDateFormat } from '@vueuse/core'
 import { useAuthStore } from './authStore'
-
-// Date utilities (from taskStore.js)
-const today = new Date()
-const addDays = (date, days) => {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-const formatDate = (date) => useDateFormat(date, 'ddd, MMM D').value
-const createInitialColumns = () => [
-  { tasks: [], date: addDays(today, -1), title: 'Yesterday', dateString: formatDate(addDays(today, -1)) },
-  { tasks: [], date: today, title: 'Today', dateString: formatDate(today) },
-  { tasks: [], date: addDays(today, 1), title: 'Tomorrow', dateString: formatDate(addDays(today, 1)) },
-  {
-    tasks: [],
-    date: addDays(today, 2),
-    title: formatDate(addDays(today, 2)),
-    dateString: formatDate(addDays(today, 2)),
-  },
-]
-// Create a date column for a specific date
-const createDateColumn = (date, title = null) => {
-  // Generate column title based on relative date if not provided
-  if (!title) {
-    const colDateObj = new Date(date)
-
-    if (colDateObj.toDateString() === today.toDateString()) {
-      title = 'Today'
-    } else {
-      const yesterday = new Date(today)
-      yesterday.setDate(today.getDate() - 1)
-
-      const tomorrow = new Date(today)
-      tomorrow.setDate(today.getDate() + 1)
-
-      if (colDateObj.toDateString() === yesterday.toDateString()) {
-        title = 'Yesterday'
-      } else if (colDateObj.toDateString() === tomorrow.toDateString()) {
-        title = 'Tomorrow'
-      } else {
-        // Use date as title for other days
-        title = formatDate(colDateObj)
-      }
-    }
-  }
-  return {
-    tasks: [],
-    date: new Date(date),
-    dateString: formatDate(date),
-    title: title,
-  }
-}
-
-// helper function to format duration
-const formatDurationForAPI = (duration) => {
-  if (!duration) return null
-
-  // If already in ISO format, return as is
-  if (duration.includes('P') && duration.includes('T')) {
-    return duration
-  }
-
-  // Parse HH:MM format
-  const [hours, minutes] = duration.split(':').map(Number)
-
-  // Convert to ISO 8601 duration format
-  return `PT${hours}H${minutes}M`
-}
+import { useTagsProjectStore } from './tagsProjectStore'
+import {
+  today,
+  addDays,
+  createInitialColumns,
+  formatDurationForAPI,
+  reInitializeOrder,
+  fetchTaskType,
+  pushForwardColumns,
+  prependEarlierColumns,
+} from '../utils/taskUtils'
 
 export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   // Build WebSocket URL
@@ -86,9 +28,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     open: wsOpen,
     close: wsClose,
   } = useWebSocket(wsUrl, {
-    lazy: true,
+    immediate: false,
     autoReconnect: { retries: 12, delay: 5000 },
-    heartbeat: { message: 'ping', interval: 30000, pongTimeout: 10000 },
+    // heartbeat: { message: 'ping', interval: 30000, pongTimeout: 10000 },
   })
 
   // Reactive state mirroring taskStore.js
@@ -98,13 +40,22 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   const backlogs = ref([])
   const archivedTasks = ref([])
   const calendarTasks = ref([])
-  const projects = ref([])
-  const tags = ref([])
-  const selectedProjects = ref([]) // selected from filter bar
-  const selectedTags = ref([]) // selected from filter bar
+  // filters are managed centrally in tagsProjectStore
+  const tagsProjectStore = useTagsProjectStore()
+  const selectedProjects = computed(() => tagsProjectStore.selectedProjects)
+  const selectedTags = computed(() => tagsProjectStore.selectedTags)
   const firstDate = ref(addDays(today, -1))
   const lastDate = ref(addDays(today, 2))
   const minDate = ref(addDays(today, -7))
+
+  // Refetch tasks whenever project or tag filters change
+  watch(
+    [selectedProjects, selectedTags],
+    () => {
+      fetchTasksWs()
+    },
+    { deep: true }
+  )
 
   // Watch and reflect status
   watch(wsStatus, (v) => {
@@ -121,33 +72,162 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       console.error('[WS] invalid JSON:', raw)
       return
     }
-    routeMessage(msg)
+    if (msg) {
+      routeMessage(msg)
+    }
   })
 
+  function assignTasksToBoard(tasks) {
+    // Distribute tasks to kanban columns
+    kanbanColumns.value.forEach((column) => {
+      const filteredTasks = tasks.filter((task) => {
+        const taskDate = new Date(task.column_date)
+        const taskDateString = taskDate.toDateString()
+        return taskDateString === column.date.toDateString()
+      })
+      // Use direct assignment to ensure reactivity
+      column.tasks = [...filteredTasks]
+    })
+  }
+
+  function _getColumnTasksFromColName(colName, column_date_string = null) {
+    switch (colName) {
+      case 'BRAINDUMP':
+        return brainDumpTasks.value
+      case 'BACKLOG':
+        return backlogs.value
+      case 'ARCHIVED':
+        return archivedTasks.value
+      case 'ON_CAL':
+        return calendarTasks.value
+      case 'ON_BOARD': {
+        if (!column_date_string) {
+          console.log('column date is required for search columns with status ON_BOARD')
+          return []
+        }
+        // search for the exact column on board
+        const column_date_from_backend = column_date_string.split('T')[0]
+        const column = kanbanColumns.value.find(
+          (column) => column.date.toISOString().split('T')[0] === column_date_from_backend
+        )
+        if (!column) {
+          console.log('column not found with date - ', column_date_from_backend)
+          return []
+        }
+        return column.tasks
+      }
+      default:
+        console.log('No column found with name - ', colName)
+        return []
+    }
+  }
+
+  function _delete_task_from_all_cols(task_id) {
+    kanbanColumns.value.forEach((col) => (col.tasks = col.tasks.filter((t) => t.id !== task_id)))
+    brainDumpTasks.value = brainDumpTasks.value.filter((t) => t.id !== task_id)
+    backlogs.value = backlogs.value.filter((t) => t.id !== task_id)
+    archivedTasks.value = archivedTasks.value.filter((t) => t.id !== task_id)
+    calendarTasks.value = calendarTasks.value.filter((t) => t.id !== task_id)
+  }
+
+  // handle msg from backend
   function routeMessage(msg) {
     switch (msg.type) {
-      case 'tasks_fetched': {
-        const p = msg.payload
-        console.log('on task fetched, this is payload- ', p)
-        kanbanColumns.value = p.kanbanColumns
-        brainDumpTasks.value = p.brainDumpTasks
-        backlogs.value = p.backlogs
-        archivedTasks.value = p.archivedTasks
-        calendarTasks.value = p.calendarTasks
-        firstDate.value = new Date(p.firstDate)
-        lastDate.value = new Date(p.lastDate)
-        minDate.value = new Date(p.minDate)
+      case 'connected': {
+        console.info('fetching tasks after rec-d connected msg from backend')
+        fetchTasksWs()
         break
       }
-      case 'projects_fetched':
-        projects.value = msg.payload
-        console.log('on project fetched - ', msg.payload)
+      case 'tasks.list': {
+        const tasks_list = msg.data
+        assignTasksToBoard(fetchTaskType(tasks_list, 'ON_BOARD'))
+        brainDumpTasks.value = fetchTaskType(tasks_list, 'BRAINDUMP')
+        backlogs.value = fetchTaskType(tasks_list, 'BACKLOG')
+        archivedTasks.value = fetchTaskType(tasks_list, 'ARCHIVED')
+        calendarTasks.value = fetchTaskType(tasks_list, 'ON_CAL')
+        // TODO: handle other tasks type too
         break
-      case 'tags_fetched':
-        tags.value = msg.payload
-        console.log('on tags fetched - ', msg.payload)
+      }
+      case 'task.created': {
+        const newTask = msg.data
+        if (newTask.status === 'BRAINDUMP') {
+          // remove the task from braindumpTasks ( generated during optmistic UI updates )
+          brainDumpTasks.value = brainDumpTasks.value.filter((t) => t.frontend_id !== newTask.frontend_id)
+          // add the task to braindumpTasks ( from backend task data)
+          brainDumpTasks.value.unshift(newTask)
+          // Update task order since new task is added & other tasks are re-indexed
+          updateTaskOrderWs(brainDumpTasks.value)
+        } else {
+          console.error(
+            'task must be created with status as BRAINDUMP but this task got created with status - ',
+            newTask.status
+          )
+          console.error('full task data - ', newTask)
+        }
         break
-      // TODO: handle create/update/delete events here
+      }
+      case 'task.deleted': {
+        const id = msg.id
+        // purge from all
+        _delete_task_from_all_cols(id)
+        break
+      }
+      // tasks.refresh legacy handler
+      case 'task.refresh_for_rec': {
+        const { deleted = [], created = [] } = msg.data
+        // Remove deleted tasks
+        deleted.forEach((id) => {
+          // remove from all arrays/columns
+          _delete_task_from_all_cols(id)
+        })
+        // Upsert created tasks
+        created.forEach((task) => {
+          if (task.status === 'ON_BOARD') {
+            const column_date = task.column_date
+            const column = kanbanColumns.value.find(
+              (c) => c.date.toISOString().split('T')[0] === column_date.split('T')[0]
+            )
+            if (column) column.tasks.push(task)
+          }
+        })
+        break
+      }
+      case 'task.updated': {
+        const updatedTask = msg.data
+        _apply_updates_to_task(updatedTask)
+        break
+      }
+      case 'task.repeat_turned_off': {
+        const { deleted_future_siblings_ids, data } = msg
+        _apply_updates_to_task(data)
+        deleted_future_siblings_ids.forEach((id) => {
+          // remove these tasks
+          _delete_task_from_all_cols(id)
+        })
+        break
+      }
+      case 'task_toggled':
+      case 'task_assigned':
+      case 'tasks_order_updated': {
+        fetchTasksWs()
+        break
+      }
+      case 'error': {
+        // Display error message using global snackbar if available
+        let errorMessage = 'Oh no! Something went wrong. trust me bro! everything was okay when i tested it'
+        if (typeof window !== 'undefined' && typeof window.__addSnackbar === 'function') {
+          window.__addSnackbar(
+            `❌ ${errorMessage}`,
+            'OK',
+            () => {},
+            () => {},
+            4000
+          )
+        } else {
+          console.error('[WS] Error:', errorMessage)
+        }
+        break
+      }
       default:
         console.warn('[WS] unhandled message type:', msg.type)
     }
@@ -158,28 +238,43 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     if (wsStatus.value === 'OPEN') {
       wsSend(JSON.stringify({ action, payload }))
     } else {
-      console.warn('[WS] cannot send, ws status:', wsStatus.value)
+      console.info('[WS] not initialized, ws status yet:', wsStatus.value)
     }
+  }
+
+  function _apply_updates_to_task(updated_task) {
+    // first find the column where the task is present
+    const tasks_array = _getColumnTasksFromColName(updated_task.status, updated_task.column_date)
+    const task_index = tasks_array.findIndex((task) => task.id === updated_task.id)
+    if (task_index === -1) {
+      console.warn("task not found with id so it's a bug - ", updated_task.id)
+      return
+    }
+    tasks_array[task_index] = updated_task
+  }
+
+  function pushToArchiveTask(task) {
+    archivedTasks.value.unshift(task)
   }
 
   // Exposed actions mirroring taskStore.js
   function initWs() {
-    wsOpen()
     const auth = useAuthStore()
     if (auth.isAuthenticated) {
-      fetchTasksWs()
-      fetchProjectsWs()
-      fetchTagsWs()
+      console.info('user is authenticated opening ws')
+      wsOpen()
     }
   }
   function closeWs() {
+    console.info('closing ws')
     wsClose()
   }
 
+  // send msg to backend
   function fetchTasksWs() {
     sendAction('fetch_tasks', {
-      firstDate: firstDate.value.toISOString(),
-      lastDate: lastDate.value.toISOString(),
+      start_date: firstDate.value.toISOString().split('T')[0],
+      end_date: lastDate.value.toISOString().split('T')[0],
       projects: selectedProjects.value,
       tags: selectedTags.value,
     })
@@ -187,34 +282,20 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   // Add more date columns for infinite scroll
   async function addMoreColumnsForward(c = 3) {
-    for (let i = 0; i < c; i++) {
-      const nextDate = addDays(lastDate.value, 1)
-      kanbanColumns.value.push(createDateColumn(nextDate))
-      lastDate.value = nextDate
-    }
-    // After adding columns, fetch tasks for the new columns
-    // Return the promise so the caller knows when it's done
+    pushForwardColumns(kanbanColumns, lastDate, c)
     return fetchTasksWs()
   }
 
   // Add earlier date columns for backward infinite scroll
   async function addEarlierColumns(count = 3) {
-    let added = 0
-    for (let i = 0; i < count; i++) {
-      const prevDate = addDays(firstDate.value, -1)
-      if (prevDate < minDate.value) break
-      kanbanColumns.value.unshift(createDateColumn(prevDate))
-      firstDate.value = prevDate
-      added++
-    }
+    const added = prependEarlierColumns(kanbanColumns, firstDate, minDate, count)
     if (added > 0) {
-      // After adding columns, fetch tasks for the new columns
       return fetchTasksWs()
     }
     return Promise.resolve()
   }
 
-  async function createTask(task) {
+  async function createTaskWs(task) {
     // Format duration before sending to API
     const taskWithFormattedDuration = {
       ...task,
@@ -223,7 +304,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     return sendAction('create_task', taskWithFormattedDuration)
   }
 
-  async function updateTask(task) {
+  async function updateTaskWs(task) {
     // Format duration before sending to API
     const taskWithFormattedDuration = {
       ...task,
@@ -232,51 +313,28 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     return sendAction('update_task', taskWithFormattedDuration)
   }
 
-  async function archiveTask(task) {
+  async function turnOffRepeat(task_id) {
+    return sendAction('turn_off_repeat', task_id)
+  }
+
+  async function archiveTaskWs(task) {
     // push task to archive
     task.status = 'ARCHIVED'
-    const updated_task = await updateTask(task)
-    archivedTasks.value.unshift(updated_task)
+    updateTaskWs(task)
   }
 
-  async function taskDroppedToBrainDump(task) {
+  async function taskDroppedToBrainDumpWs(task) {
     task.column_date = null
     task.status = 'BRAINDUMP'
-    return await updateTask(task)
+    updateTaskWs(task)
   }
 
-  async function updateTaskOrder(tasks_array) {
+  async function updateTaskOrderWs(tasks_array) {
     // reinitialize order based on their existing order
     tasks_array.forEach((task, index) => {
       task.order = index
     })
     sendAction('update_task_order', tasks_array)
-  }
-
-  function fetchProjectsWs() {
-    sendAction('fetch_projects')
-  }
-  function createProjectWs(data) {
-    sendAction('create_project', data)
-  }
-  function deleteProjectWs(id) {
-    sendAction('delete_project', { projectId: id })
-  }
-  function fetchTagsWs() {
-    sendAction('fetch_tags')
-  }
-  function setSelectedProjectsWs(arr) {
-    selectedProjects.value = arr
-    fetchTasksWs()
-  }
-  function setSelectedTagsWs(arr) {
-    selectedTags.value = arr
-    fetchTasksWs()
-  }
-  function clearFiltersWs() {
-    selectedProjects.value = []
-    selectedTags.value = []
-    fetchTasksWs()
   }
   function addMoreColumnsWs(c = 3) {
     addMoreColumnsForward(c)
@@ -285,28 +343,15 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     addEarlierColumns(c)
   }
   function toggleCompletionWs(id) {
-    sendAction('toggle_completion', { taskId: id })
+    sendAction('toggle_completion', { task_id: id })
   }
   function assignProjectWs(tid, pid) {
-    sendAction('assign_project', { taskId: tid, projectId: pid })
+    sendAction('assign_project', { task_id: tid, project_id: pid })
   }
-  function createTaskWs(task) {
-    createTask(task)
-  }
-  function deleteTaskWs(id) {
-    sendAction('delete_task', { taskId: id })
-  }
-  function updateTaskWs(task) {
-    updateTask(task)
-  }
-  function archiveTaskWs(task) {
-    archiveTask(task)
-  }
-  function braindumpTaskWs(task) {
-    taskDroppedToBrainDump(task)
-  }
-  function updateTaskOrderWs(arr) {
-    updateTaskOrder(arr)
+  function deleteTaskWs(task_id) {
+    sendAction('delete_task', task_id)
+    // remove this task from UI
+    _delete_task_from_all_cols(task_id)
   }
 
   return {
@@ -317,8 +362,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     backlogs,
     archivedTasks,
     calendarTasks,
-    projects,
-    tags,
     selectedProjects,
     selectedTags,
     firstDate,
@@ -332,13 +375,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     initWs,
     closeWs,
     fetchTasksWs,
-    fetchProjectsWs,
-    createProjectWs,
-    deleteProjectWs,
-    fetchTagsWs,
-    setSelectedProjectsWs,
-    setSelectedTagsWs,
-    clearFiltersWs,
     addMoreColumnsWs,
     addEarlierColumnsWs,
     toggleCompletionWs,
@@ -347,7 +383,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     deleteTaskWs,
     updateTaskWs,
     archiveTaskWs,
-    braindumpTaskWs,
     updateTaskOrderWs,
+    pushToArchiveTask,
+    taskDroppedToBrainDumpWs,
+    turnOffRepeat,
   }
 })

@@ -2,10 +2,10 @@
   import { computed } from 'vue'
   import { Clock, Tag, Calendar, ListTodo } from 'lucide-vue-next'
   import Draggable from 'vuedraggable'
-  import { useTaskStore } from '../../../stores/taskstore'
+  import { useTaskStoreWs } from '../../../stores/taskStoreWs'
   import { useTimeAgo } from '@vueuse/core'
 
-  const taskStore = useTaskStore()
+  const taskStore = useTaskStoreWs()
 
   // Format the created_at date
   const timeAgo = (timestamp) => {
@@ -28,13 +28,13 @@
       const element = added.element
       // Update the task with backlog status
       element.status = 'BACKLOG'
-      await taskStore.updateTask(element)
-      await taskStore.updateTaskOrder(taskStore.backlogs)
+      await taskStore.updateTaskWs(element)
+      await taskStore.updateTaskOrderWs(taskStore.backlogs)
     }
 
     // If tasks are reordered within the backlog list
     if (moved) {
-      await taskStore.updateTaskOrder(taskStore.backlogs)
+      await taskStore.updateTaskOrderWs(taskStore.backlogs)
     }
   }
 

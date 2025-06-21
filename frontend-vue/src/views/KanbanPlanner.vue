@@ -1,18 +1,18 @@
 <script setup>
   import { onMounted, ref, useTemplateRef, onUnmounted } from 'vue'
-  import { useIntervalFn } from '@vueuse/core'
   import BrainDump from '../components/BrainDump.vue'
   import KanbanColumn from '../components/KanbanColumn.vue'
   import IntegrationSidebar from '../components/sidebar/IntegrationSidebar.vue'
   import LoadingColumnsSkeleton from '../components/LoadingColumnsSkeleton.vue'
   import FilterSidebar from '../components/sidebar/FilterSidebar.vue'
 
-  import { useTaskStore } from '../stores/taskstore'
+  import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { useUIStore } from '../stores/uiStore'
+
+  const taskStore = useTaskStoreWs()
 
   // Ref for the scroll container
   const kanbanColumnsWrapper = useTemplateRef('kanbanColumnsWrapper')
-  const taskStore = useTaskStore()
   const uiStore = useUIStore()
   const hasScrolledRight = ref(false)
   const scrollThreshold = 100
@@ -42,7 +42,7 @@
       hasScrolledRight.value = false
       uiStore.setLoadingEarlierColumns(true)
       try {
-        await taskStore.addEarlierColumns(7)
+        taskStore.addEarlierColumnsWs(7)
       } catch (e) {
         console.error(e)
       } finally {
@@ -58,7 +58,7 @@
     ) {
       uiStore.setLoadingMoreColumns(true)
       try {
-        await taskStore.addMoreColumns(3)
+        taskStore.addMoreColumnsWs(3)
       } catch (e) {
         console.error(e)
       } finally {
@@ -67,18 +67,9 @@
     }
   }
 
-  // Auto-fetch tasks every 5 minutes
-  const { pause: stopAutoFetchTasks } = useIntervalFn(
-    () => {
-      taskStore.fetchTasks()
-    },
-    5 * 60 * 1000
-  )
 
-  onMounted(async () => {
-    await taskStore.fetchTasks()
-    taskStore.fetchProjects()
-    taskStore.fetchTags()
+  onMounted(() => {
+    taskStore.initWs()
     const wrapper = kanbanColumnsWrapper.value
     if (wrapper) {
       wrapper.scrollLeft = 0
@@ -91,7 +82,7 @@
     if (wrapper) {
       wrapper.removeEventListener('scroll', onScroll)
     }
-    stopAutoFetchTasks()
+    taskStore.closeWs()
   })
 </script>
 

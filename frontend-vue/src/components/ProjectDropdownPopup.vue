@@ -1,8 +1,8 @@
 <script setup>
-  import { ref } from 'vue'
+  import { onMounted, ref } from 'vue'
   import { onClickOutside } from '@vueuse/core'
   import { Plus, FolderIcon, LucideTrash } from 'lucide-vue-next'
-  import { useTaskStore } from '../stores/taskstore'
+  import { useTagsProjectStore } from '../stores/tagsProjectStore'
   import { offset, flip, shift } from '@floating-ui/dom'
   import { useFloating, autoUpdate } from '@floating-ui/vue'
 
@@ -13,7 +13,7 @@
     },
   })
 
-  const taskStore = useTaskStore()
+  const tagsProjectStore = useTagsProjectStore()
   const emit = defineEmits(['project-selected'])
 
   const isProjectPopupOpen = ref(false)
@@ -66,13 +66,15 @@
     if (newProjectTitle.value.trim()) {
       try {
         // Create the project in the backend
-        const projectData = await taskStore.createProject({
+        const projectData = await tagsProjectStore.createProject({
           title: newProjectTitle.value.trim(),
         })
 
         // Select the newly created project
         if (projectData) {
           selectProject(projectData.id, projectData.title)
+        } else {
+          console.error('Failed to assign project, projectData is null')
         }
       } catch (error) {
         // Log error but handled gracefully
@@ -92,6 +94,10 @@
   // Handle clicking outside the popup
   onClickOutside(projectPopupRef, () => {
     handleCancel()
+  })
+
+  onMounted(() => {
+    tagsProjectStore.fetchProjects()
   })
 </script>
 
@@ -124,15 +130,14 @@
 
           <!-- Existing projects -->
           <div
-            v-for="proj in taskStore.projects"
+            v-for="proj in tagsProjectStore.projects"
             :key="proj.id"
             class="project-option"
             :class="{ selected: selectedProjectId === proj.id }"
             @click="selectProject(proj.id, proj.title)">
             <FolderIcon size="14" />
-            <span class="project-content"
-              >{{ proj.title }}
-              <LucideTrash class="delete-button" size="14" @click.stop="taskStore.deleteProject(proj.id)" />
+            <span class="project-content">{{ proj.title }}
+              <LucideTrash class="delete-button" size="14" @click.stop="tagsProjectStore.deleteProject(proj.id)" />
             </span>
           </div>
 
@@ -149,9 +154,11 @@
               v-model="newProjectTitle"
               type="text"
               placeholder="Project Name"
-              @keydown.enter="createAndSelectProject" />
+              @keydown.enter="createAndSelectProject">
             <div class="new-project-actions">
-              <button class="btn-cancel" @click="toggleNewProjectMode">Cancel</button>
+              <button class="btn-cancel" @click="toggleNewProjectMode">
+                Cancel
+              </button>
               <button class="btn-create" :disabled="!newProjectTitle.trim()" @click="createAndSelectProject">
                 Create
               </button>

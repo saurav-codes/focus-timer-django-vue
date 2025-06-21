@@ -1,7 +1,7 @@
 <script setup>
   import TaskEditModal from './TaskEditModal.vue'
   import TimeDropdownPopup from './TimeDropdownPopup.vue'
-  import { useTaskStore } from '../stores/taskstore'
+  import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { ref, computed, useTemplateRef, watch } from 'vue'
   import { Clock, Repeat1, Tag, XIcon } from 'lucide-vue-next'
   import { useFloating } from '@floating-ui/vue'
@@ -12,7 +12,7 @@
   const isHovered = useElementHover(taskItem)
 
   const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed', 'task-archived'])
-  const taskStore = useTaskStore()
+  const taskStore = useTaskStoreWs()
   const props = defineProps({
     task: {
       type: Object,
@@ -71,7 +71,7 @@
   const toggleCompletion = () => {
     if (props.showCheckbox) {
       localTask.value.is_completed = !localTask.value.is_completed
-      taskStore.toggleCompletion(props.task.id)
+      taskStore.toggleCompletionWs(props.task.id)
     }
   }
 
@@ -140,7 +140,7 @@
     }
 
     // Save the update via the task store.
-    await taskStore.updateTask(localTask.value)
+    await taskStore.updateTaskWs(localTask.value)
     handleTaskUpdated(localTask.value)
   }
 
