@@ -272,6 +272,43 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now gunicorn
 ```
 
+### Alternative: Uvicorn (ASGI)
+*For async Django applications with WebSocket support and better performance.*
+
+```bash
+pip install uvicorn[standard]
+```
+Create `/etc/systemd/system/uvicorn.service`:
+```ini
+[Unit]
+Description=Uvicorn daemon for Focus Timer (ASGI)
+After=network.target
+
+[Service]
+User=focususer
+Group=www-data
+WorkingDirectory=/home/focususer/focus-timer-django-vue/backend
+ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/uvicorn \
+  backend.asgi:application \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --workers 4 \
+  --env-file /home/focususer/focus-timer-django-vue/.env \
+  --access-log
+EnvironmentFile=/home/focususer/focus-timer-django-vue/.env
+Restart=on-failure
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+```
+Enable and start:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now uvicorn
+```
+**Note:** If using uvicorn, make sure your Django project has an `asgi.py` file in the project root alongside `wsgi.py`.
+
 ## 10. Background Workers: Celery & Beat
 - Create `/etc/systemd/system/celery.service`:
 ```ini
@@ -373,7 +410,8 @@ sudo certbot --nginx -d tymr.online -d www.tymr.online
 
 ## 13. Monitoring & Logging
 - Use `journalctl -u gunicorn -f` and `journalctl -u celery -f`.
-- Set up Logrotate for Gunicorn logs if needed.
+- For uvicorn: Use `journalctl -u uvicorn -f`.
+- Set up Logrotate for application server logs if needed.
 - Consider external monitoring (Prometheus/Grafana, UptimeRobot).
 
 ## 14. Automated Backups
@@ -403,6 +441,7 @@ sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/static
 sudo chmod -R o+rX /home/focususer/focus-timer-django-vue/backend/media
 sudo chmod -R o+x /home/focususer/focus-timer-django-vue/frontend-vue
 chmod +x /home/focususer/focus-timer-django-vue/.venv/bin/gunicorn
+chmod +x /home/focususer/focus-timer-django-vue/.venv/bin/uvicorn  # if using uvicorn
 chmod +x /home/focususer/focus-timer-django-vue/.venv/bin/celery
 chmod u+x restart_all.sh
 ```
@@ -416,6 +455,11 @@ sudo systemctl daemon-reload
 sudo systemctl restart gunicorn
 sudo systemctl status  gunicorn   # check exit status immediately
 journalctl     -u gunicorn -f     # live logs
+
+# 2. Alternative: Restart your Django app (Uvicorn)
+sudo systemctl restart uvicorn
+sudo systemctl status  uvicorn    # check exit status immediately
+journalctl     -u uvicorn -f      # live logs
 
 # 3. Restart Celery worker & beat
 sudo systemctl restart celery celery-beat
@@ -472,7 +516,7 @@ echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
 
 services=(
-  gunicorn
+  gunicorn  # or uvicorn if using ASGI
   celery
   celery-beat
   nginx

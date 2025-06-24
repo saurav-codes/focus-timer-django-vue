@@ -32,7 +32,7 @@ echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
 
 services=(
-  gunicorn
+  uvicorn
   celery
   celery-beat
   nginx
