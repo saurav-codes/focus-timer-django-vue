@@ -293,7 +293,6 @@ ExecStart=/home/focususer/focus-timer-django-vue/.venv/bin/uvicorn \
   --host 127.0.0.1 \
   --port 8000 \
   --workers 4 \
-  --env-file /home/focususer/focus-timer-django-vue/.env \
   --access-log
 EnvironmentFile=/home/focususer/focus-timer-django-vue/.env
 Restart=on-failure
