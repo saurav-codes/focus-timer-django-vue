@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref, watch } from 'vue'
+  import { computed } from 'vue'
   import { BadgeCheck, Clock } from 'lucide-vue-next'
   import TaskCard from './TaskCard.vue'
   import Draggable from 'vuedraggable'
@@ -22,39 +22,37 @@
       type: String,
       required: true,
     },
-    tasks: {
-      type: Array,
-      default: () => [],
-    },
     columnWidth: {
       type: String,
       default: '300px',
     },
   })
 
-  // Initialize with empty array
-  const localTasks = ref([])
-
-  // Watch for changes to props.tasks and update localTasks
-  watch(
-    () => props.tasks,
-    (newTasks) => {
-      // Create a deep copy of the tasks to avoid reference issues
-      localTasks.value = JSON.parse(JSON.stringify(newTasks))
+  // Directly reference the tasks array that lives in the store so any drag-and-drop
+  // mutations performed by vuedraggable are applied to the single source of truth.
+  const columnTasks = computed({
+    get() {
+      const col = taskStore.kanbanColumns.find(
+        (c) => c.date.toDateString() === props.dateObj.toDateString()
+      )
+      return col ? col.tasks : []
     },
-    { immediate: true, deep: true }
-  ) // immediate: true makes it run on component mount
-  // deep:true means watch the tasks array deeply
-
-  const completedTasksCount = computed(() => {
-    return localTasks.value.filter((task) => task?.is_completed).length
+    // setter required for v-model on a computed
+    set(newArr) {
+      const col = taskStore.kanbanColumns.find(
+        (c) => c.date.toDateString() === props.dateObj.toDateString()
+      )
+      if (col) col.tasks = newArr
+    },
   })
+
+  const completedTasksCount = computed(() => columnTasks.value.filter((task) => task?.is_completed).length )
 
   // Calculate total duration of all tasks in this column
   const totalDuration = computed(() => {
     let totalMinutes = 0
 
-    localTasks.value.forEach((task) => {
+    columnTasks.value.forEach((task) => {
       if (task?.duration) {
         const [hours, minutes] = task.duration.split(':').map(Number)
         totalMinutes += hours * 60 + minutes
@@ -75,6 +73,7 @@
   })
 
   function handleTaskDroppedToKanban({ added, moved }) {
+    // this only trigger with added value on the column where it's dropped
     if (uiStore.isPointerOverIntegration) {
       return false
     }
@@ -86,14 +85,15 @@
       element.status = 'ON_BOARD'
       taskStore.updateTaskWs(element)
       // Task added, updating order
-      taskStore.updateTaskOrderWs(localTasks.value)
+      taskStore.updateTaskOrderWs(columnTasks.value);
     }
 
     // Handle when a task is moved within the same column
     if (moved) {
       // Just update the order since the task is staying in the same column
       // Task moved, updating order
-      taskStore.updateTaskOrderWs(localTasks.value)
+      console.log("triggered moved event", moved)
+      taskStore.updateTaskOrderWs(columnTasks.value)
     }
 
     // We don't need to handle removed here as the source column will handle it
@@ -101,26 +101,26 @@
 
   function handleTaskDeleted(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
-    localTasks.value = localTasks.value.filter((task) => task.id !== taskId)
-    taskStore.updateTaskOrderWs(localTasks.value)
+    columnTasks.value = columnTasks.value.filter((task) => task.id !== taskId)
+    taskStore.updateTaskOrderWs(columnTasks.value)
   }
 
   function handleTaskUpdated(updatedTask) {
     // update the task in the localTasks
     // and this will trigger any changes to the task card also
     // since we are watching the task in taskcard.vue
-    localTasks.value = localTasks.value.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    columnTasks.value = columnTasks.value.map((task) => (task.id === updatedTask.id ? updatedTask : task))
   }
 
   function handleTaskArchived(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
-    localTasks.value = localTasks.value.filter((task) => task.id !== taskId)
-    taskStore.updateTaskOrderWs(localTasks.value)
+    columnTasks.value = columnTasks.value.filter((task) => task.id !== taskId)
+    taskStore.updateTaskOrderWs(columnTasks.value)
   }
 
   async function handleTagRemoved(updated_tags_list, taskId) {
     // remove the tag from the task
-    const task = localTasks.value.find((task) => task.id === taskId)
+    const task = columnTasks.value.find((task) => task.id === taskId)
     if (!task) {
       console.error('Task not found while removing tags for task', taskId)
       return
@@ -140,7 +140,7 @@
       <div class="stats-container">
         <div class="stats">
           <BadgeCheck class="small-icon" size="14" />
-          <span>{{ completedTasksCount }} / {{ localTasks.length }}</span>
+          <span>{{ completedTasksCount }} / {{ columnTasks.length }}</span>
         </div>
         <div class="duration-stats">
           <Clock class="small-icon" size="14" />
@@ -150,7 +150,7 @@
     </div>
     <div class="tasks-container">
       <Draggable
-        v-model="localTasks"
+        v-model="columnTasks"
         drag-class="dragging"
         ghost-class="ghost-card"
         class="tasks-list"
