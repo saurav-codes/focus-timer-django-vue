@@ -81,6 +81,10 @@ export const useAuthStore = defineStore('authStore', {
       )
     },
 
+    async verify_auth() {
+      this.fetchUserData()
+    },
+
     async login(email, password) {
       this.isLoading = true
 
