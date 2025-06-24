@@ -45,7 +45,12 @@ const timeAgo = computed(() => {
   return ''
 })
 
-const saveTask = async () => {
+const saveTask = async (force_save=false) => {
+  /*
+  `force_save` kwarg will ignore recurrence_rule & will
+  save the task to backend
+  */
+  if (editedTask.value.recurrence_series?.recurrence_rule && !force_save) return
   try {
     taskStore.updateTaskWs(editedTask.value)
     emit('task-updated', editedTask.value)
@@ -132,7 +137,16 @@ watch(isModalOpen, (newVal) => {
     console.log('TaskEditModal closed')
   }
 })
-const { startTime } = useStartAt(props.task)
+const { startTime } = useStartAt(editedTask)
+// Save only when the user changes the start time (skip initial backend sync)
+const startTimeInitialized = ref(false)
+watch(startTime, () => {
+  if (startTimeInitialized.value) {
+    saveTask(true)
+  } else {
+    startTimeInitialized.value = true
+  }
+}, {immediate: true})
 </script>
 
 <template>
@@ -157,7 +171,7 @@ const { startTime } = useStartAt(props.task)
               type="text"
               class="form-input"
               placeholder="Task title"
-              @blur="saveTask">
+              @blur="saveTask(true)">
           </div>
 
           <div class="form-group">
@@ -167,7 +181,7 @@ const { startTime } = useStartAt(props.task)
               class="form-textarea"
               placeholder="Add details about this task..."
               rows="4"
-              @blur="saveTask" />
+              @blur="saveTask(true)" />
           </div>
           <div class="form-group">
             <label class="form-label">Tags</label>
@@ -205,7 +219,7 @@ const { startTime } = useStartAt(props.task)
           </div>
 
           <!-- Recurring Task Editor -->
-          <RecurringTaskEditor :task="editedTask" @close-modal="closeModal" />
+          <RecurringTaskEditor v-if="editedTask.status == 'ON_BOARD'" :task="editedTask" @close-modal="closeModal" />
 
           <div class="meta-info">
             <span class="created-at">Created {{ timeAgo }}</span>

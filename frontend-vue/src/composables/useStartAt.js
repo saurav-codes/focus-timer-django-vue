@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 
-export function useStartAt(task) {
+export function useStartAt(editedTask) {
   const startTime = ref('00:00') // HH:MM (local, 24-hour)
 
   /**
@@ -41,8 +41,7 @@ export function useStartAt(task) {
     currentDate.setHours(hours, minutes, 0, 0) // Set seconds and ms to 0
 
     // Update the task's start_at with ISO string
-    task.start_at = currentDate.toISOString()
-    console.log('value changed so updating start time')
+    editedTask.value.start_at = currentDate.toISOString()
   }
 
   /**
@@ -50,7 +49,7 @@ export function useStartAt(task) {
    * When the task's start_at changes, update the startTime value.
    */
   watch(
-    () => task.start_at,
+    () => editedTask.value.start_at,
     (val) => {
       if (val) startTime.value = _formatTimeToHHMM(val)
     },

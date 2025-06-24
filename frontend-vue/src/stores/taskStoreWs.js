@@ -8,7 +8,6 @@ import {
   addDays,
   createInitialColumns,
   formatDurationForAPI,
-  reInitializeOrder,
   fetchTaskType,
   pushForwardColumns,
   prependEarlierColumns,
@@ -192,6 +191,10 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         })
         break
       }
+      case 'full_refresh': {
+        fetchTasksWs()
+        break
+      }
       case 'task.updated': {
         const updatedTask = msg.data
         _apply_updates_to_task(updatedTask)
@@ -223,6 +226,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
             () => {},
             4000
           )
+          console.log('error recd from webscoket', msg)
         } else {
           console.error('[WS] Error:', errorMessage)
         }
@@ -260,6 +264,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   // Exposed actions mirroring taskStore.js
   function initWs() {
     const auth = useAuthStore()
+    auth.verify_auth() // sends a fetchuserdata request to make sure user is logged in
     if (auth.isAuthenticated) {
       console.info('user is authenticated opening ws')
       wsOpen()
@@ -342,8 +347,8 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   function addEarlierColumnsWs(c = 3) {
     addEarlierColumns(c)
   }
-  function toggleCompletionWs(id) {
-    sendAction('toggle_completion', { task_id: id })
+  function toggleCompletionWs(task_id) {
+    sendAction('toggle_completion', task_id)
   }
   function assignProjectWs(tid, pid) {
     sendAction('assign_project', { task_id: tid, project_id: pid })

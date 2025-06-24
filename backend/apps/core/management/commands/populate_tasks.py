@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.core.models import Task, Project
+from apps.core.models import Task, Project, RecurrenceSeries
 from taggit.models import Tag
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING("No existing user found, creating one")
             )
-            user = User.objects.create_user(
+            user = User.objects.create_user(  # type:ignore
                 first_name="raju test user",
                 email="raju@gmail.com",
                 password="raju123",
@@ -52,10 +52,11 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Found existing user: id={user.id}, using it to assign tasks"
+                    f"Found existing user= {user}, using it to assign tasks"
                 )
             )
         Project.objects.all().delete()
+        RecurrenceSeries.objects.all().delete()
         self.stdout.write(self.style.SUCCESS("Deleted all existing projects."))
         # Create sample projects
         for project_name in project_names:

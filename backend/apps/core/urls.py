@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     TasksApiView,
     TaskDetailApiView,
-    toggle_task_completion,
+    # toggle_task_completion,
     get_all_projects,
     get_all_tags,
     create_project,
@@ -15,11 +15,11 @@ app_name = "core"
 urlpatterns = [
     path("tasks/", TasksApiView.as_view(), name="task_list"),
     path("tasks/<int:pk>/", TaskDetailApiView.as_view(), name="task_detail"),
-    path(
-        "tasks/<int:pk>/toggle_completion/",
-        toggle_task_completion,
-        name="toggle_task_completion",
-    ),
+    # path(
+    #     "tasks/<int:pk>/toggle_completion/",
+    #     toggle_task_completion,
+    #     name="toggle_task_completion",
+    # ),
     path(
         "assign_project/<int:task_id>/<int:project_id>/",
         assign_project_to_task,

@@ -109,23 +109,23 @@ class TaskDetailApiView(LoginRequiredMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@csrf_protect
-@api_view(["POST"])
-@login_required
-def toggle_task_completion(request, pk):
-    """
-    Toggle the completion status of a task
-    best to use since we aren't sending/receiving any data unlike the TaskApiView
-    """
-    task: Task = get_object_or_404(Task, pk=pk, user=request.user)
-    logger.info(
-        f"Toggling completion: task_id={pk} old_status={task.is_completed} by user_id={request.user.id}"
-    )
-    with transaction.atomic():
-        task.is_completed = not task.is_completed
-        task.save()
-    logger.info(f"New completion status: task_id={pk} new_status={task.is_completed}")
-    return Response(status=status.HTTP_200_OK)
+# @csrf_protect
+# @api_view(["POST"])
+# @login_required
+# def toggle_task_completion(request, pk):
+#     """
+#     Toggle the completion status of a task
+#     best to use since we aren't sending/receiving any data unlike the TaskApiView
+#     """
+#     task: Task = get_object_or_404(Task, pk=pk, user=request.user)
+#     logger.info(
+#         f"Toggling completion: task_id={pk} old_status={task.is_completed} by user_id={request.user.id}"
+#     )
+#     with transaction.atomic():
+#         task.is_completed = not task.is_completed
+#         task.save()
+#     logger.info(f"New completion status: task_id={pk} new_status={task.is_completed}")
+#     return Response(status=status.HTTP_200_OK)
 
 
 @csrf_protect

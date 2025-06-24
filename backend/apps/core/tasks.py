@@ -1,13 +1,11 @@
 import logging
 from django.utils import timezone
 from backend.celery import app
-from .models import Task
+from .models import Task, RecurrenceSeries
 import datetime
-from django.db import transaction
-from django.db.models import OuterRef, Subquery
 from django.contrib.auth import get_user_model
 from dateutil.rrule import rrulestr
-from .selectors import get_future_childrens_of_parent_task, get_task_future_siblings
+from .selectors import get_future_siblings, get_latest_task_of_series
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .serializers import TaskSerializer
@@ -16,68 +14,27 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Helper Celery task to regenerate series when parent template changes
+# Helper functions to be used by main tasks
 # ---------------------------------------------------------------------------
-
-
-def _generate_rec_tasks_for_parent(
-    parent_task: Task, occurences_dates: list[datetime.datetime]
-):
-    results = []
-    for occurence_date in occurences_dates:
-        with transaction.atomic():
-            # make sure we don't create two task for same column_date & recurrence_parent
-            if not Task.objects.filter(
-                column_date__date=occurence_date.date(),
-                title=parent_task.title,
-                description=parent_task.description,
-            ).exists():
-                child, created = Task.objects.get_or_create(
-                    user=parent_task.user,
-                    title=parent_task.title,
-                    description=parent_task.description,
-                    order=parent_task.order,
-                    is_completed=False,
-                    duration=parent_task.duration,
-                    column_date=occurence_date,
-                    start_at=parent_task.start_at,
-                    end_at=parent_task.end_at,
-                    recurrence_rule=parent_task.recurrence_rule,
-                    recurrence_parent=parent_task,
-                    project=parent_task.project,
-                    status=Task.ON_BOARD,  # TODO: what if task is on calendar?
-                )
-                if created:
-                    # copy over tags
-                    child.tags.set(parent_task.tags.all())
-
-                action = "created" if created else "updated"
-                msg = f"Recurring task {action}: parent_task_id={parent_task.pk} child_task_id={child.pk} date={occurence_date}"
-                logger.info(msg)
-                results.append(msg)
-    return results
-
-
 def _gen_rec_tasks_for_parent_or_sibling(
     parent_or_sibling_task: Task,
     max_events: int = 20,
     days_ahead: int = 20,
 ):
-    # every rec task ( wether parent or child ) have a task.start_at
-    # if not parent_or_sibling_task.start_at:
-    #     logger.warning(
-    #         f"No start_at for parent_task_id={parent_or_sibling_task.pk}, setting to now"
-    #     )
-    #     parent_or_sibling_task.start_at = timezone.now()
-    #     parent_or_sibling_task.save()
+    rec_rule = ""
+    if parent_or_sibling_task.recurrence_series:
+        if parent_or_sibling_task.recurrence_series.recurrence_rule:
+            rec_rule = parent_or_sibling_task.recurrence_series.recurrence_rule
+    else:
+        raise ValueError("Task must have a recurrence_rule to generate future siblings")
 
-    start_after = parent_or_sibling_task.column_date or datetime.datetime.today()
+    start_after = (
+        parent_or_sibling_task.column_date
+        or timezone.now() + datetime.timedelta(days=1)
+    )
     window_end = start_after + datetime.timedelta(days=days_ahead)
     try:
-        rule = rrulestr(
-            parent_or_sibling_task.recurrence_rule,
-            dtstart=start_after,
-        )
+        rule = rrulestr(rec_rule, dtstart=start_after)
     except Exception as e:
         result = f"Error parsing recurrence rule for parent_task_id={parent_or_sibling_task.pk}: {e}"
         logger.error(result)
@@ -93,10 +50,16 @@ def _gen_rec_tasks_for_parent_or_sibling(
         logger.info(result)
         return result
 
-    return _generate_rec_tasks_for_parent(parent_or_sibling_task, occurrences)
+    from .services import generate_rec_tasks_for_parent
+
+    return generate_rec_tasks_for_parent(parent_or_sibling_task, occurrences)
 
 
-def _notify_frontend(group_name, data):
+# ---------------------------------------------------------------------------
+# Celery Tasks to invoke using .delay
+# ---------------------------------------------------------------------------
+@app.task(name="notify_frontend")
+def notify_frontend(group_name, data):
     # ------------------- Notify connected client(s) --------------------------------------
     try:
         channel_layer = get_channel_layer()
@@ -106,107 +69,81 @@ def _notify_frontend(group_name, data):
 
 
 @app.task(name="regenerate_recurring_series")
-def regenerate_recurring_series(parent_or_sibling_id: int):
-    """Delete all *future* children of a parent recurring task and rebuild them.
+def regenerate_recurring_series(task_id: int | str):
+    """
+    Delete all *future* siblings/children of a parent recurring task and rebuild them.
 
-    Called when the user edits a single child and we propagate changes to the
-    parent template.  Past instances (start_at <= now) remain untouched.
+    Called when the user edits a single child or a parent and we propagate changes to the
+    parent template or to childrens by deleting all childrens & recreating based on updated fields
+    Past instances (start_at <= now) remain untouched.
     """
     try:
-        parent_or_sibling_task: Task = Task.objects.get(id=parent_or_sibling_id)
+        task: Task = Task.objects.get(id=task_id)
+        if not task.recurrence_series:
+            error = f"Task with id {task.pk} isn't a recurring task.\
+                this could be an issue why a non rec task being passed\
+                to celery. so dig this issue"
+            logger.error(error, exc_info=True)
+            return error
     except Task.DoesNotExist:
-        logger.warning(
-            f"Parent/Sibling task not found for regeneration: id={parent_or_sibling_id}"
-        )
+        logger.warning(f"Parent/Sibling task not found for regeneration: id={task_id}")
         return "parent-missing"
 
-    deleted_count = 0
-    deleted_ids = []
-    future_tasks = None
-    # if it's a parent task then delete all future childrens
-    if parent_or_sibling_task.is_rec_task_parent:
-        # that means it's a parent task so let's delete or future series
-        future_tasks = get_future_childrens_of_parent_task(
-            parent_task=parent_or_sibling_task
-        )
-    else:
-        # it means it's a child task so let's delete its future siblings along with
-        # itself too
-        future_tasks = get_task_future_siblings(parent_or_sibling_task)
-
-    deleted_ids = list(future_tasks.values_list("id", flat=True))
-    deleted_count = future_tasks.delete()[0]
+    future_tasks_to_del = get_future_siblings(task)
+    deleted_ids = list(future_tasks_to_del.values_list("id", flat=True))
+    deleted_count, _ = future_tasks_to_del.delete()
 
     logger.info(
-        f"Deleted {deleted_count} future children/siblings for parent/child task id={parent_or_sibling_id}, ids={deleted_ids}"
+        f"Deleted {deleted_count} future children/siblings for parent/child task id={task_id}, ids={deleted_ids}"
     )
 
     # Regenerate if rule still present
     created_ids = []
-    if parent_or_sibling_task.recurrence_rule:
+    tasks = Task.objects.none()
+    if task.recurrence_series.recurrence_rule:
         # Regenerate occurrences only after cutoff date
-        _gen_rec_tasks_for_parent_or_sibling(parent_or_sibling_task)
-        if parent_or_sibling_task.is_rec_task_parent:
-            # it means it's a parent task so get all of it's future childrens
-            future_tasks = get_future_childrens_of_parent_task(
-                parent_task=parent_or_sibling_task
-            )
-        else:
-            # since it's a sibling, we need to filter with parent
-            future_tasks = get_task_future_siblings(parent_or_sibling_task)
-
-        created_ids = future_tasks.values_list("id", flat=True)
+        _gen_rec_tasks_for_parent_or_sibling(task)
+        tasks = tasks.union(get_future_siblings(task))
+        created_ids = tasks.values_list("id", flat=True)
         logger.info(
-            f"Generated {future_tasks.count()} new children for parent_id={parent_or_sibling_id}, ids={created_ids}"
+            f"Generated {tasks.count()} new children for parent_id={task_id}, ids={created_ids}"
         )
-    _notify_frontend(
-        f"tasks_user_{parent_or_sibling_task.user.pk}",
+
+    notify_frontend.delay(  # type: ignore
+        f"tasks_user_{task.user.pk}",
         {
             "type": "refresh_for_rec_task",
             "deleted": deleted_ids,
-            "created": TaskSerializer(future_tasks, many=True).data,
+            "created": TaskSerializer(tasks, many=True).data,
         },
     )
     return f"created task IDs: {created_ids}, deleted Tasks IDs: {deleted_ids}"
 
 
+# ---------------------------------------------------------------------------
+# Periodic Celery Tasks to invoke using scheduler ( schedule from admin panel )
+# ---------------------------------------------------------------------------
 @app.task(name="generate_recurring_tasks")
-def generate_recurring_sibling_tasks():
+def generate_recurring_sibling_tasks_periodic():
     """
-    Runs every 12 hours.  For each "template" task (recurrence_rule set,
-    recurrence_parent is null), parse the rule, find the next up-to-5
-    occurrences after now (that haven't already been cloned), and create them.
+    Runs every 12 hours in low priority Queue
     """
-    logger.info("Starting generate_recurring_tasks task")
-
-    latest_task_ids = (
-        Task.objects.filter(
-            recurrence_parent=OuterRef("recurrence_parent"),
-            column_date__gte=timezone.now(),
-            status=Task.ON_BOARD,
-        )
-        .order_by("-column_date")
-        .values("id")[:1]
-    )
-
-    templates_tasks = (
-        Task.objects.filter(
-            recurrence_rule__isnull=False,  # has a recurrence rule
-            recurrence_parent__isnull=False,
-            id__in=Subquery(latest_task_ids),
-        )
-        .order_by("-column_date")
-        .distinct("recurrence_parent")
-    )
-
-    results = []
-    for sibling_task in templates_tasks:
-        results.append(_gen_rec_tasks_for_parent_or_sibling(sibling_task, days_ahead=5))
-    return f"Generated recurring tasks results array containing data of every rec task -> : {results}"
+    logger.info("generate_recurring_sibling_tasks_periodic: Starting task gen")
+    all_series = RecurrenceSeries.objects.all()
+    for series in all_series:
+        latest_task = get_latest_task_of_series(series)
+        if latest_task:
+            logger.info(
+                f"regenerating task based on \
+                latest task: {latest_task.pk} of\
+                series: {series.pk} & user_id: {latest_task.user.pk}"
+            )
+            regenerate_recurring_series(latest_task.pk)
+    return "generate_recurring_sibling_tasks_periodic: task gen completed"
 
 
 @app.task(name="archive_old_tasks")
-def archive_old_tasks():
+def archive_old_tasks_periodic():
     """
     Archives tasks that haven't been updated in 30 days.
     This task runs daily at midnight.
@@ -277,7 +214,7 @@ def move_yesterday_task_to_today():
             status=Task.ON_BOARD,
             is_completed=False,
             column_date__date=yesterday_date,
-            recurrence_rule__isnull=True,  # isn't a recurring task
+            recurrence_series__isnull=True,  # isn't a recurring task
         ).exclude(status=Task.ARCHIVED)
 
         moved = 0
@@ -291,6 +228,13 @@ def move_yesterday_task_to_today():
                 f"Moved {moved} tasks for user_id={user.pk} for date={yesterday_date}"
             )
         total_moved += moved
+        notify_frontend.delay(  # type: ignore
+            f"tasks_user_{user.pk}",
+            {
+                "type": "full_refresh",
+            },
+        )
 
     logger.info(f"Total moved tasks: {total_moved}")
+
     return f"Moved {total_moved} tasks across all users"

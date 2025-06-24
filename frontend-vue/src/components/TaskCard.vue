@@ -204,7 +204,7 @@
         @task-updated="handleTaskUpdated"
         @task-archived="handleTaskArchived"
         @task-deleted="handleTaskDeleted" />
-      <div v-if="localTask.recurrence_rule" title="This is a recurring task">
+      <div v-if="localTask.recurrence_series?.recurrence_rule" title="This is a recurring task">
         <Repeat1 class="recurring-icon" size="12" />
       </div>
     </div>

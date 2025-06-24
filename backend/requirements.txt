@@ -40,3 +40,4 @@ ruff
 django-timezone-field
 channels-redis[cryptography]
 uvicorn[standard]
+drf-writable-nested

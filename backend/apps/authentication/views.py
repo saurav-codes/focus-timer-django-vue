@@ -64,7 +64,7 @@ def user(request):
         user_serializer = UserSerializer(user)
         return JsonResponse(user_serializer.data, status=200)
     logger.warning("Unauthenticated access to user endpoint")
-    return JsonResponse({"message": "Not logged in"}, status=401)
+    return JsonResponse({"message": "Not logged in"}, status=403)
 
 
 @csrf_protect

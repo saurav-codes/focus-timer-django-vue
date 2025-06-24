@@ -1,6 +1,6 @@
 import logging
 from channels.db import database_sync_to_async
-from .models import Task
+from .models import Task, RecurrenceSeries
 from .filters import TaskFilter, TASK_FILTER_FIELDS
 from .serializers import TaskSerializer
 from django.db.models.query import QuerySet
@@ -38,30 +38,23 @@ def get_filtered_tasks_for_user_serialized(user_id: int | str, filters: dict):
     )
 
 
-def get_task_future_siblings(child_task: Task) -> QuerySet[Task]:
-    """Return all future siblings for a given Task ( other than given task )"""
-    parent_task = child_task.recurrence_parent
-    if not parent_task:
-        raise ValueError(
-            "\
-            `get_task_future_siblings` must be called with a sibling task arg"
-        )
+def get_future_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
-        recurrence_parent=parent_task,
-        column_date__gt=child_task.column_date or timezone.now(),
-    )
+        recurrence_series=task.recurrence_series,
+        column_date__gte=task.column_date or timezone.now(),
+    ).exclude(id=task.pk)
 
 
-def get_future_childrens_of_parent_task(parent_task: Task):
-    """
-    Return all future childrens for a given Task ( other than given task )
-    """
-    if not parent_task.is_rec_task_parent:
-        raise ValueError(
-            "\
-            `get_future_childrens_of_parent_task` must be called with a parent task arg"
-        )
+def get_past_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
-        recurrence_parent=parent_task,
-        column_date__gt=parent_task.column_date or timezone.now(),
-    )
+        recurrence_series=task.recurrence_series,
+        column_date__lte=task.column_date or timezone.now(),
+    ).exclude(id=task.pk)
+
+
+def get_all_task_from_series(series: RecurrenceSeries) -> QuerySet[Task]:
+    return Task.objects.filter(recurrence_series=series)
+
+
+def get_latest_task_of_series(series: RecurrenceSeries) -> Task | None:
+    return get_all_task_from_series(series).order_by("-column_date").first()

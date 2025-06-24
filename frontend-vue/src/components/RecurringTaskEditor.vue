@@ -60,7 +60,7 @@ const isOpen = ref(false)
 // for first time opening of task modal, open the rec modal too incase
 // there is already an rec rule.
 watch(editableTask, ()=>{
-  if (editableTask.value.recurrence_rule) {
+  if (editableTask.value.recurrence_series?.recurrence_rule) {
     isOpen.value = true
   }
 }, {immediate: true})
@@ -75,8 +75,10 @@ function toggleRecurringEditor() {
   } else {
     // update the backend since user closed
     // rec editor
-    editableTask.value.recurrence_rule = null
-    taskStore.turnOffRepeat(editableTask.value.id)
+    if (editableTask.value.recurrence_series?.recurrence_rule) {
+      editableTask.value.recurrence_series = null
+      taskStore.turnOffRepeat(editableTask.value.id)
+    }
   }
 }
 
@@ -109,7 +111,7 @@ watch(
     <button class="recurring-button" @click="toggleRecurringEditor">
       <LucideRepeat size="16" />
       Repeat Task
-      <CircleDot :class="{ green: Boolean(editableTask.recurrence_rule) }" size="16" />
+      <CircleDot :class="{ green: Boolean(editableTask.recurrence_series?.recurrence_rule) }" size="16" />
     </button>
   </div>
 
@@ -229,14 +231,18 @@ watch(
             <span>{{ ruleDescription }}</span>
           </div>
           <!-- Recurrence scope buttons -->
-          <div v-if="!!editableTask.recurrence_parent" class="left-action-btn-group">
+          <div v-if="!!editableTask.recurrence_series?.recurrence_rule" class="left-action-btn-group">
             <button class="save-button" @click="commitSeries('single')">
               <LucideRepeat2 :size="16" />
               Save this only
             </button>
             <button class="save-button" @click="commitSeries('future')">
               <LucideRepeat2 :size="16" />
-              Save this &amp; update future Tasks
+              Save this &amp; generate/regenerate future tasks
+            </button>
+            <button class="save-button" @click="commitSeries('all')">
+              <LucideRepeat2 :size="16" />
+              Save this &amp; update All Tasks from this series
             </button>
           </div>
           <div v-else>
@@ -519,6 +525,7 @@ watch(
     border-radius: 0.25rem;
     border: 1px solid var(--color-border);
     background-color: var(--color-input-background);
+    color: var(--color-text-primary);
   }
 
   .rule-summary {

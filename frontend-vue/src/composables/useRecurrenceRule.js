@@ -112,8 +112,11 @@ export function useRecurrenceRule(task) {
    * assignRecRule() // Updates task.recurrence_rule
    */
   const assignRecRule = () => {
-    task.value.recurrence_rule = rruleString.value
-    console.log('Recurrence rule assigned:', task.value.recurrence_rule)
+    if (!task.value.recurrence_series) {
+      task.value.recurrence_series = {}
+    }
+    task.value.recurrence_series.recurrence_rule = rruleString.value
+    console.log('Recurrence rule assigned:', task.value.recurrence_series.recurrence_rule)
   }
 
   /**
@@ -127,11 +130,11 @@ export function useRecurrenceRule(task) {
    */
   const _parseRule = () => {
     // Skip if no rule to parse
-    if (!task.value.recurrence_rule) return
+    if (!task.value.recurrence_series?.recurrence_rule) return
 
     try {
       // Parse the RRULE string into a rule object
-      const parsed = RRule.fromString(task.value.recurrence_rule)
+      const parsed = RRule.fromString(task.value.recurrence_series.recurrence_rule)
 
       // Update frequency (DAILY, WEEKLY, etc.)
       frequency.value = parsed.options.freq
@@ -185,7 +188,7 @@ export function useRecurrenceRule(task) {
    * and parse the RRULE string to update the UI state.
    */
   watch(
-    () => task.value.recurrence_rule,
+    () => task.value.recurrence_series?.recurrence_rule,
     () => _parseRule(),
     { immediate: true }
   )
