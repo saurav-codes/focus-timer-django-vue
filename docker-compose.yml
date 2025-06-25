@@ -125,7 +125,8 @@ services:
       dockerfile: Dockerfile.prod
     container_name: focus_timer_frontend_prod
     volumes:
-      - frontend_dist:/app/dist
+      - frontend_dist:/usr/share/nginx/html
+      # - frontend_dist:/app/dist
     profiles:
       - prod
 
@@ -141,7 +142,7 @@ services:
     volumes:
       - static_files:/var/www/static:ro
       - media_files:/var/www/media:ro
-      - frontend_dist:/var/www/frontend:ro
+      - frontend_dist:/usr/share/nginx/html:ro
     depends_on:
       - backend
     profiles:
