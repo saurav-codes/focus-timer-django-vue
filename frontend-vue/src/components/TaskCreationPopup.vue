@@ -1,6 +1,6 @@
 <script setup>
   import { ref, watch } from 'vue'
-  import { X, Plus, Clock, PlusIcon } from 'lucide-vue-next'
+  import { X, Plus, Clock, PlusIcon, LucideBrainCircuit } from 'lucide-vue-next'
   import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { onKeyStroke } from '@vueuse/core'
   import TimeDropdownPopup from './TimeDropdownPopup.vue'
@@ -151,7 +151,9 @@
     <div v-if="isVisible" class="task-create-popup-overlay" @click="$emit('close')">
       <div class="popup-container" @click.stop>
         <div class="popup-header">
-          <span class="popup-title">Create Task</span>
+          <span class="popup-title">
+            Create Task (<LucideBrainCircuit size="14" /> Brain Dump )
+          </span>
           <button class="close-button" @click="$emit('close')">
             <X size="18" />
           </button>
@@ -268,6 +270,9 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .close-button {
