@@ -219,6 +219,10 @@ lsof -i :5432
 
 1. **Start Development Environment**:
    ```bash
+   docker-compose --profile dev up
+   ```
+   or if you want to run in detached mode
+   ```bash
    docker-compose --profile dev up -d
    ```
 
