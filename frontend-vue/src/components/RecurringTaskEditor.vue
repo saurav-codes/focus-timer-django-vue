@@ -46,6 +46,7 @@ const {
   ruleDescription,
   currentFrequencyLabel,
   frequenciesOptions,
+  generated_rrule,
   handleFrequencyOptionClicked,
   toggleWeekday,
   handleEndAfterToggle,
@@ -88,8 +89,9 @@ function toggleRecurringEditor() {
 async function commitSeries(scope) {
   try {
     editableTask.value.series_scope = scope;
-    await taskStore.updateTaskWs(editableTask.value)
-    emit('close-modal')
+    editableTask.value.recurrence_series.recurrence_rule = generated_rrule.value;
+    await taskStore.updateTaskWs(editableTask.value);
+    emit('close-modal');
   } catch (err) {
     /* eslint-disable no-console */
     console.error('Error committing recurring task', err)

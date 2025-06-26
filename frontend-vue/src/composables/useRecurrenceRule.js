@@ -45,6 +45,7 @@ export function useRecurrenceRule(task) {
   const selectedWeekDays = ref([]) // Array<Weekday>
   const count = ref(null) // number | null
   const until = ref(null) // YYYY-MM-DD string | null
+  const generated_rrule = ref('')
 
   const frequenciesOptions = [
     { value: RRule.DAILY, label: 'Daily', label2: 'Day', icon: CalendarDays },
@@ -115,8 +116,10 @@ export function useRecurrenceRule(task) {
     if (!task.value.recurrence_series) {
       task.value.recurrence_series = {}
     }
-    task.value.recurrence_series.recurrence_rule = rruleString.value
-    console.log('Recurrence rule assigned:', task.value.recurrence_series.recurrence_rule)
+    // task.value.recurrence_series.recurrence_rule = rruleString.value
+    generated_rrule.value = rruleString.value
+    // console.log('Recurrence rule assigned:', task.value.recurrence_series.recurrence_rule)
+    console.log('Recurrence rule assigned:', generated_rrule.value)
   }
 
   /**
@@ -196,7 +199,7 @@ export function useRecurrenceRule(task) {
   // Whenever the user tweaks *any* primitive that influences the rule we
   // regenerate the RRULE string so `editableTask` is always ready to be saved.
   // Update the task's recurrence rule whenever any of these reactive values change
-  watch([frequency, interval, selectedWeekDays, count, until], assignRecRule, { deep: true })
+  watch([frequency, interval, selectedWeekDays, count, until], assignRecRule, { deep: true, immediate: true })
 
   return {
     /* state */
@@ -212,6 +215,7 @@ export function useRecurrenceRule(task) {
     ruleDescription,
     currentFrequencyLabel,
     rruleString,
+    generated_rrule,
 
     /* handlers */
     handleFrequencyOptionClicked,
