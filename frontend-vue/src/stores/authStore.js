@@ -8,9 +8,12 @@ const isAuthenticatedLocalStorage = useLocalStorage('isAuthenticated', false)
 let BACKEND_BASE_URL = 'http://localhost:8000/'
 
 if (import.meta.env.PROD) {
-  BACKEND_BASE_URL = 'https://tymr.online/'
+  // either use from env or fallback to default
+  BACKEND_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://tymr.online/'
+  console.info('BACKEND_BASE_URL - ', BACKEND_BASE_URL)
 }
 
+console.info('BACKEND_BASE_URL final - ', BACKEND_BASE_URL)
 // setting this to allow cookies to be set by
 // backend using response headers
 // this is also required for session authentication to work

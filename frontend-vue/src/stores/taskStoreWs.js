@@ -15,7 +15,7 @@ import {
 
 export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   // Build WebSocket URL
-  const host = import.meta.env.PROD ? 'tymr.online' : 'localhost:8000'
+  const host = import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL || 'tymr.online' : 'localhost:8000'
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const wsUrl = computed(() => `${protocol}://${host}/ws/tasks/`)
 
@@ -80,16 +80,17 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     // Distribute tasks to kanban columns
     kanbanColumns.value.forEach((column) => {
       const filteredTasks = tasks.filter((task) => {
-        const taskDate = new Date(task.column_date)
-        const taskDateString = taskDate.toDateString()
-        return taskDateString === column.date.toDateString()
+        // const taskDate = new Date(task.column_date)
+        // const taskDateString = taskDate.toISOString().split('T')[0]
+        // return taskDateString === column.date.toISOString().split('T')[0]
+        return task.column_date === column.date.toISOString().split('T')[0]
       })
       // Use direct assignment to ensure reactivity
       column.tasks = [...filteredTasks]
     })
   }
 
-  function _getColumnTasksFromColName(colName, column_date_string = null) {
+  function _getColumnTasksFromColName(colName, column_date_from_backend = null) {
     switch (colName) {
       case 'BRAINDUMP':
         return brainDumpTasks.value
@@ -100,12 +101,10 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       case 'ON_CAL':
         return calendarTasks.value
       case 'ON_BOARD': {
-        if (!column_date_string) {
+        if (!column_date_from_backend) {
           console.log('column date is required for search columns with status ON_BOARD')
           return []
         }
-        // search for the exact column on board
-        const column_date_from_backend = column_date_string.split('T')[0]
         const column = kanbanColumns.value.find(
           (column) => column.date.toISOString().split('T')[0] === column_date_from_backend
         )
@@ -183,9 +182,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         created.forEach((task) => {
           if (task.status === 'ON_BOARD') {
             const column_date = task.column_date
-            const column = kanbanColumns.value.find(
-              (c) => c.date.toISOString().split('T')[0] === column_date.split('T')[0]
-            )
+            const column = kanbanColumns.value.find((c) => c.date.toISOString().split('T')[0] === column_date)
             if (column) column.tasks.push(task)
           }
         })
