@@ -120,10 +120,12 @@ services:
 
   # Frontend Production Build
   frontend-prod:
+    container_name: focus_timer_frontend_prod
     build:
       context: ./frontend-vue
       dockerfile: Dockerfile.prod
-    container_name: focus_timer_frontend_prod
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
     volumes:
       - frontend_dist:/usr/share/nginx/html
       # - frontend_dist:/app/dist
