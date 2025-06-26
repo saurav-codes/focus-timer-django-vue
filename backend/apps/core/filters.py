@@ -31,11 +31,7 @@ class TaskFilter(filters.FilterSet):
         fields = TASK_FILTER_FIELDS
 
     def filter_start_date(self, queryset, name, value):
-        return queryset.filter(
-            Q(column_date__date__gte=value) | Q(column_date__isnull=True)
-        )
+        return queryset.filter(Q(column_date__gte=value) | Q(column_date__isnull=True))
 
     def filter_end_date(self, queryset, name, value):
-        return queryset.filter(
-            Q(column_date__date__lte=value) | Q(column_date__isnull=True)
-        )
+        return queryset.filter(Q(column_date__lte=value) | Q(column_date__isnull=True))

@@ -41,14 +41,14 @@ def get_filtered_tasks_for_user_serialized(user_id: int | str, filters: dict):
 def get_future_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
         recurrence_series=task.recurrence_series,
-        column_date__gte=task.column_date or timezone.now(),
+        column_date__gte=task.column_date or timezone.now().date(),
     ).exclude(id=task.pk)
 
 
 def get_past_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
         recurrence_series=task.recurrence_series,
-        column_date__lte=task.column_date or timezone.now(),
+        column_date__lte=task.column_date or timezone.now().date(),
     ).exclude(id=task.pk)
 
 

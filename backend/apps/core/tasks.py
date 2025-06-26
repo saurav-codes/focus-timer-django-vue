@@ -28,11 +28,15 @@ def _gen_rec_tasks_for_parent_or_sibling(
     else:
         raise ValueError("Task must have a recurrence_rule to generate future siblings")
 
-    start_after = (
+    # Ensure we're working with datetime objects for the dateutil rrule
+    start_date = (
         parent_or_sibling_task.column_date
-        or timezone.now() + datetime.timedelta(days=1)
+        or timezone.now().date() + datetime.timedelta(days=1)
     )
+    # Convert date to datetime at midnight for comparison
+    start_after = datetime.datetime.combine(start_date, datetime.time.min)
     window_end = start_after + datetime.timedelta(days=days_ahead)
+
     try:
         rule = rrulestr(rec_rule, dtstart=start_after)
     except Exception as e:
@@ -40,9 +44,11 @@ def _gen_rec_tasks_for_parent_or_sibling(
         logger.error(result)
         return result
 
-    occurrences = list(rule.between(after=start_after, before=window_end, inc=True))[
-        :max_events
-    ]
+    # Convert the occurrences to dates since we're working with date fields
+    occurrences = [
+        dt.date() if isinstance(dt, datetime.datetime) else dt
+        for dt in rule.between(after=start_after, before=window_end, inc=True)
+    ][:max_events]
     if not occurrences:
         result = (
             f"No upcoming recurrence for parent_task_id={parent_or_sibling_task.pk}"
@@ -123,7 +129,7 @@ def regenerate_recurring_series(task_id: int | str):
 # ---------------------------------------------------------------------------
 # Periodic Celery Tasks to invoke using scheduler ( schedule from admin panel )
 # ---------------------------------------------------------------------------
-@app.task(name="generate_recurring_tasks")
+@app.task(name="generate_recurring_sibling_tasks_periodic")
 def generate_recurring_sibling_tasks_periodic():
     """
     Runs every 12 hours in low priority Queue
@@ -142,7 +148,7 @@ def generate_recurring_sibling_tasks_periodic():
     return "generate_recurring_sibling_tasks_periodic: task gen completed"
 
 
-@app.task(name="archive_old_tasks")
+@app.task(name="archive_old_tasks_periodic")
 def archive_old_tasks_periodic():
     """
     Archives tasks that haven't been updated in 30 days.
@@ -168,8 +174,8 @@ def archive_old_tasks_periodic():
     return f"Archived {count} old tasks"
 
 
-@app.task(name="move_old_tasks_to_backlogs")
-def move_old_tasks_to_backlogs():
+@app.task(name="move_old_tasks_to_backlogs_periodic")
+def move_old_tasks_to_backlogs_periodic():
     """
     Moves tasks that haven't been updated in 15 days to the backlogs.
     This task runs daily at midnight.
@@ -195,8 +201,8 @@ def move_old_tasks_to_backlogs():
     return f"Moved {count} old tasks to backlogs"
 
 
-@app.task(name="move_yesterday_task_to_today")
-def move_yesterday_task_to_today():
+@app.task(name="move_yesterday_task_to_today_periodic")
+def move_yesterday_task_to_today_periodic():
     """
     Move yesterday's tasks to today's date using each user's timezone.
     """
@@ -213,7 +219,7 @@ def move_yesterday_task_to_today():
             user=user,
             status=Task.ON_BOARD,
             is_completed=False,
-            column_date__date=yesterday_date,
+            column_date=yesterday_date,
             recurrence_series__isnull=True,  # isn't a recurring task
         ).exclude(status=Task.ARCHIVED)
 

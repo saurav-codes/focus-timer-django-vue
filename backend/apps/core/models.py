@@ -4,6 +4,7 @@ from django.utils.functional import cached_property
 from django.utils.duration import _get_duration_components  # type: ignore
 from django.contrib.auth import get_user_model
 from simple_history.models import HistoricalRecords
+from django.db.models import Q, UniqueConstraint
 
 User = get_user_model()
 
@@ -59,7 +60,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     duration = models.DurationField(blank=True, null=True)
     # column_date is used for tracking the location of task in the kanban board column
-    column_date = models.DateTimeField(blank=True, null=True)
+    column_date = models.DateField(blank=True, null=True)
     # start_at, end_at are used for calendar events
     # timezone info will be fetched based on where user is logged in from
     # so we can fetch this info from user's browser
@@ -84,11 +85,20 @@ class Task(models.Model):
     # keep a record of changes to this model
     history = HistoricalRecords()
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         ordering = ["order"]
+        constraints = [
+            # enforce unique (recurrence_series, column_date) but only
+            # when you actually have a series and a column_date
+            UniqueConstraint(
+                fields=["recurrence_series", "column_date"],
+                condition=Q(recurrence_series__isnull=False, column_date__isnull=False),
+                name="unique_task_per_series_per_date",
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
 
     @cached_property
     def get_duration_display(self):

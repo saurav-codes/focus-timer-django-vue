@@ -224,7 +224,7 @@ def test_kanban_board_workflow(authenticated_client, authenticated_user):
     assert reorder_response.status_code == 200
 
     # 7. Verify final task status
-    today_column_filter = f"{tasks_url}?column_date__date={today.strftime('%Y-%m-%d')}"
+    today_column_filter = f"{tasks_url}?column_date={today.strftime('%Y-%m-%d')}"
     today_column_response = authenticated_client.get(today_column_filter)
     assert today_column_response.status_code == 200
 

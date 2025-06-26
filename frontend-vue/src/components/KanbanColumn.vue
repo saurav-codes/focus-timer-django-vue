@@ -81,7 +81,7 @@
     if (added) {
       const element = added.element
       // Update the task with the new column date and status
-      element.column_date = props.dateObj.toISOString()
+      element.column_date = props.dateObj.toISOString().split('T')[0]
       element.status = 'ON_BOARD'
       taskStore.updateTaskWs(element)
       // Task added, updating order

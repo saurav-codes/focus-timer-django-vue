@@ -203,14 +203,8 @@ class TasksConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def _turn_off_repeat(self, task_id):
-        task_data, deleted_future_siblings_ids = self.task_service.turn_off_repeat(
-            task_id
-        )
-        return {
-            "type": "task.repeat_turned_off",
-            "data": task_data,
-            "deleted_future_siblings_ids": deleted_future_siblings_ids,
-        }
+        self.task_service.turn_off_repeat(task_id)
+        return {"type": "full_refresh"}
 
     async def handle_turn_off_repeat(self, task_id):
         response_data = await self._turn_off_repeat(task_id)

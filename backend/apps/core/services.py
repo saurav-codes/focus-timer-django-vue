@@ -1,6 +1,5 @@
 """All DB write operations for apps.core.model will be here"""
 
-import datetime
 from .models import Task, Project
 from .serializers import TaskSerializer
 from logging import getLogger
@@ -9,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from .selectors import get_future_siblings, get_past_siblings
 from django.db import transaction
 from .tasks import notify_frontend
+from django.db import IntegrityError
 
 logger = getLogger(__name__)
 
@@ -135,13 +135,15 @@ class TaskService:
             task_ids = {deleted_future_task_ids} for task_id={task_id}\
             by user_id={self.user.id}"
         )
-        task.recurrence_series = None
+        # del rec series of this task so all tasks related to this series will be detached
+        # from this series
         task.save()
+        task.recurrence_series.delete()
         task.refresh_from_db()
         logger.info(
             f"Turned off repeat for task_id={task_id} by user_id={self.user.id}"
         )
-        return TaskSerializer(task).data, deleted_future_task_ids
+        return TaskSerializer(task).data
 
     def toggle_task_completion(self, task_id):
         task = get_object_or_404(Task, id=task_id, user=self.user)
@@ -157,34 +159,37 @@ class TaskService:
         return TaskSerializer(task).data
 
 
-def generate_rec_tasks_for_parent(
-    parent_task: Task, occurences_dates: list[datetime.datetime]
-):
+def generate_rec_tasks_for_parent(parent_task: Task, occurences_dates: list):
     results = []
     for occurence_date in occurences_dates:
-        with transaction.atomic():
-            # make sure we don't create two task for same column_date & recurrence_parent
-            child, created = Task.objects.get_or_create(
-                user=parent_task.user,
-                title=parent_task.title,
-                description=parent_task.description,
-                order=parent_task.order,
-                is_completed=False,
-                duration=parent_task.duration,
-                column_date=occurence_date,
-                start_at=parent_task.start_at,
-                end_at=parent_task.end_at,
-                recurrence_series=parent_task.recurrence_series,
-                project=parent_task.project,
-                status=Task.ON_BOARD,  # TODO: what if task is on calendar?
-            )
-            if created:
-                # copy over tags
-                child.tags.set(parent_task.tags.all())
+        try:
+            with transaction.atomic():
+                # make sure we don't create two task for same column_date & recurrence_parent
+                child, created = Task.objects.get_or_create(
+                    user=parent_task.user,
+                    title=parent_task.title,
+                    description=parent_task.description,
+                    order=parent_task.order,
+                    is_completed=False,
+                    duration=parent_task.duration,
+                    column_date=occurence_date,
+                    start_at=parent_task.start_at,
+                    end_at=parent_task.end_at,
+                    recurrence_series=parent_task.recurrence_series,
+                    project=parent_task.project,
+                    status=Task.ON_BOARD,  # TODO: what if task is on calendar?
+                )
+                if created:
+                    # copy over tags
+                    child.tags.set(parent_task.tags.all())
 
-            action = "created" if created else "updated"
-            msg = f"Recurring task {action}: parent_task_id={parent_task.pk}\
-                child_task_id={child.pk} date={occurence_date}, user_id:{parent_task.user.pk}"
-            logger.info(msg)
-            results.append(msg)
+                action = "created" if created else "updated"
+                msg = f"Recurring task {action}: parent_task_id={parent_task.pk}\
+                    child_task_id={child.pk} date={occurence_date}, user_id:{parent_task.user.pk}"
+                logger.info(msg)
+                results.append(msg)
+
+        except IntegrityError as e:
+            logger.warning("error while saving task - ", e)
+
     return results
