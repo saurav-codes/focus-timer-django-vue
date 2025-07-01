@@ -1,7 +1,9 @@
-<script setup></script>
+<script setup>
+import CalendarIntegration from '@/components/sidebar/integrations/CalendarIntegration.vue'
+</script>
 
 <template>
-  <div>
-    <h1>this is Calendar Planner</h1>
+  <div class="calendar-planner-container">
+    <CalendarIntegration initial-view="dayGridMonth" />
   </div>
 </template>
