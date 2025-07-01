@@ -34,6 +34,7 @@ class TasksConsumer(AsyncJsonWebsocketConsumer):
         "assign_project": "handle_assign_project",
         "turn_off_repeat": "handle_turn_off_repeat",
         "toggle_completion": "handle_toggle_completion",
+        "task_dropped_to_cal": "handle_task_dropped_to_cal",
         "refresh_for_rec_task": "refresh_for_rec_task",  # used by celery task to send update to client
         "full_refresh": "full_refresh",
     }
@@ -220,6 +221,21 @@ class TasksConsumer(AsyncJsonWebsocketConsumer):
 
     async def handle_toggle_completion(self, task_id):
         response_data = await self._toggle_completion(task_id)
+        await self.send_json(response_data)
+
+    @database_sync_to_async
+    def _task_dropped_to_cal(self, task_data):
+        updated_task, is_updated = self.task_service.update_task(task_data)
+        if is_updated:
+            return {"type": "task.cal_task_updated", "data": updated_task}
+        return {
+            "type": "error",
+            "error": "Failed to update task",
+            "details": updated_task,
+        }
+
+    async def handle_task_dropped_to_cal(self, task_data):
+        response_data = await self._task_dropped_to_cal(task_data)
         await self.send_json(response_data)
 
     # -----------------------------------------------------------------
