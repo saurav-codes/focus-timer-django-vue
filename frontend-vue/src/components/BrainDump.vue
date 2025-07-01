@@ -76,23 +76,17 @@
   }
 
   async function handleTaskDroppedToBrainDump({ added, moved }) {
-    if (uiStore.isPointerOverIntegration) {
-      return
-    }
     // Handle when a task is added to this column
     if (added) {
       const element = added.element
-      console.log('task added. to braindump')
-      console.log('added element', element)
-      await taskStore.braindumpTaskWs(element)
-      await taskStore.updateTaskOrderWs(taskStore.brainDumpTasks)
+      taskStore.taskDroppedToBrainDumpWs(element)
     }
 
     // Handle when a task is moved within the same column
     if (moved) {
       // Just update the order since the task is staying in the same column
       console.log('task moved. so updating task order')
-      await taskStore.updateTaskOrder(taskStore.brainDumpTasks)
+      await taskStore.updateTaskOrderWs(taskStore.brainDumpTasks)
     }
 
     // We don't need to handle removed here as the source column will handle it
