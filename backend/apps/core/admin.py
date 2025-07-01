@@ -65,6 +65,7 @@ class ProjectAdmin(admin.ModelAdmin):
 class TaskAdmin(SimpleHistoryAdmin):
     form = TaskAdminForm
     list_display = (
+        "id",
         "title",
         "user",
         "status",
@@ -72,12 +73,13 @@ class TaskAdmin(SimpleHistoryAdmin):
         "order",
         "project",
         "get_duration_display",
+        "updated_at",
     )
     list_display_links = ("title",)
-    list_filter = ("status", "is_completed", "project")
+    list_filter = ("status", "is_completed", "project", "user", "start_at")
     search_fields = ("title", "description", "user__email")
     date_hierarchy = "created_at"
-    ordering = ("-id",)
+    ordering = ("-updated_at", "-id")
     autocomplete_fields = ("user", "project")  # now safe, UserAdmin has search_fields
     # DO NOT use filter_horizontal on tags—TaggableManager uses a custom through model
     # Instead rely on TagWidget via the ModelForm
