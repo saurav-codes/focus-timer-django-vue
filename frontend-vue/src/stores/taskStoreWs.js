@@ -11,6 +11,7 @@ import {
   fetchTaskType,
   pushForwardColumns,
   prependEarlierColumns,
+  reInitializeOrder,
 } from '../utils/taskUtils'
 
 export const useTaskStoreWs = defineStore('taskStoreWs', () => {
@@ -38,7 +39,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   const brainDumpTasks = ref([])
   const backlogs = ref([])
   const archivedTasks = ref([])
-  const calendarTasks = ref([])
   // filters are managed centrally in tagsProjectStore
   const tagsProjectStore = useTagsProjectStore()
   const selectedProjects = computed(() => tagsProjectStore.selectedProjects)
@@ -78,11 +78,12 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   function assignTasksToBoard(tasks) {
     // Distribute tasks to kanban columns
+    fetchTaskType(tasks, 'ON_BOARD')
+    let boardOrCalTasks = tasks.filter((task) => {
+      return task.status === 'ON_BOARD' || task.status === 'ON_CAL'
+    })
     kanbanColumns.value.forEach((column) => {
-      const filteredTasks = tasks.filter((task) => {
-        // const taskDate = new Date(task.column_date)
-        // const taskDateString = taskDate.toISOString().split('T')[0]
-        // return taskDateString === column.date.toISOString().split('T')[0]
+      const filteredTasks = boardOrCalTasks.filter((task) => {
         return task.column_date === column.date.toISOString().split('T')[0]
       })
       // Use direct assignment to ensure reactivity
@@ -98,9 +99,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         return backlogs.value
       case 'ARCHIVED':
         return archivedTasks.value
-      case 'ON_CAL':
-        return calendarTasks.value
-      case 'ON_BOARD': {
+      case 'ON_BOARD':
+      case 'ON_CAL': {
+        // now both cases lead to the same block
         if (!column_date_from_backend) {
           console.log('column date is required for search columns with status ON_BOARD')
           return []
@@ -125,7 +126,19 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     brainDumpTasks.value = brainDumpTasks.value.filter((t) => t.id !== task_id)
     backlogs.value = backlogs.value.filter((t) => t.id !== task_id)
     archivedTasks.value = archivedTasks.value.filter((t) => t.id !== task_id)
-    calendarTasks.value = calendarTasks.value.filter((t) => t.id !== task_id)
+  }
+
+  function _put_task_on_board(updatedTask) {
+    if (updatedTask.status === 'ON_CAL') {
+      // find the array where we have to place this task
+      const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+      colTasksArray.splice(updatedTask.order, 0, updatedTask)
+    } else {
+      console.log(
+        'this task status is not on cal. this function only valid for placing cal tasks on board. this is a bug - ',
+        updatedTask
+      )
+    }
   }
 
   // handle msg from backend
@@ -138,11 +151,10 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       }
       case 'tasks.list': {
         const tasks_list = msg.data
-        assignTasksToBoard(fetchTaskType(tasks_list, 'ON_BOARD'))
+        assignTasksToBoard(tasks_list)
         brainDumpTasks.value = fetchTaskType(tasks_list, 'BRAINDUMP')
         backlogs.value = fetchTaskType(tasks_list, 'BACKLOG')
         archivedTasks.value = fetchTaskType(tasks_list, 'ARCHIVED')
-        calendarTasks.value = fetchTaskType(tasks_list, 'ON_CAL')
         // TODO: handle other tasks type too
         break
       }
@@ -183,7 +195,12 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
           if (task.status === 'ON_BOARD') {
             const column_date = task.column_date
             const column = kanbanColumns.value.find((c) => c.date.toISOString().split('T')[0] === column_date)
-            if (column) column.tasks.push(task)
+            if (column) {
+              column.tasks.push(task)
+              // update task orders
+              console.log('updating all task order for column with title -> ', column.title)
+              updateTaskOrderWs(column.tasks)
+            }
           }
         })
         break
@@ -195,23 +212,22 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       case 'task.updated': {
         const updatedTask = msg.data
         _apply_updates_to_task(updatedTask)
+        console.log('saving order after updating task')
+        const taskColArr = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+        updateTaskOrderWs(taskColArr)
         break
       }
-      case 'task.repeat_turned_off': {
-        const { deleted_future_siblings_ids, data } = msg
-        _apply_updates_to_task(data)
-        deleted_future_siblings_ids.forEach((id) => {
-          // remove these tasks
-          _delete_task_from_all_cols(id)
-        })
+      case 'task.cal_task_updated': {
+        console.log('executed task.cal_task_updated')
+        const updatedTask = msg.data
+        // put this task back to same place where it was.
+        _put_task_on_board(updatedTask)
+        const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+        console.log('updating task order after cal_task_updated from backend')
+        updateTaskOrderWs(colTasksArray)
         break
       }
-      case 'task_toggled':
-      case 'task_assigned':
-      case 'tasks_order_updated': {
-        fetchTasksWs()
-        break
-      }
+
       case 'error': {
         // Display error message using global snackbar if available
         let errorMessage = 'Oh no! Something went wrong. trust me bro! everything was okay when i tested it'
@@ -251,7 +267,8 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       console.warn("task not found with id so it's a bug - ", updated_task.id)
       return
     }
-    tasks_array[task_index] = updated_task
+    // tasks_array[task_index] = updated_task
+    tasks_array.splice(task_index, 1, updated_task)
   }
 
   function pushToArchiveTask(task) {
@@ -315,6 +332,16 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     return sendAction('update_task', taskWithFormattedDuration)
   }
 
+  async function taskDroppedToCal(droppedTask) {
+    // Format duration before sending to API
+    _delete_task_from_all_cols(droppedTask.id)
+    const taskWithFormattedDuration = {
+      ...droppedTask,
+      duration: formatDurationForAPI(droppedTask.duration),
+    }
+    return sendAction('task_dropped_to_cal', taskWithFormattedDuration)
+  }
+
   async function turnOffRepeat(task_id) {
     return sendAction('turn_off_repeat', task_id)
   }
@@ -333,9 +360,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   async function updateTaskOrderWs(tasks_array) {
     // reinitialize order based on their existing order
-    tasks_array.forEach((task, index) => {
-      task.order = index
-    })
+    reInitializeOrder(tasks_array)
     sendAction('update_task_order', tasks_array)
   }
   function addMoreColumnsWs(c = 3) {
@@ -363,7 +388,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     brainDumpTasks,
     backlogs,
     archivedTasks,
-    calendarTasks,
     selectedProjects,
     selectedTags,
     firstDate,
@@ -384,6 +408,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     createTaskWs,
     deleteTaskWs,
     updateTaskWs,
+    taskDroppedToCal,
     archiveTaskWs,
     updateTaskOrderWs,
     pushToArchiveTask,

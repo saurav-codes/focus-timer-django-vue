@@ -4,10 +4,8 @@
   import TaskCard from './TaskCard.vue'
   import Draggable from 'vuedraggable'
   import { useTaskStoreWs } from '../stores/taskStoreWs'
-  import { useUIStore } from '../stores/uiStore'
 
   const taskStore = useTaskStoreWs()
-  const uiStore = useUIStore()
 
   const props = defineProps({
     dateString: {
@@ -74,9 +72,6 @@
 
   function handleTaskDroppedToKanban({ added, moved }) {
     // this only trigger with added value on the column where it's dropped
-    if (uiStore.isPointerOverIntegration) {
-      return false
-    }
     // Handle when a task is added to this column
     if (added) {
       const element = added.element
@@ -84,15 +79,12 @@
       element.column_date = props.dateObj.toISOString().split('T')[0]
       element.status = 'ON_BOARD'
       taskStore.updateTaskWs(element)
-      // Task added, updating order
-      taskStore.updateTaskOrderWs(columnTasks.value);
     }
 
     // Handle when a task is moved within the same column
     if (moved) {
       // Just update the order since the task is staying in the same column
       // Task moved, updating order
-      console.log("triggered moved event", moved)
       taskStore.updateTaskOrderWs(columnTasks.value)
     }
 
@@ -102,7 +94,6 @@
   function handleTaskDeleted(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
     columnTasks.value = columnTasks.value.filter((task) => task.id !== taskId)
-    taskStore.updateTaskOrderWs(columnTasks.value)
   }
 
   function handleTaskUpdated(updatedTask) {
@@ -115,7 +106,6 @@
   function handleTaskArchived(taskId) {
     // remove task from localTasks because we already handling the DB update in the store
     columnTasks.value = columnTasks.value.filter((task) => task.id !== taskId)
-    taskStore.updateTaskOrderWs(columnTasks.value)
   }
 
   async function handleTagRemoved(updated_tags_list, taskId) {

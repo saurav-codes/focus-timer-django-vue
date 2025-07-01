@@ -1,9 +1,7 @@
 <script setup>
   import { ref, onMounted, onBeforeUnmount, watch, computed, reactive } from 'vue'
-  import { useIntervalFn } from '@vueuse/core'
   import { useCalendarStore } from '../../../stores/calendarStore'
-  import { useAuthStore } from '../../../stores/authStore'
-  import { useTagsProjectStore } from '../../../stores/tagsProjectStore'
+  import { useTaskStoreWs } from '../../../stores/taskStoreWs'
   import { LucideCalendar, LucideLink, LucideUnlink, CheckCircle, Trash2 } from 'lucide-vue-next'
   import dayGridPlugin from '@fullcalendar/daygrid'
   import timeGridPlugin from '@fullcalendar/timegrid'
@@ -11,10 +9,28 @@
   import listPlugin from '@fullcalendar/list'
   import FullCalendar from '@fullcalendar/vue3'
   import Popper from 'vue3-popper'
+  import { tasksToFcEvents } from '../../../utils/calendarSerializer'
+
+  // Props
+  const props = defineProps({
+    initialView: {
+      type: String,
+      default: 'timeGridDay',
+    },
+  })
 
   const calendarStore = useCalendarStore()
-  const tagsProjectStore = useTagsProjectStore()
-  const authStore = useAuthStore()
+  const taskStore = useTaskStoreWs()
+  const calendarEvents = computed({
+    get() {
+      const allTaskOnKanban = taskStore.kanbanColumns.flatMap(col => col.tasks)
+      const calTasks = allTaskOnKanban.filter(task => task.status === 'ON_CAL')
+      return tasksToFcEvents(calTasks)
+    },
+    // set() {
+    //   console.log('Setting calendar events')
+    // },
+  })
   const isConnected = ref(false)
   const isLoading = ref(false)
   const showPopper = ref(false)
@@ -26,17 +42,7 @@
   // Reference to FullCalendar instance
   const calendarRef = ref(null)
 
-  const { pause: stopPolling } = useIntervalFn(
-    () => {
-      if (calendarRef.value) {
-        calendarRef.value.getApi().refetchEvents()
-      }
-    },
-    2 * 60 * 1000 // 2 minutes
-  )
-
   onBeforeUnmount(() => {
-    stopPolling()
 
     // Clean up the draggable instance to prevent memory leaks
     if (draggableInstance.value) {
@@ -88,7 +94,19 @@
       },
       { deep: true }
     )
-  })
+
+    watch(
+      calendarEvents,          // recomputed any time tasks change
+      () => {
+        if (calendarRef.value) {
+          calendarRef.value.getApi().removeAllEvents()  // remove all events currently displayed
+          calendarRef.value.getApi().refetchEvents()   // tells FullCalendar to re-run the events() function
+        }
+      },
+      { deep: true, immediate: true }           // watch inside the array
+    )
+
+   })
 
   const connectGoogleCalendar = () => {
     calendarStore.startGoogleAuth()
@@ -114,39 +132,39 @@
 
       // Update task status and start time
       droppedTask.status = 'ON_CAL'
-      droppedTask.column_date = null
       droppedTask.start_at = dropInfo.dateStr
 
       // First update the task in the database
-      await taskStore.updateTask(droppedTask)
+      taskStore.taskDroppedToCal(droppedTask)
 
       // Then remove it from its source location (kanban or braindump)
-      console.log('Removing task from kanban or braindump')
-      await taskStore.searchAndRemoveTaskFromKanbanOrBraindump(droppedTask.id)
+      // console.log('Removing task from kanban or braindump')
+      // await taskStore.searchAndRemoveTaskFromKanbanOrBraindump(droppedTask.id)
 
       // remove again ( hackish way ) as tasks doesn't get removed if snapped to a kanban col while dragging to fullcalendar
-      const taskCardElement = document.getElementById(`task-card-${droppedTask.id}`)
-      if (taskCardElement) {
-        taskCardElement.remove()
-        console.log('Task card removed from DOM')
-      }
+      // const taskCardElement = document.getElementById(`task-card-${droppedTask.id}`)
+      // if (taskCardElement) {
+      //   taskCardElement.remove()
+      //   console.log('Task card removed from DOM')
+      // }
 
       // Remove the specific event that was just added by the drag and drop
       // we do this to avoid duplicate events as fetching from backend + frontend
       // keeping old event in frontend will lead to duplicate events
-      if (calendarRef.value) {
-        const calendar = calendarRef.value.getApi()
+      // TODO: find a better way to remove duplicate events from stackoverflow
+      // if (calendarRef.value) {
+      //   const calendar = calendarRef.value.getApi()
 
-        // Find the event by ID and remove it before fetching from backend
-        const event = calendar.getEventById(droppedTask.id)
-        if (event) {
-          event.remove()
-          console.log('Event removed from calendar')
-        }
+      //   // Find the event by ID and remove it before fetching from backend
+      //   const event = calendar.getEventById(droppedTask.id)
+      //   if (event) {
+      //     event.remove()
+      //     console.log('Event removed from calendar')
+      //   }
 
-        // Now fetch the clean data from backend
-        calendar.refetchEvents()
-      }
+      //   // Now fetch the clean data from backend
+      //   calendar.refetchEvents()
+      // }
 
       return true
     } catch (error) {
@@ -157,87 +175,88 @@
     }
   }
 
-  function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
-    // Fetching calendar events
-    const axiosInstance = authStore.axios_instance
-    axiosInstance
-      .get('/api/gcalendar/events/', {
-        params: {
-          start: fetchInfo.startStr,
-          end: fetchInfo.endStr,
-        },
-      })
-      .then((res) => successCallback(res.data))
-      .catch((err) => {
-        failureCallback(err)
-      })
-  }
+  // function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
+  //   // Fetching calendar events
+  //   const axiosInstance = authStore.axios_instance
+  //   axiosInstance
+  //     .get('/api/gcalendar/events/', {
+  //       params: {
+  //         start: fetchInfo.startStr,
+  //         end: fetchInfo.endStr,
+  //       },
+  //     })
+  //     .then((res) => successCallback(res.data))
+  //     .catch((err) => {
+  //       failureCallback(err)
+  //     })
+  // }
 
-  function handleEventClick(info) {
-    // Prevent default behavior
-    info.jsEvent.preventDefault()
-    // Only show popover for our app's tasks, not Google Calendar events
-    if (info.event.extendedProps.source !== 'google') {
-      // Position the popover near the clicked event
-      eventPopover.event = info.event
-      const rect = info.el.getBoundingClientRect()
-      eventPopover.position.x = rect.left + rect.width / 2
-      eventPopover.position.y = rect.top
-      eventPopover.show = true
-    }
-  }
 
-  function _getTaskIdFromEvent(event) {
-    // Extract task ID from the event's extended properties
-    if (event.extendedProps.taskId) {
-      return event.extendedProps.taskId
-    }
-    if (event.id) {
-      return event.id
-    }
-    console.error('No valid task ID found in event properties:', event)
-  }
+  // function handleEventClick(info) {
+  //   // Prevent default behavior
+  //   info.jsEvent.preventDefault()
+  //   // Only show popover for our app's tasks, not Google Calendar events
+  //   if (info.event.extendedProps.source !== 'google') {
+  //     // Position the popover near the clicked event
+  //     eventPopover.event = info.event
+  //     const rect = info.el.getBoundingClientRect()
+  //     eventPopover.position.x = rect.left + rect.width / 2
+  //     eventPopover.position.y = rect.top
+  //     eventPopover.show = true
+  //   }
+  // }
 
-  async function markTaskAsCompleted(event) {
-    const taskId = _getTaskIdFromEvent(event)
-    try {
-      if (taskId) {
-        await taskStore.toggleCompletion(taskId)
-        // Refresh calendar events
-        if (calendarRef.value) {
-          calendarRef.value.getApi().refetchEvents()
-          console.log('Calendar events refetched')
-        } else {
-          console.error('Calendar reference not found while marking task as completed')
-        }
-        // Close the popover
-        eventPopover.show = false
-      } else {
-        console.error('No task ID found to mark as completed')
-      }
-    } catch (error) {
-      console.error('Error updating task completion status:', error)
-    }
-  }
+  // function _getTaskIdFromEvent(event) {
+  //   // Extract task ID from the event's extended properties
+  //   if (event.extendedProps.taskId) {
+  //     return event.extendedProps.taskId
+  //   }
+  //   if (event.id) {
+  //     return event.id
+  //   }
+  //   console.error('No valid task ID found in event properties:', event)
+  // }
 
-  async function deleteCalendarTask(event) {
-    const taskId = _getTaskIdFromEvent(event)
-    console.log('Deleting task:', taskId)
-    try {
-      await taskStore.deleteTask(taskId)
-      // Close the popover
-      eventPopover.show = false
-      // Refresh calendar events
-      if (calendarRef.value) {
-        calendarRef.value.getApi().refetchEvents()
-        console.log('Calendar events refetched after deletion')
-      } else {
-        console.error('Calendar reference not found')
-      }
-    } catch (error) {
-      console.error('Error deleting task:', error)
-    }
-  }
+  // async function markTaskAsCompleted(event) {
+  //   const taskId = _getTaskIdFromEvent(event)
+  //   try {
+  //     if (taskId) {
+  //       await taskStore.toggleCompletion(taskId)
+  //       // Refresh calendar events
+  //       if (calendarRef.value) {
+  //         calendarRef.value.getApi().refetchEvents()
+  //         console.log('Calendar events refetched')
+  //       } else {
+  //         console.error('Calendar reference not found while marking task as completed')
+  //       }
+  //       // Close the popover
+  //       eventPopover.show = false
+  //     } else {
+  //       console.error('No task ID found to mark as completed')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating task completion status:', error)
+  //   }
+  // }
+
+  // async function deleteCalendarTask(event) {
+  //   const taskId = _getTaskIdFromEvent(event)
+  //   console.log('Deleting task:', taskId)
+  //   try {
+  //     await taskStore.deleteTask(taskId)
+  //     // Close the popover
+  //     eventPopover.show = false
+  //     // Refresh calendar events
+  //     if (calendarRef.value) {
+  //       calendarRef.value.getApi().refetchEvents()
+  //       console.log('Calendar events refetched after deletion')
+  //     } else {
+  //       console.error('Calendar reference not found')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error deleting task:', error)
+  //   }
+  // }
 
   async function handleCalendarEventUpdated(eventDropInfo) {
     // Triggers when events are draggedend inside the calendar sidebar
@@ -265,7 +284,7 @@
 
   const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
-    initialView: 'timeGridDay',
+    initialView: props.initialView,
     headerToolbar: false,
     allDaySlot: false,
     eventTimeFormat: {
@@ -280,10 +299,10 @@
     stickyHeaderDates: false,
     navLinks: false,
     dayMaxEvents: false,
-    eventClick: handleEventClick,
+    // eventClick: handleEventClick,
     // dateClick: handleDateClick,
     // datesSet: handleDatesSet,
-    events: fetchCalendarEvents,
+    events: (fetchInfo, successCallback, failureCallback) => successCallback(calendarEvents.value),
     selectable: false,
     eventResizableFromStart: true,
     editable: true,

@@ -52,10 +52,7 @@
 </script>
 
 <template>
-  <div
-    class="integration-sidebar"
-    @mouseenter="uiStore.setPointerOverIntegration(true)"
-    @mouseleave="uiStore.setPointerOverIntegration(false)">
+  <div class="integration-sidebar">
     <!-- Integration Content -->
     <transition name="slide">
       <div v-if="showIntegrationSidebar" class="integration-content">

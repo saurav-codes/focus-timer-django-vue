@@ -8,7 +8,6 @@ export const useUIStore = defineStore('ui', () => {
   const isIntegrationSidebarVisible = useLocalStorage('integration-sidebar-visible', false)
   const activeIntegration = useLocalStorage('active-integration', 'calendar')
   const isFilterSidebarVisible = useLocalStorage('filter-sidebar-visible', false)
-  const isPointerOverIntegration = ref(false)
   // Multi-theme toggle state (light, dark, minecraft, notion, zed)
   const currentTheme = useLocalStorage('current-theme', 'light')
 
@@ -50,10 +49,6 @@ export const useUIStore = defineStore('ui', () => {
     isLoadingEarlierColumns.value = isLoading
   }
 
-  function setPointerOverIntegration(isOver) {
-    isPointerOverIntegration.value = isOver
-  }
-
   return {
     isBrainDumpCollapsed,
     isIntegrationSidebarVisible,
@@ -61,14 +56,12 @@ export const useUIStore = defineStore('ui', () => {
     isLoadingMoreColumns,
     isLoadingEarlierColumns,
     isFilterSidebarVisible,
-    isPointerOverIntegration,
     toggleBrainDump,
     toggleIntegrationSidebar,
     setActiveIntegration,
     setLoadingMoreColumns,
     setLoadingEarlierColumns,
     toggleFilterSidebar,
-    setPointerOverIntegration,
     // Export theme controls
     currentTheme,
     cycleTheme,
