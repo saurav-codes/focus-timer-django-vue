@@ -133,6 +133,9 @@
       // Update task status and start time
       droppedTask.status = 'ON_CAL'
       droppedTask.start_at = dropInfo.dateStr
+      // use today's data if task don't have col date ( happens if user directing dropping task from braindump since
+      // braindump tasks don't have column dates )
+      droppedTask.column_date = dropInfo.dateStr.split("T")[0]
 
       // First update the task in the database
       taskStore.taskDroppedToCal(droppedTask)
@@ -278,7 +281,11 @@
         eventDropInfo.revert()
       }
     } else {
-      alert('event is dropped but not a google event so handle it')
+      // get the main event object
+      const rawEventData = eventDropInfo.event.extendedProps.raw;
+      rawEventData.start_at = eventDropInfo.event.start?.toISOString();
+      rawEventData.end_at = eventDropInfo.event.end?.toISOString();
+      taskStore.updateTaskWs(rawEventData);
     }
   }
 
@@ -294,6 +301,8 @@
     },
     slotMinTime: '00:00:00',
     slotMaxTime: '23:59:00',
+    // Set 1-minute granularity for dragging / resizing
+    snapDuration: '00:01:00',
     height: 'auto',
     expandRows: true,
     stickyHeaderDates: false,

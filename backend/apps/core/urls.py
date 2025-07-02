@@ -1,25 +1,31 @@
 from django.urls import path
 from .views import (
-    TasksApiView,
-    TaskDetailApiView,
+    # TasksApiView,
+    # TaskDetailApiView,
     # toggle_task_completion,
     get_all_projects,
     get_all_tags,
     create_project,
     ProjectDetailApiView,
     assign_project_to_task,
+    update_task_duration,
 )
 
 app_name = "core"
 
 urlpatterns = [
-    path("tasks/", TasksApiView.as_view(), name="task_list"),
-    path("tasks/<int:pk>/", TaskDetailApiView.as_view(), name="task_detail"),
+    # path("tasks/", TasksApiView.as_view(), name="task_list"),
+    # path("tasks/<int:pk>/", TaskDetailApiView.as_view(), name="task_detail"),
     # path(
     #     "tasks/<int:pk>/toggle_completion/",
     #     toggle_task_completion,
     #     name="toggle_task_completion",
     # ),
+    path(
+        "update_task_duration/",
+        update_task_duration,
+        name="update_task_duration",
+    ),
     path(
         "assign_project/<int:task_id>/<int:project_id>/",
         assign_project_to_task,

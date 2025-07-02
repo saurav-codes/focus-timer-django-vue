@@ -129,16 +129,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   }
 
   function _put_task_on_board(updatedTask) {
-    if (updatedTask.status === 'ON_CAL') {
-      // find the array where we have to place this task
-      const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
-      colTasksArray.splice(updatedTask.order, 0, updatedTask)
-    } else {
-      console.log(
-        'this task status is not on cal. this function only valid for placing cal tasks on board. this is a bug - ',
-        updatedTask
-      )
-    }
+    // find the array where we have to place this task
+    const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+    colTasksArray.splice(updatedTask.order, 0, updatedTask)
   }
 
   // handle msg from backend
@@ -209,6 +202,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         fetchTasksWs()
         break
       }
+      case 'task_updated':
       case 'task.updated': {
         const updatedTask = msg.data
         _apply_updates_to_task(updatedTask)
@@ -354,6 +348,8 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   async function taskDroppedToBrainDumpWs(task) {
     task.column_date = null
+    task.start_at = null
+    task.end_at = null
     task.status = 'BRAINDUMP'
     updateTaskWs(task)
   }

@@ -92,12 +92,24 @@ class TaskSerializer(TaggitSerializer, WritableNestedModelSerializer):
         validated_data.pop("user", None)
         return super().update(instance, validated_data)
 
-    def save(self, **kwargs):
-        task = super().save(**kwargs)
-        if task.start_at and not task.end_at:
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        start_at = validated_data.get("start_at")
+        end_at = validated_data.get("end_at")
+        if start_at and not end_at:
             # calculate end at based on duration
-            if not task.duration:
-                task.duration = timedelta(minutes=30)
-            task.end_at = task.start_at + task.duration
-            task.save()
-        return task
+            if not validated_data["duration"]:
+                validated_data["duration"] = timedelta(minutes=30)
+            validated_data["end_at"] = start_at + validated_data["duration"]
+        elif start_at and end_at:
+            # make sure both are in UTC timezones
+            if start_at < end_at:
+                validated_data["duration"] = end_at - start_at
+            else:
+                validated_data["duration"] = timedelta(minutes=30)
+                validated_data["end_at"] = None
+        return validated_data
+
+
+class TaskDurationUpdateSerializer(serializers.Serializer):
+    duration = serializers.DurationField()

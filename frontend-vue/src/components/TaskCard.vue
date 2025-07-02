@@ -2,6 +2,7 @@
   import TaskEditModal from './TaskEditModal.vue'
   import TimeDropdownPopup from './TimeDropdownPopup.vue'
   import { useTaskStoreWs } from '../stores/taskStoreWs'
+  import { useTaskStoreApi } from '../stores/taskStoreApi'
   import { ref, computed, useTemplateRef, watch } from 'vue'
   import { Clock, Repeat1, Tag, XIcon } from 'lucide-vue-next'
   import { useFloating } from '@floating-ui/vue'
@@ -13,6 +14,8 @@
 
   const emit = defineEmits(['task-deleted', 'task-updated', 'tag-removed', 'task-archived'])
   const taskStore = useTaskStoreWs()
+  const taskStoreApi = useTaskStoreApi()
+
   const props = defineProps({
     task: {
       type: Object,
@@ -140,7 +143,7 @@
     }
 
     // Save the update via the task store.
-    await taskStore.updateTaskWs(localTask.value)
+    await taskStoreApi.updateTaskDuration(localTask.value.id, localTask.value.duration)
     handleTaskUpdated(localTask.value)
   }
 

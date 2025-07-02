@@ -246,3 +246,7 @@ class TasksConsumer(AsyncJsonWebsocketConsumer):
 
     async def refresh_for_rec_task(self, payload):
         await self.send_json({"type": "task.refresh_for_rec", "data": payload})
+
+    async def task_updated(self, event):
+        """Handle a task update pushed from server-side code."""
+        await self.send_json(event)
