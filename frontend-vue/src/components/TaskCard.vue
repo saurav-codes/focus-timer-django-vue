@@ -167,7 +167,7 @@
       ref="taskItem"
       class="task-item"
       :data-event="taskData"
-      :class="{ completed: localTask.is_completed }"
+      :class="{ completed: localTask.is_completed, 'on-cal': localTask.status === 'ON_CAL' }"
       @click="openEditModal">
       <div v-if="showCheckbox" class="task-checkbox" @click.stop="toggleCompletion">
         <div class="checkbox" :class="{ checked: localTask.is_completed }" />
@@ -353,5 +353,20 @@
   }
   .description-icon:hover {
     opacity: 1;
+  }
+
+  /* Calendar tasks google colors bottom border */
+  .task-item.on-cal {
+    position: relative;
+  }
+  .task-item.on-cal::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0.7px;
+    background: linear-gradient(to right, #4285F4, #DB4437, #F4B400, #0F9D58);
+    border-radius: 0 0 4px 4px;
   }
 </style>
