@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onUnmounted } from 'vue'
+import { ref, watch, computed, onUnmounted, nextTick } from 'vue'
 import { useTaskStoreWs } from '../stores/taskStoreWs'
 import { useTagsProjectStore } from '../stores/tagsProjectStore'
 import { X, Trash2, PencilLine, Archive, AlarmClock } from 'lucide-vue-next'
@@ -124,17 +124,30 @@ const assignProject = async (projectId) => {
   }
 }
 
+const descriptionTextarea = ref(null)
+
+const autoResize = () => {
+  const el = descriptionTextarea.value
+  if (el) {
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }
+}
+
+watch(() => editedTask.value.description, () => {
+  autoResize()
+})
+
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)
 })
 
 const isModalOpen = computed(() => props.isOpen)
-watch(isModalOpen, (newVal) => {
+watch(isModalOpen, async (newVal) => {
   if (newVal) {
-    console.log('TaskEditModal opened')
+    await nextTick()
     tagsProjectStore.fetchTags()
-  } else {
-    console.log('TaskEditModal closed')
+    autoResize()
   }
 })
 const { startTime } = useStartAt(editedTask)
@@ -177,10 +190,12 @@ watch(startTime, () => {
           <div class="form-group">
             <textarea
               id="task-description"
+              ref="descriptionTextarea"
               v-model.lazy="editedTask.description"
               class="form-textarea"
               placeholder="Add details about this task..."
               rows="4"
+              @input="autoResize"
               @blur="saveTask(true)" />
           </div>
           <div class="form-group">
