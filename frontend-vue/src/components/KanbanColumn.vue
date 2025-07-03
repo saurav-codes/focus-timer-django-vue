@@ -70,6 +70,32 @@
     }
   })
 
+  // Compute completed vs total duration progress for progress bar
+  const durationProgress = computed(() => {
+    let totalMins = 0;
+    let completedMins = 0;
+
+    columnTasks.value.forEach((task) => {
+      if (task?.duration) {
+        const [h, m] = task.duration.split(':').map(Number);
+        const mins = h * 60 + m;
+        totalMins += mins;
+        if (task?.is_completed) completedMins += mins;
+      }
+    });
+
+    const format = (mins) => {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      if (h === 0) return m ? `${m}min` : '0min';
+      if (m === 0) return `${h}hr`;
+      return `${h}hr ${m}min`;
+    };
+
+    const percent = totalMins ? Math.round((completedMins / totalMins) * 100) : 0;
+    return { percent, label: `${format(completedMins)} / ${format(totalMins)}` };
+  });
+
   function handleTaskDroppedToKanban({ added, moved }) {
     // this only trigger with added value on the column where it's dropped
     // Handle when a task is added to this column
@@ -138,6 +164,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Duration progress bar -->
+    <div
+      v-if="columnTasks.length > 1"
+      class="progress-bar-container"
+      role="progressbar"
+      :aria-valuenow="durationProgress.percent"
+      aria-valuemin="0"
+      aria-valuemax="100">
+      <div class="progress-track">
+        <div class="progress-fill" :style="{ width: durationProgress.percent + '%' }" />
+      </div>
+    </div>
+
     <div class="tasks-container">
       <Draggable
         v-model="columnTasks"
@@ -171,16 +211,26 @@
     height: 90vh;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
+    padding: 0.5rem 1rem 1rem 1rem;
   }
 
   .column-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--color-border);
+    margin: 0;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+
+  .column-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--color-border);
   }
 
   .title-section {
@@ -189,11 +239,19 @@
     gap: 0.25rem;
   }
 
+  .stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-end;
+  }
+
   .title-section h3 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
     margin: 0;
+    line-height: 1.2;
   }
 
   .date {
@@ -221,6 +279,35 @@
     color: var(--color-text-tertiary);
   }
 
+  .progress-bar-container {
+    margin: 0;
+    padding: 0;
+    height: 4px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 0 0 2px 2px;
+  }
+
+  .progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 240ms ease-out;
+    border-radius: 0 2px 2px 0;
+  }
+
+
+
   .tasks-container {
     display: flex;
     flex-direction: column;
@@ -228,6 +315,7 @@
     flex-grow: 1;
     height: 100%;
     overflow-y: scroll;
+    padding-top: 0.5rem;
   }
 
   .add-task {
