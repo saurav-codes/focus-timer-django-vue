@@ -249,59 +249,6 @@
   //     eventPopover.show = true
   //   }
   // }
-
-  // function _getTaskIdFromEvent(event) {
-  //   // Extract task ID from the event's extended properties
-  //   if (event.extendedProps.taskId) {
-  //     return event.extendedProps.taskId
-  //   }
-  //   if (event.id) {
-  //     return event.id
-  //   }
-  //   console.error('No valid task ID found in event properties:', event)
-  // }
-
-  // async function markTaskAsCompleted(event) {
-  //   const taskId = _getTaskIdFromEvent(event)
-  //   try {
-  //     if (taskId) {
-  //       await taskStore.toggleCompletion(taskId)
-  //       // Refresh calendar events
-  //       if (calendarRef.value) {
-  //         calendarRef.value.getApi().refetchEvents()
-  //         console.log('Calendar events refetched')
-  //       } else {
-  //         console.error('Calendar reference not found while marking task as completed')
-  //       }
-  //       // Close the popover
-  //       eventPopover.show = false
-  //     } else {
-  //       console.error('No task ID found to mark as completed')
-  //     }
-  //   } catch (error) {
-  //     console.error('Error updating task completion status:', error)
-  //   }
-  // }
-
-  // async function deleteCalendarTask(event) {
-  //   const taskId = _getTaskIdFromEvent(event)
-  //   console.log('Deleting task:', taskId)
-  //   try {
-  //     await taskStore.deleteTask(taskId)
-  //     // Close the popover
-  //     eventPopover.show = false
-  //     // Refresh calendar events
-  //     if (calendarRef.value) {
-  //       calendarRef.value.getApi().refetchEvents()
-  //       console.log('Calendar events refetched after deletion')
-  //     } else {
-  //       console.error('Calendar reference not found')
-  //     }
-  //   } catch (error) {
-  //     console.error('Error deleting task:', error)
-  //   }
-  // }
-
   async function handleCalendarEventUpdated(eventDropInfo) {
     // Triggers when events are draggedend inside the calendar sidebar
     const eventSource = eventDropInfo.event.extendedProps.source
