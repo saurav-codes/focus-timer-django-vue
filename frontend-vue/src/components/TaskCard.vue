@@ -4,7 +4,7 @@
   import { useTaskStoreWs } from '../stores/taskStoreWs'
   import { useTaskStoreApi } from '../stores/taskStoreApi'
   import { ref, computed, useTemplateRef, watch } from 'vue'
-  import { Clock, Repeat1, Tag, XIcon } from 'lucide-vue-next'
+  import { Clock, Repeat1, Tag, XIcon, FileText } from 'lucide-vue-next'
   import { useFloating } from '@floating-ui/vue'
   import { useElementHover } from '@vueuse/core'
   import { offset, flip, shift } from '@floating-ui/dom'
@@ -210,6 +210,10 @@
       <div v-if="localTask.recurrence_series?.recurrence_rule" title="This is a recurring task">
         <Repeat1 class="recurring-icon" size="12" />
       </div>
+      <div v-if="localTask.description" title="This task has a description" class="description-indicator">
+        <FileText class="description-icon" size="12" />
+      </div>
+
     </div>
   </div>
 </template>
@@ -334,7 +338,20 @@
   .recurring-icon {
     color: var(--color-text-tertiary);
     position: absolute;
+    right: 1.5rem;
+    bottom: 0.5rem;
+  }
+  .description-indicator {
+    position: absolute;
     right: 0.5rem;
     bottom: 0.5rem;
+  }
+  .description-icon {
+    color: var(--color-text-tertiary);
+    opacity: 0.75;
+    transition: opacity var(--transition-base);
+  }
+  .description-icon:hover {
+    opacity: 1;
   }
 </style>
