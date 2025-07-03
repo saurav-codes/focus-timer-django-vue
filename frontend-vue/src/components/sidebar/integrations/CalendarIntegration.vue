@@ -10,6 +10,7 @@
   import FullCalendar from '@fullcalendar/vue3'
   import Popper from 'vue3-popper'
   import { tasksToFcEvents } from '../../../utils/calendarSerializer'
+  import TaskEditModal from '../../TaskEditModal.vue'
 
   // Props
   const props = defineProps({
@@ -41,6 +42,34 @@
   })
   // Reference to FullCalendar instance
   const calendarRef = ref(null)
+
+  // -------- Task Edit Modal --------
+  const isEditModalOpen = ref(false)
+  const activeTask = ref(null)
+
+  function openEditModal(task) {
+    activeTask.value = task
+    isEditModalOpen.value = true
+  }
+
+  function closeEditModal() {
+    isEditModalOpen.value = false
+    activeTask.value = null
+  }
+
+  function handleTaskDeleted() {
+    closeEditModal()
+  }
+
+  function handleTaskUpdated() {
+    // we don't need to update task because
+    // websocket request from taskstorews will update the task
+    // and all the components will be updated automatically
+  }
+
+  function handleTaskArchived() {
+    closeEditModal()
+  }
 
   onBeforeUnmount(() => {
 
@@ -178,6 +207,18 @@
     }
   }
 
+  function handleEventClick(eventClickInfo) {
+    const source = eventClickInfo.event.extendedProps.source
+    if (source === 'google') {
+      return
+    }
+    const task = eventClickInfo.event.extendedProps.raw
+    if (task) {
+      // Open modal for non-Google calendar tasks
+      openEditModal({ ...task })
+    }
+  }
+
   // function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
   //   // Fetching calendar events
   //   const axiosInstance = authStore.axios_instance
@@ -308,7 +349,7 @@
     stickyHeaderDates: false,
     navLinks: false,
     dayMaxEvents: false,
-    // eventClick: handleEventClick,
+    eventClick: handleEventClick,
     // dateClick: handleDateClick,
     // datesSet: handleDatesSet,
     events: (fetchInfo, successCallback, failureCallback) => successCallback(calendarEvents.value),
@@ -388,6 +429,16 @@
 
       <!-- Backdrop to close popover when clicking outside -->
       <div v-if="eventPopover.show" class="event-popover-backdrop" @click="eventPopover.show = false" />
+
+      <!-- Task Edit Modal -->
+      <TaskEditModal
+        v-if="activeTask"
+        :task="activeTask"
+        :is-open="isEditModalOpen"
+        @close-modal="closeEditModal"
+        @task-updated="handleTaskUpdated"
+        @task-archived="handleTaskArchived"
+        @task-deleted="handleTaskDeleted" />
     </div>
   </div>
 </template>
