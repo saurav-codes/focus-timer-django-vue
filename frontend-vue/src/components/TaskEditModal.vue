@@ -2,7 +2,7 @@
 import { ref, watch, computed, onUnmounted, nextTick } from 'vue'
 import { useTaskStoreWs } from '../stores/taskStoreWs'
 import { useTagsProjectStore } from '../stores/tagsProjectStore'
-import { X, Trash2, PencilLine, Archive, AlarmClock } from 'lucide-vue-next'
+import { X, Trash2, PencilLine, Archive, AlarmClock, CalendarX } from 'lucide-vue-next'
 import { useTimeAgo } from '@vueuse/core'
 import { VueSpinner } from 'vue3-spinners'
 import Multiselect from '@vueform/multiselect'
@@ -90,6 +90,13 @@ const archiveTask = async () => {
   } finally {
     isArchiving.value = false
   }
+}
+
+const removeFromGCal = async () => {
+  if (editedTask.value.status !== 'ON_CAL') return
+  editedTask.value.status = 'ON_BOARD'
+  await taskStore.updateTaskWs(editedTask.value)
+  emit('task-updated', editedTask.value)
 }
 
 // Press Escape to close
@@ -247,6 +254,10 @@ watch(startTime, () => {
               <Archive v-if="!isArchiving" size="16" />
               <VueSpinner v-if="isArchiving" />
               <span>Archive</span>
+            </button>
+            <button v-if="editedTask.status === 'ON_CAL'" class="remove-gcal-button" @click="removeFromGCal">
+              <CalendarX size="16" />
+              <span>Remove from GCal</span>
             </button>
             <button class="delete-button" @click="deleteTask">
               <Trash2 v-if="!isDeleting" size="16" />
@@ -486,4 +497,21 @@ input {
   background-color: var(--color-input-background);
   font-size: var(--font-size-sm);
 }
+  /* Button for removing a task sync from Google Calendar */
+  .remove-gcal-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 0.375rem;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background-color var(--transition-base);
+  }
+  .remove-gcal-button:hover {
+    background-color: var(--color-background-secondary);
+    color: var(--color-text-primary);
+  }
 </style>
