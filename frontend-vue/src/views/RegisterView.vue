@@ -68,7 +68,10 @@
       return
     }
 
-    await authStore.register(email.value, password.value, browserTimezone)
+    const loggedIn = await authStore.register(email.value, password.value, browserTimezone)
+    if (loggedIn) {
+      router.push("/kanban-planner")
+    }
   }
 
   // Navigate to login page

@@ -22,7 +22,10 @@
     }
 
     formError.value = ''
-    await authStore.login(email.value, password.value)
+    const loggedIn = await authStore.login(email.value, password.value)
+    if (loggedIn) {
+      router.push('/kanban-planner')
+    }
   }
 
   // Navigate to register page
@@ -39,16 +42,28 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <button class="back-button" @click="goToHome">← Back to Home</button>
+      <button class="back-button" @click="goToHome">
+        ← Back to Home
+      </button>
       <div class="card-header">
-        <h1 class="title">Log in to Tymr Online</h1>
-        <p class="subtitle">Enter your credentials to access your account</p>
+        <h1 class="title">
+          Log in to Tymr Online
+        </h1>
+        <p class="subtitle">
+          Enter your credentials to access your account
+        </p>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="email">Email</label>
-          <input id="email" v-model="email" type="email" placeholder="your@email.com" required autocomplete="email" />
+          <input
+            id="email"
+            v-model="email"
+            type="email"
+            placeholder="your@email.com"
+            required
+            autocomplete="email">
         </div>
         <div v-if="authStore.loginErrors.email" class="error-message">
           {{ authStore.loginErrors.email }}
@@ -62,7 +77,7 @@
               :type="showPassword ? 'text' : 'password'"
               placeholder="Enter your password"
               required
-              autocomplete="current-password" />
+              autocomplete="current-password">
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
@@ -86,7 +101,11 @@
       </form>
 
       <div class="card-footer">
-        <p>Don't have an account? <button class="text-button" @click="goToRegister">Sign up</button></p>
+        <p>
+          Don't have an account? <button class="text-button" @click="goToRegister">
+            Sign up
+          </button>
+        </p>
       </div>
     </div>
   </div>

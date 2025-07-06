@@ -100,7 +100,6 @@ export const useAuthStore = defineStore('authStore', {
           password,
         })
 
-        router.push('/kanban-planner')
         this.userData = await this.fetchUserData()
         this.isAuthenticated = true
         return true
