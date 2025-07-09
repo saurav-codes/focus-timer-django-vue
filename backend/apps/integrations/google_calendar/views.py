@@ -221,9 +221,9 @@ def get_calendar_events(request):
                     "start": task.start_at.isoformat(),
                     "end": task.end_at.isoformat(),
                     "allDay": False,  # Tasks are not all-day events by default
-                    "backgroundColor": "#4285F4",  # You can customize the color
-                    "borderColor": "#4285F4",
-                    "textColor": "#FFFFFF",
+                    "backgroundColor": "#E69553",  # You can customize the color
+                    "borderColor": "#DF892E",
+                    "textColor": "#0C0000",
                     "extendedProps": {
                         "description": task.description or "",
                         "source": "task",  # Mark as a task source
