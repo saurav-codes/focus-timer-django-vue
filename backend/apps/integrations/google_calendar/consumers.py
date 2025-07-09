@@ -6,7 +6,8 @@ import uuid
 from django.urls import reverse
 from .utils import build_calendar_service, format_event_for_fullcalendar
 from .models import GoogleCalendarCredentials
-from dateutil.parser import isoparse
+
+import re
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -62,15 +63,24 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             resp = await self.fetch_cal_taks_from_dt(date_iso_str)
             return resp
 
-    async def fetch_cal_taks_from_dt(self, date_iso: str):
-        # parse the date and make sure it's valid iso str
+    async def fetch_cal_taks_from_dt(self, date_str: str):
+        # validate incoming date string is exactly YYYY-MM-DD
+        if not isinstance(date_str, str) or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}", date_str
+        ):
+            await self.send_json(
+                {"type": "error", "error": "Invalid date format, expected YYYY-MM-DD"}
+            )
+            return
+        # parse the date value
         try:
-            isoparse(date_iso)
-        except Exception:
-            await self.send_json({"type": "error", "error": "Invalid ISO string"})
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            await self.send_json({"type": "error", "error": "Invalid date value"})
+            return
 
         try:
-            events = await self._fetch_events(date_iso)
+            events = await self._fetch_events(date_str)
             # await self._start_push_subscription()
             # TODO: make sure we only subscribe to notification
             # when already there not a subscription
@@ -98,7 +108,7 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
     #   Helpers
     # ------------------------------------------------------------------
     @database_sync_to_async
-    def _fetch_events(self, date_iso: str):
+    def _fetch_events(self, date_str: str):
         """Synchronously fetch Google-Calendar events & return FullCalendar-ready list."""
         # Get stored credentials
         creds_obj = GoogleCalendarCredentials.objects.filter(user=self.user).first()
@@ -118,7 +128,7 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
         service = build_calendar_service(creds)
         calendar_id = creds_obj.calendar_id or "primary"
 
-        today_datetime = datetime.fromisoformat(date_iso)
+        today_datetime = datetime.fromisoformat(date_str)
         today_datetime = today_datetime.replace(tzinfo=dt_tz.utc)
         # we are fetching event 1 day before - after 1 days so if user is travelling
         # and there were events created before the current tz then it will fetch all

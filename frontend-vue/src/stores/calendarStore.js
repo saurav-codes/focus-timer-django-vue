@@ -85,12 +85,18 @@ export const useCalendarStore = defineStore('calendar', () => {
     }
   }
   // websocket methods
-  function fetchGcalTask(date_iso_string = '') {
-    if (!date_iso_string) {
-      // set today's date
-      date_iso_string = new Date().toISOString()
+  function fetchGcalTask(date_str = '') {
+    // Accept a local date string (YYYY-MM-DD). If none provided, use today's local date.
+    if (!date_str) {
+      const today = new Date()
+      const y = today.getFullYear()
+      const m = String(today.getMonth() + 1).padStart(2, '0')
+      const d = String(today.getDate()).padStart(2, '0')
+      date_str = `${y}-${m}-${d}`
+      console.log("no date passed so using today's local date -", date_str)
     }
-    _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_iso_str: date_iso_string })
+    console.log('fetch gcal task with date -', date_str)
+    _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_iso_str: date_str })
   }
   function routeGcalMessage(msg) {
     switch (msg.type) {

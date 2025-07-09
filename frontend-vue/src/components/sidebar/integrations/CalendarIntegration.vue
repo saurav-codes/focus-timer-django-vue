@@ -10,6 +10,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/vue3'
 import Popper from 'vue3-popper'
 import TaskEditModal from '../../TaskEditModal.vue'
+import { getDateStrFromDateObj } from '../../../utils/taskUtils'
 
 // Props
 const props = defineProps({
@@ -43,44 +44,62 @@ watch([localCalTasks, gcalEvents], () => {
 
 // -------- Calendar Navigation Controls --------
 // Tracks the current view date to display in header
-const currentDate = ref(null)
+const currentDate = ref(new Date())
 // Updates currentDate when the calendar view changes
 function handleDatesSet(dateInfo) {
   // calling prev/next trigger this function. the dates are already set
   // in fullcalendar and we here are just updating the value
   // on currentDate
-  currentDate.value = dateInfo.view.currentStart
+  const dt = dateInfo.view.currentStart
+  // set time to 0 because later we have to compare 2 dates
+  dt.setHours(0,0,0,0)
+  currentDate.value = dt
 }
 
 // Formatted display for the current date
-const currentDateDisplay = computed(() =>
-  currentDate.value
+const currentDateDisplay = computed(() =>{
+  return currentDate.value
     ? currentDate.value.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     : ''
-)
+})
 // Navigate to previous period
 function prev() {
   calendarRef.value?.getApi().prev()
-  console.log("current date after clicking on prev - ", currentDate.value)
-  // calendarStore.fetchGcalTask(currentDate)
+  const leftMostColDt = taskStore.kanbanColumns[0].date
+  leftMostColDt.setHours(0,0,0,0)
+  if (currentDate.value < leftMostColDt) {
+    taskStore.addEarlierColumnsWs(3)
+    console.log("Added 3 more col and fetched their tasks since user clicked on date older than what's visible")
+  }
+  // fetch for the normalized local date
+  if (currentDate.value) {
+    const dt = getDateStrFromDateObj(currentDate.value)
+    calendarStore.fetchGcalTask(dt)
+  }
 }
 // Navigate to next period
 function next() {
   calendarRef.value?.getApi().next()
-  console.log("current date after clicking on next - ", currentDate.value)
-  // calendarStore.fetchGcalTask(currentDate)
+  const rightMostColDt = taskStore.kanbanColumns[taskStore.kanbanColumns.length - 1].date
+  rightMostColDt.setHours(0,0,0,0)
+  if (currentDate.value > rightMostColDt) {
+    taskStore.addMoreColumnsWs(3)
+    console.log("Added 3 more col and fetched their tasks since user clicked on date greater than what's visible")
+  }
+  // fetch for the normalized local date
+  if (currentDate.value) {
+    const dt = getDateStrFromDateObj(currentDate.value)
+    calendarStore.fetchGcalTask(dt)
+  }
 }
 // Determine if the calendar's current view is today
-const todayDate = new Date()
-const startOfToday = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate())
 const isToday = computed(() => {
   if (!currentDate.value) return true
-  const viewDate = new Date(
-    currentDate.value.getFullYear(),
-    currentDate.value.getMonth(),
-    currentDate.value.getDate()
-  )
-  return viewDate.getTime() === startOfToday.getTime()
+  const todayDate = new Date()
+  // normalize to midnight
+  todayDate.setHours(0, 0, 0, 0)
+  // compare timestamps
+  return currentDate.value.getTime() === todayDate.getTime()
 })
 // Jump calendar to today
 function today() {
