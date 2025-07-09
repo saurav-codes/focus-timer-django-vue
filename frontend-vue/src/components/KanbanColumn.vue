@@ -285,7 +285,7 @@
     height: 4px;
     overflow: hidden;
     position: relative;
-    z-index: 1;
+    /* z-index: 1; */
   }
 
   .progress-track {
