@@ -1,97 +1,162 @@
 import { defineStore } from 'pinia'
 import { useAuthStore } from './authStore'
+import { useWebSocket } from '@vueuse/core'
+import { watch, ref } from 'vue'
 
-export const useCalendarStore = defineStore('calendar', {
-  state: () => ({
-    isGoogleConnected: false,
-    isLoading: false,
-    events: [],
-    error: null,
-  }),
+export const useCalendarStore = defineStore('calendar', () => {
+  const host = import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL || 'tymr.online' : 'localhost:8000'
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const wsUrl = `${protocol}://${host}/ws/gcal/`
+  const {
+    status: gcalWsStatus,
+    data: gcalWsData,
+    open: gcalWsOpen,
+    close: gcalWsClose,
+    send: gcalWsSend,
+  } = useWebSocket(wsUrl, {
+    immediate: false,
+    autoReconnect: { retries: 0, delay: 5000 },
+  })
 
-  actions: {
-    async checkGoogleConnection() {
-      const authStore = useAuthStore()
-      try {
-        this.isLoading = true
-        const response = await authStore.axios_instance.get('api/gcalendar/status/')
-        this.isGoogleConnected = response.data.connected
-        return this.isGoogleConnected
-      } catch (error) {
-        // Set error message with details if available
-        this.error = error.response?.data?.error || 'Error checking Google connection'
-        this.isGoogleConnected = false
-        return false
-      } finally {
-        this.isLoading = false
-      }
-    },
-    async startGoogleAuth() {
-      const authStore = useAuthStore()
-      try {
-        this.isLoading = true
-        const response = await authStore.axios_instance.get('api/gcalendar/auth/start/')
-        // Redirect to Google's authorization page
-        window.location.href = response.data.auth_url
-      } catch (error) {
-        // Handle auth error with specific details if available
-        this.error = error.response?.data?.error || 'Failed to connect to Google Calendar'
-      } finally {
-        this.isLoading = false
-      }
-    },
-    async fetchEvents(startStr, endStr) {
-      const authStore = useAuthStore()
-      try {
-        this.isLoading = true
-        const response = await authStore.axios_instance.get(`api/gcalendar/events/?start=${startStr}&end=${endStr}`)
-        this.events = response.data
-        return this.events
-      } catch (error) {
-        // Update error state with specific details if available
-        this.error = error.response?.data?.error || 'Failed to fetch calendar events'
-        return []
-      } finally {
-        this.isLoading = false
-      }
-    },
-    async disconnectGoogleCalendar() {
-      const authStore = useAuthStore()
-      try {
-        this.isLoading = true
-        await authStore.axios_instance.delete('api/gcalendar/disconnect/')
-        this.isGoogleConnected = false
-        this.events = []
-        return true
-      } catch (error) {
-        // Update error state with specific details if available
-        this.error = error.response?.data?.error || 'Failed to disconnect Google Calendar'
-        return false
-      } finally {
-        this.isLoading = false
-      }
-    },
-    async updateGoogleCalendarEvent(eventId, updateData) {
-      const authStore = useAuthStore()
-      try {
-        this.isLoading = true
-        // Ensure the updateData contains all required fields in the correct format
-        // The API expects specific format for updating Google Calendar events
+  const isLoading = ref(false)
+  const isGoogleConnected = ref(false)
+  const error = ref(null)
+  const gcalEvents = ref([])
 
-        // Make the API call to update the event
-        await authStore.axios_instance.put(`api/gcalendar/events/${eventId}/`, updateData)
-        return true
-      } catch (error) {
-        // Handle error and provide feedback
-        if (error.response && error.response.data) {
-          this.error = error.response.data.error || 'Failed to update Google Calendar event'
-        } else {
-          this.error = 'Network error while updating event'
-        }
-        return false
-      } finally {
-        this.isLoading = false
+  const authStore = useAuthStore()
+
+  async function checkGoogleConnection() {
+    // methods using API
+    try {
+      isLoading.value = true
+      const response = await authStore.axios_instance.get('api/gcalendar/status/')
+      isGoogleConnected.value = response.data.connected
+      return isGoogleConnected.value
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Error checking Google connection'
+      isGoogleConnected.value = false
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+  async function startGoogleAuth() {
+    try {
+      isLoading.value = true
+      const response = await authStore.axios_instance.get('api/gcalendar/auth/start/')
+      window.location.href = response.data.auth_url
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to connect to Google Calendar'
+    } finally {
+      isLoading.value = false
+    }
+  }
+  async function disconnectGoogleCalendar() {
+    try {
+      isLoading.value = true
+      await authStore.axios_instance.delete('api/gcalendar/disconnect/')
+      isGoogleConnected.value = false
+      gcalEvents.value = []
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to disconnect Google Calendar'
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+  async function updateGoogleCalendarEvent(eventId, updateData) {
+    try {
+      isLoading.value = true
+      // Ensure the updateData contains all required fields in the correct format
+      // The API expects specific format for updating Google Calendar events
+      // Make the API call to update the event
+      return await authStore.axios_instance.put(`api/gcalendar/events/${eventId}/`, updateData)
+    } catch (error) {
+      // Handle error and provide feedback
+      if (error.response && error.response.data) {
+        error.value = error.response.data.error || 'Failed to update Google Calendar event'
+      } else {
+        error.value = 'Network error while updating event'
       }
-    },
-  },
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+  // websocket methods
+  function fetchGcalTask(date_iso_string = '') {
+    if (!date_iso_string) {
+      // set today's date
+      date_iso_string = new Date().toISOString()
+    }
+    _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_iso_str: date_iso_string })
+  }
+  function routeGcalMessage(msg) {
+    switch (msg.type) {
+      case 'connected': {
+        console.log('google cal ws connected successfully: ', msg)
+        fetchGcalTask()
+        break
+      }
+      case 'gcal_event':
+      case 'gcal.events': {
+        const updates = msg.data || []
+        updates.forEach((ev) => {
+          const idx = gcalEvents.value.findIndex((e) => e.id === ev.id)
+          if (idx !== -1) {
+            gcalEvents.value.splice(idx, 1, ev)
+          } else {
+            gcalEvents.value.push(ev)
+          }
+        })
+        break
+      }
+      default:
+        console.warn('[GCAL WS] unhandled message type:', msg.type)
+    }
+  }
+  // Generic send helper
+  function _sendActionToGcalWebsocket(action, payload = {}) {
+    if (gcalWsStatus.value === 'OPEN') {
+      gcalWsSend(JSON.stringify({ action, payload }))
+    } else {
+      console.info('[WS] not initialized, ws status yet:', gcalWsStatus.value)
+    }
+  }
+
+  // watch incoming data
+  watch(gcalWsData, (raw) => {
+    if (!raw) return
+    let msg
+    try {
+      msg = JSON.parse(raw.data ?? raw)
+    } catch {
+      console.error('[CalendarStore GCAL WS] invalid JSON:', raw)
+      return
+    }
+    if (msg) {
+      routeGcalMessage(msg)
+    }
+  })
+  function initGcalWs() {
+    const auth = useAuthStore()
+    auth.verify_auth() // sends a fetchuserdata request to make sure user is logged in
+    if (auth.isAuthenticated) {
+      console.info('user is authenticated opening gcal ws')
+      gcalWsOpen()
+    }
+  }
+
+  return {
+    gcalEvents,
+    fetchGcalTask,
+    gcalWsStatus,
+    initGcalWs,
+    gcalWsClose,
+    checkGoogleConnection,
+    startGoogleAuth,
+    disconnectGoogleCalendar,
+    updateGoogleCalendarEvent,
+  }
 })
