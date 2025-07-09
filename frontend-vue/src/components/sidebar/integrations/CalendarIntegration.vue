@@ -290,9 +290,9 @@ const calendarOptions = ref({
   eventResizableFromStart: true,
   editable: true,
   droppable: true,
-  drop: handleTaskDropped,
-  eventDrop: handleCalendarEventUpdated,
-  eventResize: handleCalendarEventUpdated,
+  drop: handleTaskDropped,  // task dropped from outside into fullcalendar
+  eventDrop: handleCalendarEventUpdated,  // Triggered when dragging stops and the event has moved to a different day/time.
+  eventResize: handleCalendarEventUpdated,  // Triggered when resizing stops and the event has changed in duration.
 })
 </script>
 
