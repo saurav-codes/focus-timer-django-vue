@@ -13,6 +13,7 @@ import {
   prependEarlierColumns,
   reInitializeOrder,
 } from '../utils/taskUtils'
+import { tasksToFcEvents } from '../utils/calendarSerializer'
 
 export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   // Build WebSocket URL
@@ -33,7 +34,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     // heartbeat: { message: 'ping', interval: 30000, pongTimeout: 10000 },
   })
 
-  // Reactive state mirroring taskStore.js
   const status = ref(wsStatus.value) // CONNECTING | OPEN | CLOSED ...
   const kanbanColumns = ref(createInitialColumns())
   const brainDumpTasks = ref([])
@@ -46,6 +46,18 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   const firstDate = ref(addDays(today, -1))
   const lastDate = ref(addDays(today, 2))
   const minDate = ref(addDays(today, -7))
+  const localCalendarTaskInFcFormat = ref([])
+
+  watch(
+    kanbanColumns,
+    () => {
+      const alltasks = kanbanColumns.value.flatMap((col) => col.tasks).filter((task) => task.status == 'ON_CAL')
+      if (alltasks) {
+        localCalendarTaskInFcFormat.value = tasksToFcEvents(alltasks)
+      }
+    },
+    { immediate: true, deep: true }
+  )
 
   // Refetch tasks whenever project or tag filters change
   watch(
@@ -61,7 +73,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     status.value = v
   })
 
-  // Handle incoming messages
+  // ---------------------
+  // Handle incoming messages (tasks ws)
+  // ---------------------
   watch(wsData, (raw) => {
     if (!raw) return
     let msg
@@ -148,7 +162,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         brainDumpTasks.value = fetchTaskType(tasks_list, 'BRAINDUMP')
         backlogs.value = fetchTaskType(tasks_list, 'BACKLOG')
         archivedTasks.value = fetchTaskType(tasks_list, 'ARCHIVED')
-        // TODO: handle other tasks type too
         break
       }
       case 'task.created': {
@@ -269,7 +282,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     archivedTasks.value.unshift(task)
   }
 
-  // Exposed actions mirroring taskStore.js
   function initWs() {
     const auth = useAuthStore()
     auth.verify_auth() // sends a fetchuserdata request to make sure user is logged in
@@ -384,6 +396,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     brainDumpTasks,
     backlogs,
     archivedTasks,
+    localCalendarTaskInFcFormat,
     selectedProjects,
     selectedTags,
     firstDate,
