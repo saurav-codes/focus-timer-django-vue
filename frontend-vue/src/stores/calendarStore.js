@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from './authStore'
 import { useWebSocket } from '@vueuse/core'
 import { watch, ref } from 'vue'
+import { getDateStrFromDateObj } from '../../src/utils/taskUtils'
 
 export const useCalendarStore = defineStore('calendar', () => {
   const host = import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL || 'tymr.online' : 'localhost:8000'
@@ -89,14 +90,11 @@ export const useCalendarStore = defineStore('calendar', () => {
     // Accept a local date string (YYYY-MM-DD). If none provided, use today's local date.
     if (!date_str) {
       const today = new Date()
-      const y = today.getFullYear()
-      const m = String(today.getMonth() + 1).padStart(2, '0')
-      const d = String(today.getDate()).padStart(2, '0')
-      date_str = `${y}-${m}-${d}`
+      date_str = getDateStrFromDateObj(today)
       console.log("no date passed so using today's local date -", date_str)
     }
     console.log('fetch gcal task with date -', date_str)
-    _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_iso_str: date_str })
+    _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_str: date_str })
   }
   function routeGcalMessage(msg) {
     switch (msg.type) {
