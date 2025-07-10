@@ -55,12 +55,12 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             return
         if action == "fetch_gcal_task_from_dt":
             payload = content.get("payload")
-            date_iso_str = payload.get("date_iso_str")
-            if not date_iso_str:
+            date_str = payload.get("date_str")
+            if not date_str:
                 return await self.send_json(
-                    {"type": "error", "error": "no `date_iso_str` found"}
+                    {"type": "error", "error": "no `date_str` found"}
                 )
-            resp = await self.fetch_cal_taks_from_dt(date_iso_str)
+            resp = await self.fetch_cal_taks_from_dt(date_str)
             return resp
 
     async def fetch_cal_taks_from_dt(self, date_str: str):
