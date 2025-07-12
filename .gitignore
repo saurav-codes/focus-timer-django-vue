@@ -41,3 +41,4 @@ backend/static/
 backend/media/
 
 .opencode
+.zed/
