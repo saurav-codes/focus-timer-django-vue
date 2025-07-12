@@ -31,14 +31,14 @@
   const columnTasks = computed({
     get() {
       const col = taskStore.kanbanColumns.find(
-        (c) => c.date.toDateString() === props.dateObj.toDateString()
+        (c) => c.date === props.dateObj
       )
       return col ? col.tasks : []
     },
     // setter required for v-model on a computed
     set(newArr) {
       const col = taskStore.kanbanColumns.find(
-        (c) => c.date.toDateString() === props.dateObj.toDateString()
+        (c) => c.date === props.dateObj
       )
       if (col) col.tasks = newArr
     },
