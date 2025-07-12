@@ -5,20 +5,18 @@ import { addDays, subDays, startOfToday as today_dt_fn } from 'date-fns'
 export const formatDate = (date) => useDateFormat(date, 'ddd, MMM D').value
 
 // Create a kanban column object for a given date with a human-readable title
-export const createDateColumn = (date, title = null) => {
+export const createDateColumn = (colDateObj, title = null) => {
   if (!title) {
-    const colDateObj = new Date(date)
-
-    if (colDateObj === today_dt_fn()) {
+    if (colDateObj.toDateString() === today_dt_fn().toDateString()) {
       title = 'Today'
     } else {
       const yesterday = subDays(today_dt_fn(), 1)
 
       const tomorrow = addDays(today_dt_fn(), 1)
 
-      if (colDateObj === yesterday) {
+      if (colDateObj.toDateString() === yesterday.toDateString()) {
         title = 'Yesterday'
-      } else if (colDateObj === tomorrow) {
+      } else if (colDateObj.toDateString() === tomorrow.toDateString()) {
         title = 'Tomorrow'
       } else {
         title = formatDate(colDateObj)
@@ -28,8 +26,8 @@ export const createDateColumn = (date, title = null) => {
 
   return {
     tasks: [],
-    date: date,
-    dateString: formatDate(date),
+    date: colDateObj,
+    dateString: formatDate(colDateObj),
     title,
   }
 }
