@@ -24,6 +24,9 @@ CREATE ROLE focus_timer_user
 CREATE DATABASE focus_timer_django_vue_db
   OWNER = focus_timer_user;
 
+-- firstly make sure tz is UTC to avoid issues with timezones
+ALTER DATABASE focus_timer_django_vue_db SET timezone TO 'UTC';
+
 -- Grant the minimal CONNECT/TEMP/USAGE/CREATE rights on that DB & schema:
 \c focus_timer_django_vue_db focus_timer_user
 -- above cmd only for mac local setup. -- for ubuntu, use the following cmd:
