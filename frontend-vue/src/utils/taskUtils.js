@@ -1,14 +1,5 @@
 import { useDateFormat } from '@vueuse/core'
-
-// Global reference date for today
-export const today = new Date()
-
-// Helper function to add or subtract days from a given date
-export const addDays = (date, days) => {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
+import { addDays, subDays, startOfToday as today_dt_fn } from 'date-fns'
 
 // Consistent date formatting helper (Mon, Jan 1)
 export const formatDate = (date) => useDateFormat(date, 'ddd, MMM D').value
@@ -18,18 +9,16 @@ export const createDateColumn = (date, title = null) => {
   if (!title) {
     const colDateObj = new Date(date)
 
-    if (colDateObj.toDateString() === today.toDateString()) {
+    if (colDateObj === today_dt_fn()) {
       title = 'Today'
     } else {
-      const yesterday = new Date(today)
-      yesterday.setDate(today.getDate() - 1)
+      const yesterday = subDays(today_dt_fn(), 1)
 
-      const tomorrow = new Date(today)
-      tomorrow.setDate(today.getDate() + 1)
+      const tomorrow = addDays(today_dt_fn(), 1)
 
-      if (colDateObj.toDateString() === yesterday.toDateString()) {
+      if (colDateObj === yesterday) {
         title = 'Yesterday'
-      } else if (colDateObj.toDateString() === tomorrow.toDateString()) {
+      } else if (colDateObj === tomorrow) {
         title = 'Tomorrow'
       } else {
         title = formatDate(colDateObj)
@@ -39,23 +28,18 @@ export const createDateColumn = (date, title = null) => {
 
   return {
     tasks: [],
-    date: new Date(date),
+    date: date,
     dateString: formatDate(date),
     title,
   }
 }
 
-// Pre-populate the first four kanban columns (Yesterday, Today, Tomorrow, +1 day)
+// Pre-populate the first four kanban columns (Yesterday, today(), Tomorrow, +1 day)
 export const createInitialColumns = () => [
-  { tasks: [], date: addDays(today, -1), title: 'Yesterday', dateString: formatDate(addDays(today, -1)) },
-  { tasks: [], date: today, title: 'Today', dateString: formatDate(today) },
-  { tasks: [], date: addDays(today, 1), title: 'Tomorrow', dateString: formatDate(addDays(today, 1)) },
-  {
-    tasks: [],
-    date: addDays(today, 2),
-    title: formatDate(addDays(today, 2)),
-    dateString: formatDate(addDays(today, 2)),
-  },
+  { ...createDateColumn(subDays(today_dt_fn(), 1)) },
+  { ...createDateColumn(today_dt_fn()) },
+  { ...createDateColumn(addDays(today_dt_fn(), 1)) },
+  { ...createDateColumn(addDays(today_dt_fn(), 2)) },
 ]
 
 // Convert an HH:MM duration string to ISO-8601 (PT#H#M) expected by the API
@@ -138,7 +122,7 @@ export const pushForwardColumns = (kanbanColumnsRef, lastDateRef, count = 3) => 
 export const prependEarlierColumns = (kanbanColumnsRef, firstDateRef, minDateRef, count = 3) => {
   let added = 0
   for (let i = 0; i < count; i++) {
-    const prevDate = addDays(firstDateRef.value, -1)
+    const prevDate = subDays(firstDateRef.value, 1)
     if (prevDate < minDateRef.value) break
     kanbanColumnsRef.value.unshift(createDateColumn(prevDate))
     firstDateRef.value = prevDate

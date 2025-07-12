@@ -3,9 +3,8 @@ import { useWebSocket } from '@vueuse/core'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from './authStore'
 import { useTagsProjectStore } from './tagsProjectStore'
+import { addDays, parseISO, subDays, startOfToday as today } from 'date-fns'
 import {
-  today,
-  addDays,
   createInitialColumns,
   formatDurationForAPI,
   fetchTaskType,
@@ -43,9 +42,9 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   const tagsProjectStore = useTagsProjectStore()
   const selectedProjects = computed(() => tagsProjectStore.selectedProjects)
   const selectedTags = computed(() => tagsProjectStore.selectedTags)
-  const firstDate = ref(addDays(today, -1))
-  const lastDate = ref(addDays(today, 2))
-  const minDate = ref(addDays(today, -7))
+  const firstDate = ref(subDays(today(), 1))
+  const lastDate = ref(addDays(today(), 2))
+  const minDate = ref(subDays(today(), 7))
   const localCalendarTaskInFcFormat = ref([])
 
   watch(
@@ -98,7 +97,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     })
     kanbanColumns.value.forEach((column) => {
       const filteredTasks = boardOrCalTasks.filter((task) => {
-        return task.column_date === column.date.toISOString().split('T')[0]
+        return parseISO(task.column_date).toDateString() === column.date.toDateString()
       })
       // Use direct assignment to ensure reactivity
       column.tasks = [...filteredTasks]
@@ -298,8 +297,8 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   // send msg to backend
   function fetchTasksWs() {
     sendAction('fetch_tasks', {
-      start_date: firstDate.value.toISOString().split('T')[0],
-      end_date: lastDate.value.toISOString().split('T')[0],
+      start_date: firstDate.value.toDateString(),
+      end_date: lastDate.value.toDateString(),
       projects: selectedProjects.value,
       tags: selectedTags.value,
     })
