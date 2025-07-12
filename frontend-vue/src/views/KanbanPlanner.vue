@@ -70,18 +70,9 @@
 
   onMounted(() => {
     taskStore.initWs()
-    const wrapper = kanbanColumnsWrapper.value
-    if (wrapper) {
-      wrapper.scrollLeft = 0
-      wrapper.addEventListener('scroll', onScroll)
-    }
   })
 
   onUnmounted(() => {
-    const wrapper = kanbanColumnsWrapper.value
-    if (wrapper) {
-      wrapper.removeEventListener('scroll', onScroll)
-    }
     taskStore.closeWs()
   })
 </script>
@@ -93,7 +84,7 @@
     </div>
 
     <!-- Scrollable columns container -->
-    <div ref="kanbanColumnsWrapper" class="kanban-columns-wrapper">
+    <div ref="kanbanColumnsWrapper" class="kanban-columns-wrapper" @scroll="onScroll">
       <div class="kanban-columns">
         <!-- Loading skeleton for backward infinite scroll -->
         <LoadingColumnsSkeleton v-if="uiStore.isLoadingEarlierColumns" />
