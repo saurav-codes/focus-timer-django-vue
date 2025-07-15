@@ -10,6 +10,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/vue3'
 import Popper from 'vue3-popper'
 import TaskEditModal from '../../TaskEditModal.vue'
+import ReadOnlyModal from './ReadOnlyModal.vue'
 import { calculateEndAt, getDateStrFromDateObj } from '../../../utils/taskUtils'
 
 // Props
@@ -106,9 +107,11 @@ const isToday = computed(() => {
 function today() {
   calendarRef.value?.getApi().today()
 }
-// -------- Task Edit Modal --------
+// -------- Task and Event Modals --------
 const isEditModalOpen = ref(false)
 const activeTask = ref(null)
+const activeEvent = ref(null)
+const isReadOnlyModalOpen = computed(() => Boolean(activeEvent))
 
 function openEditModal(task) {
   activeTask.value = task
@@ -118,6 +121,14 @@ function openEditModal(task) {
 function closeEditModal() {
   isEditModalOpen.value = false
   activeTask.value = null
+}
+
+function openReadOnlyModal(event) {
+  activeEvent.value = event
+}
+
+function closeReadOnlyModal() {
+  activeEvent.value = null
 }
 
 function handleTaskDeleted() {
@@ -241,11 +252,16 @@ async function handleTaskDropped(dropInfo) {
 
 function handleEventClick(eventClickInfo) {
   const source = eventClickInfo.event.extendedProps.source
+  // const source = eventClickInfo.event
   if (source === 'google') {
-    console.log("event is from google so no feature to show event ")
+    // Open modal specifically for Google Calendar events
+    const event = eventClickInfo.event
+    if (event) {
+      console.log("opening event")
+      openReadOnlyModal(event)
+    }
     return
   }
-  console.log("opening event")
   const task = eventClickInfo.event.extendedProps.raw
   if (task) {
     // Open modal for non-Google calendar tasks
@@ -364,7 +380,6 @@ const calendarOptions = ref({
       <!-- Render FullCalendar component here -->
       <FullCalendar v-else ref="calendarRef" :options="calendarOptions" />
 
-      <!-- Task Edit Modal -->
       <TaskEditModal
         v-if="activeTask"
         :task="activeTask"
@@ -373,6 +388,11 @@ const calendarOptions = ref({
         @task-updated="handleTaskUpdated"
         @task-archived="handleTaskArchived"
         @task-deleted="handleTaskDeleted" />
+      <ReadOnlyModal
+        v-if="activeEvent"
+        :event="activeEvent"
+        :is-open="isReadOnlyModalOpen"
+        @close-modal="closeReadOnlyModal" />
     </div>
   </div>
 </template>
