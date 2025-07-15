@@ -1,5 +1,5 @@
 <script setup>
-import { X, Calendar as CalendarIcon, Clock, MapPin, Users, Link, Info, Tag, Eye } from 'lucide-vue-next'
+import { X, Calendar as CalendarIcon, Clock, MapPin, Users, Link, Info, Eye, ExternalLink } from 'lucide-vue-next'
 import { computed } from 'vue'
 import {
   format,
@@ -552,7 +552,7 @@ const eventUpdatedFormatted = computed(() => {
           <div v-if="props.event.extendedProps.htmlLink" class="form-group">
             <div class="info-value">
               <a :href="props.event.extendedProps.htmlLink" target="_blank" class="calendar-link-button">
-                <Link size="16" />
+                <ExternalLink size="16" />
                 Open on Calendar
               </a>
             </div>
@@ -628,17 +628,18 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+  width: 95%;
 }
 
 .form-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .info-value {
@@ -651,21 +652,22 @@ const eventUpdatedFormatted = computed(() => {
   max-height: 150px;
   overflow-y: auto;
   padding: 0.75rem;
-  background: var(--color-background-secondary);
+  background: var(--color-input-background);
   border-radius: 0.375rem;
   border: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
 }
 
 .info-value.code {
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-family: var(--font-family-mono);
   background: var(--color-background-secondary);
   padding: 0.5rem;
   border-radius: 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .info-value.timestamp {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
 }
 
@@ -677,12 +679,12 @@ const eventUpdatedFormatted = computed(() => {
 
 .duration-info {
   color: var(--color-text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .relative-time {
   color: var(--color-text-tertiary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   font-style: italic;
 }
 
@@ -692,8 +694,8 @@ const eventUpdatedFormatted = computed(() => {
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   margin-top: 0.5rem;
 }
 
@@ -723,7 +725,7 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .attendee-email {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   margin-top: 0.25rem;
 }
@@ -738,8 +740,8 @@ const eventUpdatedFormatted = computed(() => {
 .badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   text-transform: capitalize;
 }
 
@@ -789,7 +791,7 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .conference-id {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   margin-bottom: 0.5rem;
 }
@@ -809,7 +811,7 @@ const eventUpdatedFormatted = computed(() => {
 .conference-link {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .conference-link:hover {
@@ -817,12 +819,12 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .meeting-code {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   background: var(--color-background-secondary);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .attachments-list {
@@ -844,7 +846,7 @@ const eventUpdatedFormatted = computed(() => {
 .attachment-link {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .attachment-link:hover {
@@ -852,7 +854,7 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .attachment-type {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   background: var(--color-background-tertiary);
   padding: 0.25rem 0.5rem;
@@ -860,8 +862,8 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .recurrence-rule {
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-  font-size: 0.875rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
   background: var(--color-background-secondary);
   padding: 0.5rem;
   border-radius: 0.25rem;
@@ -875,15 +877,15 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .reminder-item {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
 .status-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   text-transform: capitalize;
 }
 
@@ -904,7 +906,7 @@ const eventUpdatedFormatted = computed(() => {
 
 .extended-prop {
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .extended-prop:last-child {
@@ -914,7 +916,7 @@ const eventUpdatedFormatted = computed(() => {
 .calendar-link {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .calendar-link:hover {
@@ -922,28 +924,31 @@ const eventUpdatedFormatted = computed(() => {
 }
 
 .event-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0 0 0.5rem 0;
-  line-height: 1.3;
+  line-height: var(--line-height-tight);
 }
 
 .calendar-link-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--color-primary);
-  color: white;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  color: var(--color-text-secondary);
   text-decoration: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-base);
 }
 
 .calendar-link-button:hover {
-  background: var(--color-primary-hover);
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
   text-decoration: none;
 }
 
