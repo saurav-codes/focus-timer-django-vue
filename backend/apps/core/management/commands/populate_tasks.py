@@ -25,7 +25,7 @@ User = get_user_model()
 class Command(BaseCommand):
     help = "Populate the database with fake tasks"
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # type:ignore
         if not settings.DEBUG:
             self.stdout.write(
                 self.style.ERROR(
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 "description": "Generate innovative feature ideas for the next quarter.",
                 "is_completed": False,
                 "status": Task.BRAINDUMP,
-                "column_date": None,
+                "start_at": None,
                 "tags": ["Planning", "Innovation"],
                 "duration": "00:20:00",
             },
@@ -84,8 +84,8 @@ class Command(BaseCommand):
                 "description": "Analyze top 5 competitors and their feature sets.",
                 "is_completed": False,
                 "status": Task.BRAINDUMP,
+                "start_at": None,
                 "tags": ["Research", "Strategy"],
-                "column_date": None,
                 "duration": "00:30:00",
             },
             {
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.BRAINDUMP,
                 "tags": ["Marketing", "Planning"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "01:00:00",
             },
             # Regular Tasks
@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ON_BOARD,
                 "tags": ["Development", "Security"],
-                "column_date": today,
+                "start_at": today,
                 "duration": "00:30:00",
             },
             {
@@ -113,7 +113,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ON_BOARD,
                 "tags": ["Documentation", "API"],
-                "column_date": today,
+                "start_at": today,
                 "duration": "00:40:00",
             },
             {
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Meeting", "Team"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=1),
+                "start_at": today + timedelta(days=1),
                 "duration": "00:80:00",
             },
             {
@@ -131,7 +131,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Bug", "UI"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=1),
+                "start_at": today + timedelta(days=1),
                 "duration": "00:30:00",
             },
             {
@@ -140,7 +140,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Feature", "UI"],
                 "status": Task.ON_BOARD,
-                "column_date": today - timedelta(days=1),
+                "start_at": today - timedelta(days=1),
                 "duration": "00:30:00",
             },
             {
@@ -149,7 +149,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Performance", "Development"],
                 "status": Task.ON_BOARD,
-                "column_date": today - timedelta(days=1),
+                "start_at": today - timedelta(days=1),
                 "duration": "00:30:00",
             },
             {
@@ -158,7 +158,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "tags": ["Analysis", "User Experience"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=2),
+                "start_at": today + timedelta(days=2),
                 "duration": "00:30:00",
             },
             {
@@ -167,7 +167,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Security", "Maintenance"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=2),
+                "start_at": today + timedelta(days=2),
                 "duration": "00:30:00",
             },
             {
@@ -176,7 +176,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["UX", "Documentation"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=3),
+                "start_at": today + timedelta(days=3),
                 "duration": "00:110:00",
             },
             {
@@ -184,7 +184,7 @@ class Command(BaseCommand):
                 "description": "Update all project dependencies to latest versions.",
                 "is_completed": True,
                 "tags": ["Maintenance", "Development"],
-                "column_date": today + timedelta(days=3),
+                "start_at": today + timedelta(days=3),
                 "status": Task.ON_BOARD,
                 "duration": "00:50:00",
             },
@@ -194,7 +194,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Feature", "Backend"],
                 "status": Task.ON_BOARD,
-                "column_date": today + timedelta(days=4),
+                "start_at": today + timedelta(days=4),
                 "duration": "00:30:00",
             },
             {
@@ -202,7 +202,7 @@ class Command(BaseCommand):
                 "description": "Generate and analyze monthly usage statistics.",
                 "is_completed": False,
                 "tags": ["Analytics", "Reporting"],
-                "column_date": today + timedelta(days=4),
+                "start_at": today + timedelta(days=4),
                 "status": Task.ON_BOARD,
                 "duration": "00:30:00",
             },
@@ -213,7 +213,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "tags": ["Analytics", "Reporting"],
                 "status": Task.BACKLOG,
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -222,7 +222,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.BACKLOG,
                 "tags": ["outdoor", "Reporting"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             # Archived Tasks
@@ -232,7 +232,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "Cleanup"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -241,7 +241,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Wiki"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -250,7 +250,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "API"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -259,7 +259,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ARCHIVED,
                 "tags": ["Maintenance", "Git"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -268,7 +268,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Git"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -277,7 +277,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ARCHIVED,
                 "tags": ["Documentation", "Release"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -286,7 +286,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ARCHIVED,
                 "tags": ["Infrastructure", "Maintenance"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -295,7 +295,7 @@ class Command(BaseCommand):
                 "is_completed": True,
                 "status": Task.ARCHIVED,
                 "tags": ["Backup", "Maintenance"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -304,7 +304,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ARCHIVED,
                 "tags": ["Testing", "Maintenance"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
             {
@@ -313,7 +313,7 @@ class Command(BaseCommand):
                 "is_completed": False,
                 "status": Task.ARCHIVED,
                 "tags": ["Research", "User Experience"],
-                "column_date": None,
+                "start_at": None,
                 "duration": "00:30:00",
             },
         ]
@@ -325,7 +325,7 @@ class Command(BaseCommand):
                 title=data["title"],
                 description=data["description"],
                 is_completed=data["is_completed"],
-                column_date=data["column_date"],
+                start_at=data["start_at"],
                 duration=parse_duration(data["duration"]),
                 user=user,
                 project_id=random.choice(project_ids),

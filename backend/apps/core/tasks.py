@@ -5,7 +5,13 @@ from .models import Task, RecurrenceSeries
 import datetime
 from django.contrib.auth import get_user_model
 from dateutil.rrule import rrulestr
+from django.db.models import Q
 from .selectors import get_future_siblings, get_latest_task_of_series
+from .services import (
+    save_task,
+    _apply_new_dt_to_datetime_obj,
+    generate_rec_tasks_for_parent,
+)
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .serializers import TaskSerializer
@@ -29,16 +35,23 @@ def _gen_rec_tasks_for_parent_or_sibling(
         raise ValueError("Task must have a recurrence_rule to generate future siblings")
 
     # Ensure we're working with datetime objects for the dateutil rrule
-    start_date = (
-        parent_or_sibling_task.column_date
-        or timezone.now().date() + datetime.timedelta(days=1)
-    )
+    start_date = parent_or_sibling_task.start_at or timezone.now().date()
     # Convert date to datetime at midnight for comparison
-    start_after = datetime.datetime.combine(start_date, datetime.time.min)
-    window_end = start_after + datetime.timedelta(days=days_ahead)
+    start_date = datetime.datetime.combine(start_date, datetime.time.min)
+    # if there are already more than 10 tasks in this series
+    # then don't create new ones
+    alrdy_created_tsks_count = Task.objects.filter(
+        recurrence_series=parent_or_sibling_task.recurrence_series,
+        start_date__gte=start_date,
+    ).count()
+    if alrdy_created_tsks_count > 10:
+        msg = f"already {alrdy_created_tsks_count} tasks exists in series: {parent_or_sibling_task.recurrence_series}, so not creating new tasks"
+        logger.info(msg)
+        return msg
+    window_end = start_date + datetime.timedelta(days=days_ahead)
 
     try:
-        rule = rrulestr(rec_rule, dtstart=start_after)
+        rule = rrulestr(rec_rule, dtstart=start_date)
     except Exception as e:
         result = f"Error parsing recurrence rule for parent_task_id={parent_or_sibling_task.pk}: {e}"
         logger.error(result)
@@ -47,7 +60,7 @@ def _gen_rec_tasks_for_parent_or_sibling(
     # Convert the occurrences to dates since we're working with date fields
     occurrences = [
         dt.date() if isinstance(dt, datetime.datetime) else dt
-        for dt in rule.between(after=start_after, before=window_end, inc=True)
+        for dt in rule.between(after=start_date, before=window_end, inc=True)
     ][:max_events]
     if not occurrences:
         result = (
@@ -55,8 +68,6 @@ def _gen_rec_tasks_for_parent_or_sibling(
         )
         logger.info(result)
         return result
-
-    from .services import generate_rec_tasks_for_parent
 
     return generate_rec_tasks_for_parent(parent_or_sibling_task, occurrences)
 
@@ -167,7 +178,7 @@ def archive_old_tasks_periodic():
     count = 0
     for task in old_tasks:
         task.status = Task.ARCHIVED
-        task.save(update_fields=["status"])
+        save_task(task)  # for further processing of task
         count += 1
 
     logger.info(f"Archived {count} old tasks")
@@ -194,7 +205,7 @@ def move_old_tasks_to_backlogs_periodic():
     count = 0
     for task in old_tasks:
         task.status = Task.BACKLOG
-        task.save(update_fields=["status"])
+        save_task(task)
         count += 1
 
     logger.info(f"Moved {count} old tasks to backlogs")
@@ -210,24 +221,41 @@ def move_yesterday_task_to_today_periodic():
     User = get_user_model()
     total_moved = 0
 
-    # Iterate through all users and adjust based on their local midnight
     for user in User.objects.all():
-        now_local = timezone.now().astimezone(user.timezone)  # type:ignore
-        yesterday_date = (now_local - datetime.timedelta(days=1)).date()
+        # today midnight time
+        today_date_mid = datetime.datetime.combine(
+            timezone.now().date(),
+            datetime.time.min,
+        )
+        yesterday_date = (today_date_mid - datetime.timedelta(days=1)).date()
 
-        old_tasks = Task.objects.filter(
-            user=user,
-            status=Task.ON_BOARD,
-            is_completed=False,
-            column_date=yesterday_date,
-            recurrence_series__isnull=True,  # isn't a recurring task
-        ).exclude(status=Task.ARCHIVED)
+        old_tasks = (
+            Task.objects.filter(Q(status=Task.ON_BOARD) | Q(status=Task.ON_CAL))
+            .filter(
+                user=user,
+                is_completed=False,
+                start_at__date=yesterday_date,
+                recurrence_series__isnull=True,  # isn't a recurring task
+            )
+            .exclude(status=Task.ARCHIVED)
+        )
 
         moved = 0
         for task in old_tasks:
-            task.column_date = now_local
-            task.save(update_fields=["column_date"])
-            moved += 1
+            tsk_changed = False
+            if task.start_at:
+                task.start_at = _apply_new_dt_to_datetime_obj(
+                    task.start_at, today_date_mid.date()
+                )
+                tsk_changed = True
+            if task.end_at:
+                task.end_at = _apply_new_dt_to_datetime_obj(
+                    task.end_at, today_date_mid.date()
+                )
+                tsk_changed = True
+            if tsk_changed:
+                save_task(task)
+                moved += 1
 
         if moved:
             logger.info(

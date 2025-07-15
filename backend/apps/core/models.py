@@ -4,7 +4,6 @@ from django.utils.functional import cached_property
 from django.utils.duration import _get_duration_components  # type: ignore
 from django.contrib.auth import get_user_model
 from simple_history.models import HistoricalRecords
-from django.db.models import Q, UniqueConstraint
 
 User = get_user_model()
 
@@ -59,13 +58,7 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     duration = models.DurationField(blank=True, null=True)
-    # column_date is used for tracking the location of task in the kanban board column
-    column_date = models.DateField(blank=True, null=True)
-    # start_at, end_at are used for calendar events
-    # timezone info will be fetched based on where user is logged in from
-    # so we can fetch this info from user's browser
-    # we may need to handle it differently if user is let's say travelling
-    # because he will add the task in diff timezones.
+    # start_at, end_at are used for calendar events & task location on kanban board
     start_at = models.DateTimeField(blank=True, null=True)
     end_at = models.DateTimeField(blank=True, null=True)
     tags = TaggableManager(blank=True)
@@ -86,16 +79,7 @@ class Task(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ["order"]
-        constraints = [
-            # enforce unique (recurrence_series, column_date) but only
-            # when you actually have a series and a column_date
-            UniqueConstraint(
-                fields=["recurrence_series", "column_date"],
-                condition=Q(recurrence_series__isnull=False, column_date__isnull=False),
-                name="unique_task_per_series_per_date",
-            ),
-        ]
+        ordering = ["start_at", "order"]
 
     def __str__(self):
         return self.title
@@ -103,11 +87,13 @@ class Task(models.Model):
     @cached_property
     def get_duration_display(self):
         if self.duration:
-            _, hours, minutes, _, _ = _get_duration_components(self.duration)
+            day, hours, minutes, _, _ = _get_duration_components(self.duration)
             final_str = ""
             if hours > 0:
                 final_str += f"{hours}h "
             if minutes > 0:
                 final_str += f"{minutes}m"
+            if day > 0:
+                final_str = f"{day}d " + final_str
             return final_str.strip()
         return None

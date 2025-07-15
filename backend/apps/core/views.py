@@ -13,6 +13,7 @@ from django.db import transaction
 import logging
 from .tasks import notify_frontend
 from datetime import timedelta
+from .services import save_task
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -34,7 +35,7 @@ def update_task_duration(request):
         # also set end time according to the duration.
         if task.start_at and isinstance(task.duration, timedelta):
             task.end_at = task.start_at + task.duration  # type:ignore
-        task.save()
+        save_task(task)
         serialized_task = TaskSerializer(task).data
         notify_frontend.delay(  # type: ignore
             f"tasks_user_{task.user.pk}",
@@ -45,116 +46,6 @@ def update_task_duration(request):
         )
         return Response(serialized_task, status=status.HTTP_200_OK)
     return Response(duration_serializer.errors, status=400)
-
-
-# class TasksApiView(LoginRequiredMixin, APIView):
-#     filter_backends = (filters.DjangoFilterBackend,)
-#     filterset_class = TaskFilter
-
-#     def get(self, request):
-#         """
-#         Get all tasks
-#         """
-#         logger.info(
-#             f"Fetching tasks for user_id={request.user.id} filters={request.GET.dict()}"
-#         )
-#         tasks = Task.objects.filter(user=request.user)
-#         # Apply filtering
-#         filterset = TaskFilter(request.GET, queryset=tasks)
-#         if not filterset.is_valid():
-#             logger.warning(
-#                 f"TaskFilter invalid for user_id={request.user.id}, errors={filterset.errors}"
-#             )
-#         tasks = filterset.qs if filterset.is_valid() else tasks
-#         logger.info(f"Found {tasks.count()} tasks for user_id={request.user.id}")
-#         serializer = TaskSerializer(tasks, many=True)
-#         return Response(serializer.data)
-
-#     def post(self, request):
-#         """
-#         Create a new task
-#         """
-#         serializer = TaskSerializer(data=request.data, context={"request": request})
-#         if serializer.is_valid():
-#             with transaction.atomic():
-#                 serializer.save()
-#                 logger.info(
-#                     f"Task created: task_id={serializer.instance.id} by user_id={request.user.id}"
-#                 )
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     def put(self, request):
-#         """
-#         Update the Tasks in bulk
-#         """
-#         action = request.data.get("action")
-#         if action == "update_order":
-#             tasks = request.data.get("tasks")
-#             logger.info(
-#                 f"Bulk update order by user_id={request.user.id} for task_ids={[t['id'] for t in tasks]}"
-#             )
-#             for idx, task in enumerate(tasks, start=1):
-#                 task_obj = get_object_or_404(Task, pk=task["id"], user=request.user)
-#                 with transaction.atomic():
-#                     task_obj.order = idx
-#                     task_obj.save()
-#             return Response(status=status.HTTP_200_OK)
-#         return Response({"error": "unknown action"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class TaskDetailApiView(LoginRequiredMixin, APIView):
-#     def get(self, request, pk):
-#         """
-#         Get a task by id
-#         """
-#         logger.info(f"Fetching task: task_id={pk} by user_id={request.user.id}")
-#         task = get_object_or_404(Task, pk=pk, user=request.user)
-#         serializer = TaskSerializer(task)
-#         return Response(serializer.data)
-
-#     def put(self, request, pk):
-#         """
-#         Update a task
-#         use `toggle_task_completion` for toggling the completion status and this
-#         one for updating other fields.
-#         """
-#         logger.info(f"Updating task: task_id={pk} by user_id={request.user.id}")
-#         task = get_object_or_404(Task, pk=pk, user=request.user)
-#         serializer = TaskSerializer(
-#             task, data=request.data, context={"request": request}, partial=True
-#         )
-#         if serializer.is_valid():
-#             with transaction.atomic():
-#                 serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     def delete(self, request, pk):
-#         logger.info(f"Deleting task: task_id={pk} by user_id={request.user.id}")
-#         task = get_object_or_404(Task, pk=pk, user=request.user)
-#         with transaction.atomic():
-#             task.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# @csrf_protect
-# @api_view(["POST"])
-# @login_required
-# def toggle_task_completion(request, pk):
-#     """
-#     Toggle the completion status of a task
-#     best to use since we aren't sending/receiving any data unlike the TaskApiView
-#     """
-#     task: Task = get_object_or_404(Task, pk=pk, user=request.user)
-#     logger.info(
-#         f"Toggling completion: task_id={pk} old_status={task.is_completed} by user_id={request.user.id}"
-#     )
-#     with transaction.atomic():
-#         task.is_completed = not task.is_completed
-#         task.save()
-#     logger.info(f"New completion status: task_id={pk} new_status={task.is_completed}")
-#     return Response(status=status.HTTP_200_OK)
 
 
 @csrf_protect
@@ -171,7 +62,7 @@ def assign_project_to_task(request, task_id, project_id):
     task = get_object_or_404(Task, pk=task_id, user=request.user)
     project = get_object_or_404(Project, pk=project_id, user=request.user)
     task.project = project
-    task.save()  # save() returns None, so we don't assign it
+    save_task(task)  # save() returns None, so we don't assign it
     serializer = TaskSerializer(task)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

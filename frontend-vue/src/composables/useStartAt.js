@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue'
+import { parseISO } from 'date-fns'
 
 export function useStartAt(editedTask) {
   const startTime = ref('00:00') // HH:MM (local, 24-hour)
@@ -11,15 +12,26 @@ export function useStartAt(editedTask) {
    * _formatTimeToHHMM('2025-01-01T09:15:00Z') // '14:45' (IST)
    * _formatTimeToHHMM() // Current time, e.g. '09:30'
    *
-   * @param {Date|string} [dateObj] - Optional Date object or ISO string. Defaults to now.
+   * @param {string} [iso] - Optional ISO string. Defaults to now.
    * @returns {string} Time in 24-hour format, e.g. '14:30'
    */
-  const _formatTimeToHHMM = (dateObj) => {
+  const _formatTimeToHHMM = (iso) => {
     // Use current time if no date provided
-    if (!dateObj) dateObj = new Date()
+    if (!iso) {
+      console.log("no date passed so using today's local date -", new Date().toISOString().split('T')[0])
+      iso = new Date().toISOString()
+    }
 
     // Ensure we have a Date object (handles both Date instances and ISO strings)
-    const d = new Date(dateObj)
+    let d
+    if (iso instanceof Date) {
+      d = iso
+    } else if (typeof iso === 'string') {
+      d = parseISO(iso)
+    } else {
+      console.error('Invalid date format passed to _formatTimeToHHMM:', iso)
+      d = new Date()
+    }
 
     // Format hours and minutes with leading zeros
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`

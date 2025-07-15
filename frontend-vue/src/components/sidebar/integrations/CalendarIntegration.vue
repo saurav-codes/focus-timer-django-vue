@@ -10,7 +10,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/vue3'
 import Popper from 'vue3-popper'
 import TaskEditModal from '../../TaskEditModal.vue'
-import { getDateStrFromDateObj } from '../../../utils/taskUtils'
+import { calculateEndAt, getDateStrFromDateObj } from '../../../utils/taskUtils'
 
 // Props
 const props = defineProps({
@@ -38,7 +38,8 @@ const gcalEvents = computed(() => calendarStore.gcalEvents)
 watch([localCalTasks, gcalEvents], () => {
   if (calendarRef.value) {
     calendarRef.value.getApi().removeAllEvents()  // remove all events currently displayed
-    calendarRef.value.getApi().refetchEvents()   // tells FullCalendar to re-run the events() function
+    calendarRef.value.getApi().refetchEvents()   // Refetches events from all sources and rerenders them on the screen.
+    console.log("smth changed so all events removed & calendar refetched")
   }
 }, { deep: true })
 
@@ -225,9 +226,7 @@ async function handleTaskDropped(dropInfo) {
     // Update task status and start time
     droppedTask.status = 'ON_CAL'
     droppedTask.start_at = dropInfo.dateStr
-    // use today's data if task don't have col date ( happens if user directing dropping task from braindump since
-    // braindump tasks don't have column dates )
-    droppedTask.column_date = dropInfo.dateStr.split("T")[0]
+    droppedTask.end_at = calculateEndAt(droppedTask.start_at, droppedTask.duration)
 
     // First update the task in the database
     taskStore.taskDroppedToCal(droppedTask)

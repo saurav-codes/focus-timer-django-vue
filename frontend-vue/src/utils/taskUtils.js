@@ -1,5 +1,5 @@
 import { useDateFormat } from '@vueuse/core'
-import { addDays, subDays, startOfToday as today_dt_fn } from 'date-fns'
+import { addDays, subDays, startOfToday as today_dt_fn, set, parseISO, add } from 'date-fns'
 
 // Consistent date formatting helper (Mon, Jan 1)
 export const formatDate = (date) => useDateFormat(date, 'ddd, MMM D').value
@@ -57,6 +57,34 @@ export const formatDurationForAPI = (duration) => {
 export const reInitializeOrder = (tasksArray) => {
   tasksArray.forEach((task, index) => {
     task.order = index
+  })
+}
+
+/**
+ * Upsert tasks into a target array (update if exists, insert if not).
+ * This function mutates the targetArray in place for Vue reactivity.
+ *
+ * @param {Array<Object>} targetArray - The array to update (will be mutated)
+ * @param {Array<Object>} newTasks - The tasks to upsert
+ * @param {string} [idKey='id'] - The key to use for matching tasks (defaults to 'id')
+ *
+ * @example
+ * // Update existing tasks or add new ones
+ * upsertTasks(brainDumpTasks.value, newTasksFromServer)
+ *
+ * // Use a different key for matching
+ * upsertTasks(tasks, newTasks, 'frontend_id')
+ */
+export const upsertTasks = (targetArray, newTasks, idKey = 'id') => {
+  newTasks.forEach((newTask) => {
+    const existingIndex = targetArray.findIndex((task) => task[idKey] === newTask[idKey])
+    if (existingIndex >= 0) {
+      // Update existing task in place to maintain Vue reactivity
+      targetArray.splice(existingIndex, 1, newTask)
+    } else {
+      // Add new task
+      targetArray.push(newTask)
+    }
   })
 }
 
@@ -134,4 +162,36 @@ export function getDateStrFromDateObj(dt) {
   const m = String(dt.getMonth() + 1).padStart(2, '0')
   const d = String(dt.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+export function replaceDt(datetime_str_of_task, datetime_obj_of_col) {
+  // assign the given date to a given task and keep the time info as it is
+  const datetime_obj_of_task = parseISO(datetime_str_of_task)
+  const updated_datetime = set(datetime_obj_of_task, {
+    year: datetime_obj_of_col.getFullYear(),
+    month: datetime_obj_of_col.getMonth(), // getMonth() returns 0-11, which is what date-fns expects
+    date: datetime_obj_of_col.getDate(), // Use 'date' parameter name as per date-fns docs
+  })
+  // Return ISO string to maintain consistency with the rest of the codebase
+  return updated_datetime.toISOString()
+}
+
+export function calculateEndAt(startAt, duration) {
+  if (!startAt || !duration) return ''
+  try {
+    const startDate = parseISO(startAt)
+
+    const [hours, minutes, seconds] = duration.split(':').map(Number)
+
+    const endDate = add(startDate, {
+      hours: hours,
+      minutes: minutes,
+      seconds: seconds,
+    })
+
+    return endDate.toISOString()
+  } catch (err) {
+    console.log(`error while calculating end_at of task - ${err}`)
+    return ''
+  }
 }

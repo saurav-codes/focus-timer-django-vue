@@ -91,7 +91,7 @@ export const useCalendarStore = defineStore('calendar', () => {
     if (!date_str) {
       const today = new Date()
       date_str = getDateStrFromDateObj(today)
-      console.log("no date passed so using today's local date -", date_str)
+      // console.log("no date passed so using today's local date -", date_str)
     }
     console.log('fetch gcal task with date -', date_str)
     _sendActionToGcalWebsocket('fetch_gcal_task_from_dt', { date_str: date_str })

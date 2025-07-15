@@ -1,5 +1,6 @@
 """All DB write operations for apps.core.model will be here"""
 
+import datetime
 from .models import Task, Project
 from .serializers import TaskSerializer
 from logging import getLogger
@@ -7,7 +8,6 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from .selectors import get_future_siblings, get_past_siblings
 from django.db import transaction
-from .tasks import notify_frontend
 from django.db import IntegrityError
 
 logger = getLogger(__name__)
@@ -20,6 +20,15 @@ def update_task_with_new_values(task: Task, updated_task: Task):
     task.end_at = updated_task.end_at
     task.tags.set(updated_task.tags.all())
     task.project = updated_task.project
+    return save_task(task)
+
+
+def save_task(task: Task) -> Task:
+    """
+    Use this save method always when saving a task for
+    post save task operations
+    """
+    # add more checks here like updating gcal
     task.save()
     return task
 
@@ -69,6 +78,8 @@ class TaskService:
                         f"Updated {len(updated_tasks)} prev tasks in series:\
                         task_id={updated_instance.pk} by user_id={self.user.id}"
                     )
+                    from .tasks import notify_frontend
+
                     notify_frontend.delay(  # type: ignore
                         f"tasks_user_{updated_instance.user.pk}",
                         {
@@ -110,12 +121,12 @@ class TaskService:
         for idx, task in enumerate(tasks, start=1):
             task_obj = get_object_or_404(Task, id=task["id"], user=self.user)
             task_obj.order = idx
-            task_obj.save()
+            save_task(task_obj)
 
     def assign_project_to_task(self, task_id, project_id):
         task = get_object_or_404(Task, id=task_id, user=self.user)
         task.project = get_object_or_404(Project, id=project_id, user=self.user)
-        task.save()
+        save_task(task)
         logger.info(
             f"Task assigned to project: task_id={task_id}\
             project_id={project_id} by user_id={self.user.id}"
@@ -137,7 +148,7 @@ class TaskService:
         )
         # del rec series of this task so all tasks related to this series will be detached
         # from this series
-        task.save()
+        save_task(task)
         task.recurrence_series.delete()
         task.refresh_from_db()
         logger.info(
@@ -151,7 +162,7 @@ class TaskService:
             f"Toggling completion: task_id={task_id} old_status={task.is_completed} by user_id={self.user.id}"
         )
         task.is_completed = not task.is_completed
-        task.save()
+        task = save_task(task)
         task.refresh_from_db()
         logger.info(
             f"New completion status: task_id={task_id} new_status={task.is_completed}"
@@ -159,32 +170,55 @@ class TaskService:
         return TaskSerializer(task).data
 
 
+def _apply_new_dt_to_datetime_obj(datetime_obj: datetime.datetime, dt: datetime.date):
+    """
+    take time from `datetime_obj` & date from `dt`
+    and combine them
+    """
+    return datetime.datetime.combine(dt, datetime_obj.time())
+
+
 def generate_rec_tasks_for_parent(parent_task: Task, occurences_dates: list):
     results = []
     for occurence_date in occurences_dates:
         try:
             with transaction.atomic():
-                # make sure we don't create two task for same column_date & recurrence_parent
-                child, created = Task.objects.get_or_create(
+                # make sure we don't create two task for same start_at__date & recurrence_parent
+                # so lets first check if there any task exist with same recurrence series & on same date
+                tsk = Task.objects.filter(
+                    recurrence_series=parent_task.recurrence_series,
+                    start_date__date=occurence_date,
+                )
+                if tsk.exists():
+                    continue
+                start_datetime = None
+                end_datetime = None
+                if parent_task.start_at:
+                    # assign current date to start_at field
+                    start_datetime = _apply_new_dt_to_datetime_obj(
+                        parent_task.start_at, occurence_date
+                    )
+                if parent_task.end_at:
+                    end_datetime = _apply_new_dt_to_datetime_obj(
+                        parent_task.end_at, occurence_date
+                    )
+                child = Task.objects.create(
                     user=parent_task.user,
                     title=parent_task.title,
                     description=parent_task.description,
                     order=parent_task.order,
                     is_completed=False,
                     duration=parent_task.duration,
-                    column_date=occurence_date,
-                    start_at=parent_task.start_at,
-                    end_at=parent_task.end_at,
+                    start_at=start_datetime,
+                    end_at=end_datetime,
                     recurrence_series=parent_task.recurrence_series,
                     project=parent_task.project,
-                    status=Task.ON_BOARD,  # TODO: what if task is on calendar?
+                    status=Task.ON_BOARD,  # TODO: what if task is on calendar? for now we keeping it on board & user can manually drag into cal
                 )
-                if created:
-                    # copy over tags
-                    child.tags.set(parent_task.tags.all())
+                # copy over tags
+                child.tags.set(parent_task.tags.all())
 
-                action = "created" if created else "updated"
-                msg = f"Recurring task {action}: parent_task_id={parent_task.pk}\
+                msg = f"Recurring task created: parent_task_id={parent_task.pk}\
                     child_task_id={child.pk} date={occurence_date}, user_id:{parent_task.user.pk}"
                 logger.info(msg)
                 results.append(msg)

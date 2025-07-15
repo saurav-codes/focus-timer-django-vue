@@ -41,14 +41,14 @@ def get_filtered_tasks_for_user_serialized(user_id: int | str, filters: dict):
 def get_future_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
         recurrence_series=task.recurrence_series,
-        column_date__gte=task.column_date or timezone.now().date(),
+        start_at__gte=task.start_at or timezone.now().date(),
     ).exclude(id=task.pk)
 
 
 def get_past_siblings(task: Task) -> QuerySet[Task]:
     return Task.objects.filter(
         recurrence_series=task.recurrence_series,
-        column_date__lte=task.column_date or timezone.now().date(),
+        start_at__lte=task.start_at or timezone.now().date(),
     ).exclude(id=task.pk)
 
 
@@ -57,4 +57,4 @@ def get_all_task_from_series(series: RecurrenceSeries) -> QuerySet[Task]:
 
 
 def get_latest_task_of_series(series: RecurrenceSeries) -> Task | None:
-    return get_all_task_from_series(series).order_by("-column_date").first()
+    return get_all_task_from_series(series).order_by("-start_at").first()

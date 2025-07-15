@@ -110,7 +110,6 @@
         order: 0,
         tags: [],
         status: 'BRAINDUMP',
-        column_date: null, // Explicitly set to null
         recurrence_series: null,
       }
       if (selectedProjectId.value) {

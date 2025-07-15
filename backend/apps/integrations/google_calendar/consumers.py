@@ -1,4 +1,4 @@
-from datetime import datetime, timezone as dt_tz, timedelta
+from datetime import datetime, timezone as dt_tz
 import logging
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.consumer import database_sync_to_async
@@ -63,7 +63,7 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             resp = await self.fetch_cal_taks_from_dt(date_str)
             return resp
 
-    async def fetch_cal_taks_from_dt(self, date_str: str):
+    async def _validate_dt(self, date_str):
         # validate incoming date string is exactly YYYY-MM-DD
         if not isinstance(date_str, str) or not re.fullmatch(
             r"\d{4}-\d{2}-\d{2}", date_str
@@ -79,6 +79,8 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"type": "error", "error": "Invalid date value"})
             return
 
+    async def fetch_cal_taks_from_dt(self, date_str: str):
+        await self._validate_dt(date_str)
         try:
             events = await self._fetch_events(date_str)
             # await self._start_push_subscription()
@@ -128,17 +130,16 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
         service = build_calendar_service(creds)
         calendar_id = creds_obj.calendar_id or "primary"
 
-        today_datetime = datetime.fromisoformat(date_str)
-        today_datetime = today_datetime.replace(tzinfo=dt_tz.utc)
-        # we are fetching event 1 day before - after 1 days so if user is travelling
-        # and there were events created before the current tz then it will fetch all
-        # those events too.
-        yesterday = today_datetime - timedelta(days=1, hours=2)
-        tmrw = today_datetime + timedelta(days=1)
+        today_start = datetime.fromisoformat(date_str)
+        today_start = today_start.replace(
+            tzinfo=dt_tz.utc
+        )  # -> datetime.datetime(2025, 7, 10, 0, 0, tzinfo=datetime.timezone.utc)
+        today_end = today_start.replace(hour=23, minute=59, second=59)
         filter_params = {
             "calendarId": calendar_id,
-            "timeMin": yesterday.isoformat(),
-            "timeMax": tmrw.isoformat(),
+            "timeMin": today_start.isoformat(),  # '2025-07-10T00:00:00+00:00'
+            "timeMax": today_end.isoformat(),  # '2025-07-10T23:59:59+00:00'
+            "timeZone": today_start.tzname(),  # UTC
         }
         events_result = service.events().list(**filter_params).execute()
         raw_events = events_result.get("items", [])

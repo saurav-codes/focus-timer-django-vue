@@ -68,7 +68,6 @@ class TaskSerializer(TaggitSerializer, WritableNestedModelSerializer):
             "created_at",
             "updated_at",
             "duration",
-            "column_date",
             "start_at",
             "end_at",
             "tags",
@@ -98,7 +97,7 @@ class TaskSerializer(TaggitSerializer, WritableNestedModelSerializer):
         end_at = validated_data.get("end_at")
         if start_at and not end_at:
             # calculate end at based on duration
-            if not validated_data["duration"]:
+            if not validated_data.get("duration"):
                 validated_data["duration"] = timedelta(minutes=30)
             validated_data["end_at"] = start_at + validated_data["duration"]
         elif start_at and end_at:
@@ -109,6 +108,12 @@ class TaskSerializer(TaggitSerializer, WritableNestedModelSerializer):
                 validated_data["duration"] = timedelta(minutes=30)
                 validated_data["end_at"] = None
         return validated_data
+
+    def save(self, **kwargs):
+        tsk = super().save(**kwargs)
+        from .services import save_task
+
+        return save_task(tsk)
 
 
 class TaskDurationUpdateSerializer(serializers.Serializer):

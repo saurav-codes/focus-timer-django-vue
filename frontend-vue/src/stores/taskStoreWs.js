@@ -11,6 +11,7 @@ import {
   pushForwardColumns,
   prependEarlierColumns,
   reInitializeOrder,
+  upsertTasks,
 } from '../utils/taskUtils'
 import { tasksToFcEvents } from '../utils/calendarSerializer'
 
@@ -62,7 +63,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   watch(
     [selectedProjects, selectedTags],
     () => {
-      fetchTasksWs()
+      fetchTasksWs(true)
     },
     { deep: true }
   )
@@ -97,14 +98,24 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     })
     kanbanColumns.value.forEach((column) => {
       const filteredTasks = boardOrCalTasks.filter((task) => {
-        return parseISO(task.column_date).toDateString() === column.date.toDateString()
+        try {
+          // Skip tasks with null start_at
+          if (!task.start_at) {
+            console.warn(`Task ${task.id} has null start_at, skipping assignment to board`)
+            return false
+          }
+          return parseISO(task.start_at).toDateString() === column.date.toDateString()
+        } catch {
+          console.error("can't parse task start_at iso string ", task.start_at, 'task id is: ', task.id)
+          return false
+        }
       })
       // Use direct assignment to ensure reactivity
       column.tasks = [...filteredTasks]
     })
   }
 
-  function _getColumnTasksFromColName(colName, column_date_from_backend = null) {
+  function _getColumnTasksFromColName(colName, start_date_from_backend = null) {
     switch (colName) {
       case 'BRAINDUMP':
         return brainDumpTasks.value
@@ -115,15 +126,19 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
       case 'ON_BOARD':
       case 'ON_CAL': {
         // now both cases lead to the same block
-        if (!column_date_from_backend) {
-          console.log('column date is required for search columns with status ON_BOARD')
+        if (!start_date_from_backend) {
+          console.log('start_at is required for search columns with status ON_BOARD')
           return []
         }
-        const column = kanbanColumns.value.find(
-          (column) => column.date.toISOString().split('T')[0] === column_date_from_backend
-        )
+        // parse start_at
+        const start_at = parseISO(start_date_from_backend)
+        if (!start_at) {
+          console.log('failed to parse start_at from task recd from backend - ', start_date_from_backend)
+        }
+        console.log(`finding column with task start-at - ${start_at}`)
+        const column = kanbanColumns.value.find((column) => column.date.toDateString() === start_at.toDateString())
         if (!column) {
-          console.log('column not found with date - ', column_date_from_backend)
+          console.log('column not found with date - ', start_date_from_backend)
           return []
         }
         return column.tasks
@@ -143,7 +158,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   function _put_task_on_board(updatedTask) {
     // find the array where we have to place this task
-    const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+    const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.start_at)
     colTasksArray.splice(updatedTask.order, 0, updatedTask)
   }
 
@@ -152,15 +167,17 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
     switch (msg.type) {
       case 'connected': {
         console.info('fetching tasks after rec-d connected msg from backend')
-        fetchTasksWs()
+        fetchTasksWs(true)
         break
       }
       case 'tasks.list': {
         const tasks_list = msg.data
         assignTasksToBoard(tasks_list)
-        brainDumpTasks.value = fetchTaskType(tasks_list, 'BRAINDUMP')
-        backlogs.value = fetchTaskType(tasks_list, 'BACKLOG')
-        archivedTasks.value = fetchTaskType(tasks_list, 'ARCHIVED')
+
+        // Use upsert to update existing tasks or add new ones
+        upsertTasks(brainDumpTasks.value, fetchTaskType(tasks_list, 'BRAINDUMP'))
+        upsertTasks(backlogs.value, fetchTaskType(tasks_list, 'BACKLOG'))
+        upsertTasks(archivedTasks.value, fetchTaskType(tasks_list, 'ARCHIVED'))
         break
       }
       case 'task.created': {
@@ -198,8 +215,12 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         // Upsert created tasks
         created.forEach((task) => {
           if (task.status === 'ON_BOARD') {
-            const column_date = task.column_date
-            const column = kanbanColumns.value.find((c) => c.date.toISOString().split('T')[0] === column_date)
+            if (!task.start_at) {
+              console.warn(`Task ${task.id} has null start_at, skipping board assignment in refresh_for_rec`)
+              return
+            }
+            const task_start_at = parseISO(task.start_at).toDateString()
+            const column = kanbanColumns.value.find((c) => c.date.toDateString() === task_start_at)
             if (column) {
               column.tasks.push(task)
               // update task orders
@@ -211,7 +232,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         break
       }
       case 'full_refresh': {
-        fetchTasksWs()
+        fetchTasksWs(true)
         break
       }
       case 'task_updated':
@@ -219,7 +240,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         const updatedTask = msg.data
         _apply_updates_to_task(updatedTask)
         console.log('saving order after updating task')
-        const taskColArr = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+        const taskColArr = _getColumnTasksFromColName(updatedTask.status, updatedTask.start_at)
         updateTaskOrderWs(taskColArr)
         break
       }
@@ -228,7 +249,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
         const updatedTask = msg.data
         // put this task back to same place where it was.
         _put_task_on_board(updatedTask)
-        const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.column_date)
+        const colTasksArray = _getColumnTasksFromColName(updatedTask.status, updatedTask.start_at)
         console.log('updating task order after cal_task_updated from backend')
         updateTaskOrderWs(colTasksArray)
         break
@@ -267,13 +288,12 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
 
   function _apply_updates_to_task(updated_task) {
     // first find the column where the task is present
-    const tasks_array = _getColumnTasksFromColName(updated_task.status, updated_task.column_date)
+    const tasks_array = _getColumnTasksFromColName(updated_task.status, updated_task.start_at)
     const task_index = tasks_array.findIndex((task) => task.id === updated_task.id)
     if (task_index === -1) {
       console.warn("task not found with id so it's a bug - ", updated_task.id)
       return
     }
-    // tasks_array[task_index] = updated_task
     tasks_array.splice(task_index, 1, updated_task)
   }
 
@@ -295,13 +315,21 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   }
 
   // send msg to backend
-  function fetchTasksWs() {
-    sendAction('fetch_tasks', {
-      start_date: firstDate.value.toDateString(),
-      end_date: lastDate.value.toDateString(),
-      projects: selectedProjects.value,
-      tags: selectedTags.value,
-    })
+  function fetchTasksWs(full_refresh = false) {
+    if (full_refresh) {
+      sendAction('fetch_tasks', {
+        // even with full refresh we should fetch based on selected projects and tags
+        projects: selectedProjects.value,
+        tags: selectedTags.value,
+      })
+    } else {
+      sendAction('fetch_tasks', {
+        start_at_after: firstDate.value.toISOString(),
+        start_at_before: lastDate.value.toISOString(),
+        projects: selectedProjects.value,
+        tags: selectedTags.value,
+      })
+    }
   }
 
   // Add more date columns for infinite scroll
@@ -358,7 +386,6 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   }
 
   async function taskDroppedToBrainDumpWs(task) {
-    task.column_date = null
     task.start_at = null
     task.end_at = null
     task.status = 'BRAINDUMP'

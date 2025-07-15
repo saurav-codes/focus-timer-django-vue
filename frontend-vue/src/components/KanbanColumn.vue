@@ -4,6 +4,7 @@
   import TaskCard from './TaskCard.vue'
   import Draggable from 'vuedraggable'
   import { useTaskStoreWs } from '../stores/taskStoreWs'
+  import { replaceDt, calculateEndAt } from '../utils/taskUtils'
 
   const taskStore = useTaskStoreWs()
 
@@ -100,10 +101,28 @@
     // this only trigger with added value on the column where it's dropped
     // Handle when a task is added to this column
     if (added) {
+      console.log("task dropped on col -", props.dateObj)
       const element = added.element
       // Update the task with the new column date and status
-      element.column_date = props.dateObj.toISOString().split('T')[0]
-      element.status = 'ON_BOARD'
+      let task_start_at = ""
+      if (element.start_at) {
+        task_start_at = replaceDt(element.start_at, props.dateObj)
+      } else {
+        task_start_at = props.dateObj.toISOString()
+      }
+      element.start_at = task_start_at
+
+      let end_at = ""
+      if (element.end_at) {
+        end_at = replaceDt(element.end_at, props.dateObj)
+      } else {
+        end_at = calculateEndAt(task_start_at, element.duration)
+      }
+      element.end_at = end_at
+      if (element.status !== "ON_CAL") {
+        // only change the status of those tasks which aren't on gcal
+        element.status = 'ON_BOARD'
+      }
       taskStore.updateTaskWs(element)
     }
 
