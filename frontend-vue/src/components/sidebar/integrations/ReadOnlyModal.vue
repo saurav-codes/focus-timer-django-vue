@@ -1,282 +1,132 @@
 <script setup>
-import { X, Calendar as CalendarIcon, Clock, MapPin, Users, Link, Info, Eye, ExternalLink } from 'lucide-vue-next'
+import { X, Calendar as CalendarIcon, Clock, MapPin, Users, Link, Info, Eye, ExternalLink, Video, Phone } from 'lucide-vue-next'
 import { computed } from 'vue'
 import {
-  format,
-  parseISO,
-  isValid,
-  formatDistanceToNow,
-  differenceInMinutes
-} from 'date-fns'
+  parseEventDate,
+  formatEventDateTime,
+  calculateEventDuration,
+  formatRelativeTime,
+  isAllDayEvent,
+  getUserTimezone,
+} from '../../../utils/dateParsingUtils'
+
+import {
+  normalizeEventData,
+  getResponseStatusLabel,
+  getEventStatusLabel,
+  getTransparencyLabel,
+  getVisibilityLabel,
+  getAttendeeInitials,
+  hasConferenceData
+} from '../../../utils/eventDataNormalizer'
+
 
 const props = defineProps({
   event: {
     type: Object,
-    required: true,
+    default: () => ({})
   },
-  isOpen: {
-    type: Boolean,
-    required: true,
-  },
+  isOpen: Boolean
 })
 
-console.log('Raw event data:', props.event)
 const emit = defineEmits(['close-modal'])
 
-function closeModal() {
-  console.log("emiting to close google cal event modal")
-  emit('close-modal')
-}
+const closeModal = () => emit('close-modal')
 
-// Helper function to parse and format date/time with timezone support
-const formatDateTime = (dateObj, options = {}) => {
-  if (!dateObj) return 'Not specified'
+// Normalize the event data using our utility
+const normalizedEvent = computed(() => normalizeEventData(props.event))
 
-  const { includeTime = true, includeTimezone = true } = options
+// Event basic information
+const eventTitle = computed(() => normalizedEvent.value.title)
+const eventDescription = computed(() => normalizedEvent.value.description)
+const eventLocation = computed(() => normalizedEvent.value.location)
 
-  let parsedDate
-  let timezone = null
-
-  try {
-    // Handle Google Calendar format
-    if (dateObj.dateTime) {
-      parsedDate = parseISO(dateObj.dateTime)
-      timezone = dateObj.timeZone
-    } else if (dateObj.date) {
-      // All-day event
-      parsedDate = parseISO(dateObj.date + 'T00:00:00')
-      includeTime = false
-    }
-    // Handle FullCalendar format
-    else if (dateObj instanceof Date) {
-      parsedDate = dateObj
-    }
-    // Handle ISO string
-    else if (typeof dateObj === 'string') {
-      parsedDate = parseISO(dateObj)
-    }
-    // Handle timestamp
-    else if (typeof dateObj === 'number') {
-      parsedDate = new Date(dateObj)
-    }
-
-    if (!parsedDate || !isValid(parsedDate)) {
-      return 'Invalid date'
-    }
-
-    // Format based on whether it includes time and timezone
-    if (!includeTime) {
-      return format(parsedDate, 'PPPP') // Full date only
-    }
-
-    // Use basic formatting with timezone info if available
-    let formattedDate = format(parsedDate, 'PPPp') // Full date and time
-
-    if (includeTimezone && timezone) {
-      formattedDate += ` (${timezone})`
-    }
-
-    return formattedDate
-
-  } catch (error) {
-    console.error('Error parsing date:', error, dateObj)
-    return 'Invalid date'
-  }
-}
-
-// Helper function to get duration between two dates
-const getEventDuration = (start, end) => {
-  if (!start || !end) return null
-
-  try {
-    let startDate, endDate
-
-    // Parse start date
-    if (start.dateTime) {
-      startDate = parseISO(start.dateTime)
-    } else if (start.date) {
-      startDate = parseISO(start.date + 'T00:00:00')
-    } else if (start instanceof Date) {
-      startDate = start
-    } else if (typeof start === 'string') {
-      startDate = parseISO(start)
-    }
-
-    // Parse end date
-    if (end.dateTime) {
-      endDate = parseISO(end.dateTime)
-    } else if (end.date) {
-      endDate = parseISO(end.date + 'T00:00:00')
-    } else if (end instanceof Date) {
-      endDate = end
-    } else if (typeof end === 'string') {
-      endDate = parseISO(end)
-    }
-
-    if (!startDate || !endDate || !isValid(startDate) || !isValid(endDate)) {
-      return null
-    }
-
-    const minutes = differenceInMinutes(endDate, startDate)
-
-    if (minutes < 60) {
-      return `${minutes} minutes`
-    } else if (minutes < 1440) { // Less than 24 hours
-      const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`
-    } else {
-      const days = Math.floor(minutes / 1440)
-      const remainingHours = Math.floor((minutes % 1440) / 60)
-      return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`
-    }
-  } catch (error) {
-    console.error('Error calculating duration:', error)
-    return null
-  }
-}
-
-// Helper function to format relative time
-const formatRelativeTime = (dateObj) => {
-  if (!dateObj) return null
-
-  try {
-    let parsedDate
-
-    if (dateObj.dateTime) {
-      parsedDate = parseISO(dateObj.dateTime)
-    } else if (dateObj.date) {
-      parsedDate = parseISO(dateObj.date + 'T00:00:00')
-    } else if (dateObj instanceof Date) {
-      parsedDate = dateObj
-    } else if (typeof dateObj === 'string') {
-      parsedDate = parseISO(dateObj)
-    }
-
-    if (!parsedDate || !isValid(parsedDate)) {
-      return null
-    }
-
-    return formatDistanceToNow(parsedDate, { addSuffix: true })
-  } catch (error) {
-    console.error('Error formatting relative time:', error)
-    return null
-  }
-}
-
-// Computed properties for better data parsing
-const eventTitle = computed(() => {
-  return props.event.title || props.event.summary || 'Untitled Event'
-})
-
+// Date and time computations using our new utilities
 const eventStart = computed(() => {
-  return formatDateTime(props.event.start)
+  const startDate = parseEventDate(normalizedEvent.value.start)
+  if (!startDate) return 'Date not available'
+
+  const userTz = getUserTimezone()
+  const formatOptions = {
+    format: isAllDay.value ? 'date' : 'full',
+    timezone: userTz,
+    relative: false
+  }
+
+  return formatEventDateTime(startDate, formatOptions)
 })
 
 const eventEnd = computed(() => {
-  return formatDateTime(props.event.end)
+  const endDate = parseEventDate(normalizedEvent.value.end)
+  if (!endDate) return 'Date not available'
+
+  const userTz = getUserTimezone()
+  const formatOptions = {
+    format: isAllDay.value ? 'date' : 'full',
+    timezone: userTz,
+    relative: false
+  }
+
+  return formatEventDateTime(endDate, formatOptions)
 })
 
 const eventDuration = computed(() => {
-  return getEventDuration(props.event.start, props.event.end)
+  const duration = calculateEventDuration(normalizedEvent.value.start, normalizedEvent.value.end)
+  return duration.formatted
 })
 
 const eventStartRelative = computed(() => {
-  return formatRelativeTime(props.event.start)
+  const startDate = parseEventDate(normalizedEvent.value.start)
+  if (!startDate) return null
+
+  return formatRelativeTime(startDate, { addSuffix: true })
 })
 
 const isAllDay = computed(() => {
-  // FullCalendar property
-  if (props.event.allDay !== undefined) {
-    return props.event.allDay
-  }
-
-  // Google Calendar - if only date (no dateTime), it's all day
-  if (props.event.start && props.event.start.date && !props.event.start.dateTime) {
-    return true
-  }
-
-  return false
+  return isAllDayEvent(normalizedEvent.value.start, normalizedEvent.value.end)
 })
 
+// People information
 const eventCreator = computed(() => {
-  if (props.event.creator) {
-    return props.event.creator.displayName || props.event.creator.email
-  }
-  return null
+  const creator = normalizedEvent.value.creator
+  return creator ? (creator.displayName || creator.email) : null
 })
 
 const eventOrganizer = computed(() => {
-  if (props.event.organizer) {
-    return props.event.organizer.displayName || props.event.organizer.email
-  }
-  return null
+  const organizer = normalizedEvent.value.organizer
+  return organizer ? (organizer.displayName || organizer.email) : null
 })
 
-const eventVisibility = computed(() => {
-  const visibility = props.event.visibility
-  if (visibility === 'default') return 'Default'
-  if (visibility === 'public') return 'Public'
-  if (visibility === 'private') return 'Private'
-  if (visibility === 'confidential') return 'Confidential'
-  return visibility
+const attendees = computed(() => normalizedEvent.value.attendees)
+
+// Conference and meeting information
+const conferenceInfo = computed(() => normalizedEvent.value.conferenceData)
+const hangoutLink = computed(() => normalizedEvent.value.hangoutLink)
+const hasConferenceInfo = computed(() => hasConferenceData(conferenceInfo.value) || hangoutLink.value)
+
+// Status and metadata
+const eventStatus = computed(() => getEventStatusLabel(normalizedEvent.value.status))
+const eventVisibility = computed(() => getVisibilityLabel(normalizedEvent.value.visibility))
+const eventTransparency = computed(() => getTransparencyLabel(normalizedEvent.value.transparency))
+
+// Timestamps
+const eventCreated = computed(() => {
+  const created = parseEventDate(normalizedEvent.value.created)
+  return created ? formatEventDateTime(created, { format: 'compact' }) : null
 })
 
-const eventTransparency = computed(() => {
-  const transparency = props.event.transparency
-  if (transparency === 'opaque') return 'Busy'
-  if (transparency === 'transparent') return 'Free'
-  return transparency
+const eventUpdated = computed(() => {
+  const updated = parseEventDate(normalizedEvent.value.updated)
+  return updated ? formatEventDateTime(updated, { format: 'compact' }) : null
 })
 
-const conferenceData = computed(() => {
-  return props.event.conferenceData
-})
+// Attachments and reminders
+const attachments = computed(() => normalizedEvent.value.attachments)
+const reminders = computed(() => normalizedEvent.value.reminders)
 
-const attachments = computed(() => {
-  return props.event.attachments || []
-})
+// Helper functions for attendee display
+const getAttendeeStatusClass = (attendee) => `avatar-${attendee.responseStatus || 'needsAction'}`
 
-const extendedProps = computed(() => {
-  // FullCalendar extendedProps
-  if (props.event.extendedProps) {
-    return props.event.extendedProps
-  }
-
-  // Google Calendar extendedProperties
-  if (props.event.extendedProperties) {
-    return {
-      ...props.event.extendedProperties.private,
-      ...props.event.extendedProperties.shared
-    }
-  }
-
-  return null
-})
-
-const reminders = computed(() => {
-  return props.event.reminders
-})
-
-const eventCreatedFormatted = computed(() => {
-  if (!props.event.created) return null
-  try {
-    const createdDate = parseISO(props.event.created)
-    return isValid(createdDate) ? format(createdDate, 'PPPp') : null
-  } catch (error) {
-    return null
-  }
-})
-
-const eventUpdatedFormatted = computed(() => {
-  if (!props.event.updated) return null
-  try {
-    const updatedDate = parseISO(props.event.updated)
-    return isValid(updatedDate) ? format(updatedDate, 'PPPp') : null
-  } catch (error) {
-    return null
-  }
-})
 </script>
 
 <template>
@@ -316,27 +166,28 @@ const eventUpdatedFormatted = computed(() => {
                 <div v-if="eventStartRelative" class="relative-time">
                   {{ eventStartRelative }}
                 </div>
-                <div v-if="isAllDay" class="all-day-badge">All Day Event</div>
+                <div v-if="isAllDay" class="all-day-badge">
+                  All Day Event
+                </div>
               </div>
             </div>
           </div>
 
-          <div v-if="props.event.description" class="form-group">
+          <div v-if="eventDescription" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Description
             </label>
-            <div class="info-value description" v-html="props.event.description">
-            </div>
+            <div class="info-value description" v-text="eventDescription" />
           </div>
 
-          <div v-if="props.event.location" class="form-group">
+          <div v-if="eventLocation" class="form-group">
             <label class="form-label">
               <MapPin size="16" />
               Location
             </label>
             <div class="info-value">
-              {{ props.event.location }}
+              {{ eventLocation }}
             </div>
           </div>
 
@@ -361,68 +212,87 @@ const eventUpdatedFormatted = computed(() => {
             </div>
           </div>
 
-          <div v-if="props.event.attendees && props.event.attendees.length > 0" class="form-group">
+          <div v-if="attendees && attendees.length > 0" class="form-group">
             <label class="form-label">
               <Users size="16" />
-              Attendees ({{ props.event.attendees.length }})
+              Attendees ({{ attendees.length }})
             </label>
-            <div class="attendees-list">
-              <div v-for="attendee in props.event.attendees" :key="attendee.email" class="attendee-item">
-                <div class="attendee-info">
-                  <div class="attendee-name">
-                    {{ attendee.displayName || attendee.email }}
-                  </div>
-                  <div class="attendee-email" v-if="attendee.displayName">
-                    {{ attendee.email }}
+            <div class="attendees-grid">
+              <div v-for="attendee in attendees" :key="attendee.email" class="attendee-card">
+                <div class="attendee-avatar">
+                  <div class="avatar-circle" :class="getAttendeeStatusClass(attendee)">
+                    {{ getAttendeeInitials(attendee) }}
                   </div>
                 </div>
-                <div class="attendee-badges">
-                  <span v-if="attendee.organizer" class="badge organizer">Organizer</span>
-                  <span v-if="attendee.optional" class="badge optional">Optional</span>
-                  <span v-if="attendee.self" class="badge self">You</span>
-                  <span class="badge status" :class="attendee.responseStatus">
-                    {{ attendee.responseStatus || 'needsAction' }}
-                  </span>
+                <div class="attendee-content">
+                  <div class="attendee-header">
+                    <div class="attendee-name">
+                      {{ attendee.displayName || attendee.email }}
+                    </div>
+                    <div class="attendee-status">
+                      <span class="status-indicator" :class="attendee.responseStatus">
+                        {{ getResponseStatusLabel(attendee.responseStatus) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-if="attendee.displayName && attendee.email !== attendee.displayName" class="attendee-email">
+                    {{ attendee.email }}
+                  </div>
+                  <div v-if="attendee.organizer || attendee.optional || attendee.self" class="attendee-badges">
+                    <span v-if="attendee.organizer" class="badge organizer-badge">
+                      <Users size="10" />
+                      Organizer
+                    </span>
+                    <span v-if="attendee.optional" class="badge optional-badge">Optional</span>
+                    <span v-if="attendee.self" class="badge self-badge">You</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Conference/Meeting Information -->
-          <div v-if="conferenceData" class="form-group">
+          <div v-if="hasConferenceInfo" class="form-group">
             <label class="form-label">
-              <Link size="16" />
-              Conference
+              <Video size="16" />
+              Meeting
             </label>
             <div class="info-value">
-              <div v-if="conferenceData.conferenceSolution" class="conference-solution">
-                <strong>{{ conferenceData.conferenceSolution.name }}</strong>
+              <!-- Hangout Link (Google Meet) -->
+              <div v-if="hangoutLink" class="conference-entry">
+                <a :href="hangoutLink" target="_blank" class="conference-link primary-meeting-link">
+                  <Video size="16" />
+                  Join Google Meet
+                </a>
               </div>
-              <div v-if="conferenceData.conferenceId" class="conference-id">
-                ID: {{ conferenceData.conferenceId }}
-              </div>
-              <div v-if="conferenceData.entryPoints && conferenceData.entryPoints.length > 0" class="entry-points">
-                <div v-for="entryPoint in conferenceData.entryPoints" :key="entryPoint.uri" class="entry-point">
-                  <a v-if="entryPoint.uri" :href="entryPoint.uri" target="_blank" class="conference-link">
-                    {{ entryPoint.label || entryPoint.entryPointType }}
-                  </a>
-                  <span v-if="entryPoint.meetingCode" class="meeting-code">
-                    Code: {{ entryPoint.meetingCode }}
-                  </span>
+
+              <!-- Conference Data -->
+              <div v-if="conferenceInfo">
+                <div v-if="conferenceInfo.conferenceSolution" class="conference-solution">
+                  <strong>{{ conferenceInfo.conferenceSolution.name }}</strong>
+                </div>
+                <div v-if="conferenceInfo.conferenceId" class="conference-id">
+                  Meeting ID: {{ conferenceInfo.conferenceId }}
+                </div>
+                <div v-if="conferenceInfo.entryPoints && conferenceInfo.entryPoints.length > 0" class="entry-points">
+                  <div v-for="entryPoint in conferenceInfo.entryPoints" :key="entryPoint.uri" class="entry-point">
+                    <a v-if="entryPoint.uri" :href="entryPoint.uri" target="_blank" class="conference-link">
+                      <Video v-if="entryPoint.entryPointType === 'video'" size="14" />
+                      <Phone v-else-if="entryPoint.entryPointType === 'phone'" size="14" />
+                      <Link v-else size="14" />
+                      {{ entryPoint.label || entryPoint.entryPointType }}
+                    </a>
+                    <div v-if="entryPoint.meetingCode || entryPoint.accessCode" class="meeting-codes">
+                      <span v-if="entryPoint.meetingCode" class="meeting-code">
+                        Code: {{ entryPoint.meetingCode }}
+                      </span>
+                      <span v-if="entryPoint.accessCode" class="meeting-code">
+                        Access: {{ entryPoint.accessCode }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div v-if="props.event.hangoutLink" class="form-group">
-            <label class="form-label">
-              <Link size="16" />
-              Hangout Link
-            </label>
-            <div class="info-value">
-              <a :href="props.event.hangoutLink" target="_blank" class="conference-link">
-                Join Hangout
-              </a>
             </div>
           </div>
 
@@ -443,7 +313,7 @@ const eventUpdatedFormatted = computed(() => {
           </div>
 
           <!-- Recurrence Information -->
-          <div v-if="props.event.recurringEventId" class="form-group">
+          <div v-if="normalizedEvent.recurringEventId" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Recurring Event
@@ -453,13 +323,13 @@ const eventUpdatedFormatted = computed(() => {
             </div>
           </div>
 
-          <div v-if="props.event.recurrence && props.event.recurrence.length > 0" class="form-group">
+          <div v-if="normalizedEvent.recurrence && normalizedEvent.recurrence.length > 0" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Recurrence Rules
             </label>
             <div class="info-value">
-              <div v-for="rule in props.event.recurrence" :key="rule" class="recurrence-rule">
+              <div v-for="rule in normalizedEvent.recurrence" :key="rule" class="recurrence-rule">
                 {{ rule }}
               </div>
             </div>
@@ -472,7 +342,9 @@ const eventUpdatedFormatted = computed(() => {
               Reminders
             </label>
             <div class="info-value">
-              <div v-if="reminders.useDefault">Using default reminders</div>
+              <div v-if="reminders.useDefault">
+                Using default reminders
+              </div>
               <div v-if="reminders.overrides && reminders.overrides.length > 0" class="reminder-overrides">
                 <div v-for="reminder in reminders.overrides" :key="reminder.minutes" class="reminder-item">
                   {{ reminder.minutes }} minutes before ({{ reminder.method }})
@@ -482,14 +354,14 @@ const eventUpdatedFormatted = computed(() => {
           </div>
 
           <!-- Status and Visibility -->
-          <div v-if="props.event.status" class="form-group">
+          <div v-if="eventStatus && eventStatus !== 'Confirmed'" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Status
             </label>
             <div class="info-value">
-              <span class="status-badge" :class="props.event.status">
-                {{ props.event.status }}
+              <span class="status-badge" :class="normalizedEvent.status">
+                {{ eventStatus }}
               </span>
             </div>
           </div>
@@ -514,44 +386,33 @@ const eventUpdatedFormatted = computed(() => {
             </div>
           </div>
 
-          <!-- Extended Properties -->
-          <div v-if="extendedProps && Object.keys(extendedProps).length > 0" class="form-group">
-            <label class="form-label">
-              <Info size="16" />
-              Additional Properties
-            </label>
-            <div class="info-value">
-              <div v-for="(value, key) in extendedProps" :key="key" class="extended-prop">
-                <strong>{{ key }}:</strong> {{ value }}
-              </div>
-            </div>
-          </div>
+
 
           <!-- Timestamps -->
-          <div v-if="eventCreatedFormatted" class="form-group">
+          <div v-if="eventCreated" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Created
             </label>
             <div class="info-value timestamp">
-              {{ eventCreatedFormatted }}
+              {{ eventCreated }}
             </div>
           </div>
 
-          <div v-if="eventUpdatedFormatted" class="form-group">
+          <div v-if="eventUpdated" class="form-group">
             <label class="form-label">
               <Info size="16" />
               Last Updated
             </label>
             <div class="info-value timestamp">
-              {{ eventUpdatedFormatted }}
+              {{ eventUpdated }}
             </div>
           </div>
 
           <!-- Calendar Link -->
-          <div v-if="props.event.extendedProps.htmlLink" class="form-group">
+          <div v-if="normalizedEvent.htmlLink" class="form-group">
             <div class="info-value">
-              <a :href="props.event.extendedProps.htmlLink" target="_blank" class="calendar-link-button">
+              <a :href="normalizedEvent.htmlLink" target="_blank" class="calendar-link-button">
                 <ExternalLink size="16" />
                 Open on Calendar
               </a>
@@ -699,35 +560,127 @@ const eventUpdatedFormatted = computed(() => {
   margin-top: 0.5rem;
 }
 
-.attendees-list {
+.attendees-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.attendee-item {
+.attendee-card {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  padding: 0.75rem;
+  gap: 0.75rem;
+  padding: 1rem;
   background: var(--color-background-secondary);
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
 }
 
-.attendee-info {
+.attendee-card:hover {
+  background: var(--color-background-tertiary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.attendee-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: white;
+  background: var(--color-neutral-400);
+  border: 2px solid var(--color-background);
+}
+
+.avatar-circle.avatar-accepted {
+  background: var(--color-success);
+}
+
+.avatar-circle.avatar-declined {
+  background: var(--color-error);
+}
+
+.avatar-circle.avatar-tentative {
+  background: var(--color-warning);
+}
+
+.avatar-circle.avatar-needsAction {
+  background: var(--color-neutral-400);
+}
+
+.attendee-content {
   flex: 1;
+  min-width: 0;
+}
+
+.attendee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
 }
 
 .attendee-name {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.attendee-status {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.status-indicator {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-indicator.accepted {
+  background: var(--color-success);
+  color: white;
+}
+
+.status-indicator.declined {
+  background: var(--color-error);
+  color: white;
+}
+
+.status-indicator.tentative {
+  background: var(--color-warning);
+  color: white;
+}
+
+.status-indicator.needsAction {
+  background: var(--color-background-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .attendee-email {
   font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
-  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .attendee-badges {
@@ -735,6 +688,32 @@ const eventUpdatedFormatted = computed(() => {
   flex-wrap: wrap;
   gap: 0.25rem;
   align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: none;
+}
+
+.organizer-badge {
+  background: var(--color-primary);
+  color: white;
+}
+
+.optional-badge {
+  background: var(--color-warning);
+  color: white;
+}
+
+.self-badge {
+  background: var(--color-secondary);
+  color: white;
 }
 
 .badge {
@@ -816,6 +795,45 @@ const eventUpdatedFormatted = computed(() => {
 
 .conference-link:hover {
   text-decoration: underline;
+}
+
+.primary-meeting-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 1rem;
+  transition: all var(--transition-base);
+}
+
+.primary-meeting-link:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: white;
+}
+
+.conference-entry {
+  margin-bottom: 1rem;
+}
+
+.entry-point {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.meeting-codes {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .meeting-code {
