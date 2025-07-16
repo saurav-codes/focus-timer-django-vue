@@ -55,12 +55,12 @@ function handleDatesSet(dateInfo) {
   // on currentDate
   const dt = dateInfo.view.currentStart
   // set time to 0 because later we have to compare 2 dates
-  dt.setHours(0,0,0,0)
+  dt.setHours(0, 0, 0, 0)
   currentDate.value = dt
 }
 
 // Formatted display for the current date
-const currentDateDisplay = computed(() =>{
+const currentDateDisplay = computed(() => {
   return currentDate.value
     ? currentDate.value.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     : ''
@@ -69,7 +69,7 @@ const currentDateDisplay = computed(() =>{
 function prev() {
   calendarRef.value?.getApi().prev()
   const leftMostColDt = taskStore.kanbanColumns[0].date
-  leftMostColDt.setHours(0,0,0,0)
+  leftMostColDt.setHours(0, 0, 0, 0)
   if (currentDate.value < leftMostColDt) {
     taskStore.addEarlierColumnsWs(3)
   }
@@ -82,7 +82,7 @@ function prev() {
 function next() {
   calendarRef.value?.getApi().next()
   const rightMostColDt = taskStore.kanbanColumns[taskStore.kanbanColumns.length - 1].date
-  rightMostColDt.setHours(0,0,0,0)
+  rightMostColDt.setHours(0, 0, 0, 0)
   if (currentDate.value > rightMostColDt) {
     taskStore.addMoreColumnsWs(3)
   }
@@ -161,7 +161,7 @@ const calendarError = computed(() => {
 const draggableInstance = ref(null)
 
 // Define stopPolling in the parent scope so it's accessible in onUnmounted
-let stopPolling = () => {}
+let stopPolling = () => { }
 
 // --- Connection Status Indicator for Header ---
 const showConnectPopper = ref(false)
@@ -262,7 +262,7 @@ function handleEventClick(eventClickInfo) {
     // Open modal specifically for Google Calendar events
     const event = eventClickInfo.event
     if (event) {
-      console.log("opening event")
+
       openReadOnlyModal(event)
     }
     return
@@ -323,7 +323,7 @@ const calendarOptions = ref({
     // Local tasks marked ON_CAL
     { events: (info, success) => success(localCalTasks.value) },
     // Google Calendar events via WebSocket
-{
+    {
       events: (info, success) => {
         if (isConnected.value) {
           success(gcalEvents.value)
@@ -377,13 +377,15 @@ const calendarOptions = ref({
             @click="disconnectGoogleCalendar" />
         </Popper>
         <Popper v-else arrow content="Connect Google Calendar" :show="showConnectPopper">
-          <LucideLink
-            class="connect-button-icon"
+          <div
+            class="google-connect-button"
             :class="{ 'disabled-div': isLoading }"
-            :size="14"
             @mouseover="showConnectPopper = true"
             @mouseleave="showConnectPopper = false"
-            @click="connectGoogleCalendar" />
+            @click="connectGoogleCalendar">
+            <span class="google-icon">G</span>
+            <LucideLink :size="10" class="link-icon" />
+          </div>
         </Popper>
       </div>
     </div>
@@ -623,5 +625,54 @@ const calendarOptions = ref({
   background-color: var(--color-success);
   border-color: var(--color-success);
   color: var(--color-text-primary);
+}
+
+/* Google Connect Button Styles */
+.google-connect-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  background-color: var(--color-background-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+}
+
+.google-connect-button:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.google-connect-button:hover .google-icon {
+  background-color: white;
+  color: var(--color-primary);
+}
+
+.google-connect-button:hover .link-icon {
+  color: white;
+}
+
+.google-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background-color: #4285f4;
+  color: white;
+  border-radius: 2px;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: 'Product Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: all 0.2s ease;
+}
+
+.link-icon {
+  color: var(--color-text-secondary);
+  transition: color 0.2s ease;
 }
 </style>
