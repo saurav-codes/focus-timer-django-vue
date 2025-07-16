@@ -187,7 +187,7 @@ def generate_rec_tasks_for_parent(parent_task: Task, occurences_dates: list):
                 # so lets first check if there any task exist with same recurrence series & on same date
                 tsk = Task.objects.filter(
                     recurrence_series=parent_task.recurrence_series,
-                    start_date__date=occurence_date,
+                    start_at__date=occurence_date,
                 )
                 if tsk.exists():
                     continue

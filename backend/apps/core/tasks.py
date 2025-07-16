@@ -35,23 +35,23 @@ def _gen_rec_tasks_for_parent_or_sibling(
         raise ValueError("Task must have a recurrence_rule to generate future siblings")
 
     # Ensure we're working with datetime objects for the dateutil rrule
-    start_date = parent_or_sibling_task.start_at or timezone.now().date()
+    start_at = parent_or_sibling_task.start_at or timezone.now().date()
     # Convert date to datetime at midnight for comparison
-    start_date = datetime.datetime.combine(start_date, datetime.time.min)
+    start_at = datetime.datetime.combine(start_at, datetime.time.min)
     # if there are already more than 10 tasks in this series
     # then don't create new ones
     alrdy_created_tsks_count = Task.objects.filter(
         recurrence_series=parent_or_sibling_task.recurrence_series,
-        start_date__gte=start_date,
+        start_at__gte=start_at,
     ).count()
     if alrdy_created_tsks_count > 10:
         msg = f"already {alrdy_created_tsks_count} tasks exists in series: {parent_or_sibling_task.recurrence_series}, so not creating new tasks"
         logger.info(msg)
         return msg
-    window_end = start_date + datetime.timedelta(days=days_ahead)
+    window_end = start_at + datetime.timedelta(days=days_ahead)
 
     try:
-        rule = rrulestr(rec_rule, dtstart=start_date)
+        rule = rrulestr(rec_rule, dtstart=start_at)
     except Exception as e:
         result = f"Error parsing recurrence rule for parent_task_id={parent_or_sibling_task.pk}: {e}"
         logger.error(result)
@@ -60,7 +60,7 @@ def _gen_rec_tasks_for_parent_or_sibling(
     # Convert the occurrences to dates since we're working with date fields
     occurrences = [
         dt.date() if isinstance(dt, datetime.datetime) else dt
-        for dt in rule.between(after=start_date, before=window_end, inc=True)
+        for dt in rule.between(after=start_at, before=window_end, inc=True)
     ][:max_events]
     if not occurrences:
         result = (
