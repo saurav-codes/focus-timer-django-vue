@@ -12,6 +12,7 @@ import Popper from 'vue3-popper'
 import TaskEditModal from '../../TaskEditModal.vue'
 import ReadOnlyModal from './ReadOnlyModal.vue'
 import { calculateEndAt, getDateStrFromDateObj } from '../../../utils/taskUtils'
+import { useIntervalFn } from '@vueuse/core'
 
 // Props
 const props = defineProps({
@@ -161,6 +162,9 @@ const calendarError = computed(() => {
 // Store reference to the draggable instance
 const draggableInstance = ref(null)
 
+// Define stopPolling in the parent scope so it's accessible in onUnmounted
+let stopPolling = () => {}
+
 onMounted(async () => {
   isLoading.value = true
   isConnected.value = await calendarStore.checkGoogleConnection()
@@ -205,11 +209,23 @@ onMounted(async () => {
 
   isLoading.value = false
 
+  // Assign pause to stopPolling so it's available in onUnmounted
+  const { pause } = useIntervalFn(
+    () => {
+      if (calendarRef.value) {
+        calendarStore.fetchGcalTask(getDateStrFromDateObj(currentDate.value))
+      }
+    },
+    5 * 60 * 1000 // 2 minutes
+  )
+  stopPolling = pause
+
 })
 
 onUnmounted(async () => {
   // close gcal event ws connection
   calendarStore.gcalWsClose()
+  stopPolling()
 })
 
 const connectGoogleCalendar = () => {
