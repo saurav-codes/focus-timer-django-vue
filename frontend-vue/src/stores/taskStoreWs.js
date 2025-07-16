@@ -44,7 +44,7 @@ export const useTaskStoreWs = defineStore('taskStoreWs', () => {
   const selectedProjects = computed(() => tagsProjectStore.selectedProjects)
   const selectedTags = computed(() => tagsProjectStore.selectedTags)
   const firstDate = ref(subDays(today(), 1))
-  const lastDate = ref(addDays(today(), 2))
+  const lastDate = ref(addDays(today(), 5))
   const minDate = ref(subDays(today(), 7))
   const localCalendarTaskInFcFormat = ref([])
 

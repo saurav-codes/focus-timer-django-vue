@@ -38,6 +38,9 @@ export const createInitialColumns = () => [
   { ...createDateColumn(today_dt_fn()) },
   { ...createDateColumn(addDays(today_dt_fn(), 1)) },
   { ...createDateColumn(addDays(today_dt_fn(), 2)) },
+  { ...createDateColumn(addDays(today_dt_fn(), 3)) },
+  { ...createDateColumn(addDays(today_dt_fn(), 4)) },
+  { ...createDateColumn(addDays(today_dt_fn(), 5)) },
 ]
 
 // Convert an HH:MM duration string to ISO-8601 (PT#H#M) expected by the API
