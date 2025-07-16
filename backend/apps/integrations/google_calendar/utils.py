@@ -1,5 +1,4 @@
 import json
-import datetime
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleRequest
 from google_auth_oauthlib.flow import Flow
@@ -368,33 +367,6 @@ def format_event_for_fullcalendar(event):
     }
 
     return fullcalendar_event
-
-
-def get_event_time_boundaries(event):
-    """
-    Extract start and end times from a Google Calendar event.
-
-    Args:
-        event (dict): Google Calendar event.
-
-    Returns:
-        tuple: (start_datetime, end_datetime) - Start and end datetimes.
-    """
-    start_str = event["start"].get("dateTime", event["start"].get("date"))
-    end_str = event["end"].get("dateTime", event["end"].get("date"))
-
-    # Parse the strings to datetime objects
-    if "T" in start_str:  # dateTime format (e.g., "2023-11-15T10:00:00Z")
-        start_dt = datetime.datetime.fromisoformat(start_str.replace("Z", "+00:00"))
-    else:  # date format (e.g., "2023-11-15")
-        start_dt = datetime.datetime.fromisoformat(f"{start_str}T00:00:00")
-
-    if "T" in end_str:
-        end_dt = datetime.datetime.fromisoformat(end_str.replace("Z", "+00:00"))
-    else:
-        end_dt = datetime.datetime.fromisoformat(f"{end_str}T23:59:59")
-
-    return start_dt, end_dt
 
 
 def handle_calendar_api_error(
