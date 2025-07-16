@@ -250,7 +250,7 @@ async function handleTaskDropped(dropInfo) {
   } catch (error) {
     // Error handling task drop
     alert('Failed to add task to calendar. Please try again.')
-    console.log('Error during task drop:', error)
+
     return false // Return false to indicate failed drop
   }
 }
@@ -351,18 +351,22 @@ const calendarOptions = ref({
           <LucideCalendar :size="14" />
           Calendar
         </h3>
-        <div class="date-display">
-          <button class="nav-btn prev-btn" @click="prev">
-            <LucideChevronLeft :size="14" />
-          </button>
-          <!-- Show Today button only when not viewing today -->
-          <button v-if="!isToday" class="nav-btn today-btn" @click="today">
-            Today
-          </button>
-          {{ currentDateDisplay }}
-          <button class="nav-btn next-btn" @click="next">
-            <LucideChevronRight :size="14" />
-          </button>
+        <div class="date-navigation">
+          <div class="nav-controls">
+            <button class="nav-btn prev-btn" @click="prev">
+              <LucideChevronLeft :size="16" />
+            </button>
+            <button class="nav-btn next-btn" @click="next">
+              <LucideChevronRight :size="16" />
+            </button>
+          </div>
+          <div class="date-info">
+            <span class="current-date">{{ currentDateDisplay }}</span>
+            <!-- Show Today button only when not viewing today -->
+            <button v-if="!isToday" class="today-btn" @click="today">
+              Today
+            </button>
+          </div>
         </div>
       </div>
       <!-- Connection status controls -->
@@ -674,5 +678,101 @@ const calendarOptions = ref({
 .link-icon {
   color: var(--color-text-secondary);
   transition: color 0.2s ease;
+}
+
+/* Calendar Navigation Styles */
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.nav-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-background-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+}
+
+.nav-btn:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.current-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.today-btn {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.today-btn:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.today-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+  .date-navigation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .date-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .current-date {
+    font-size: var(--font-size-xs);
+  }
 }
 </style>
