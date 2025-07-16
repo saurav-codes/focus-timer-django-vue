@@ -98,13 +98,6 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             )
 
     # ------------------------------------------------------------------
-    #   Group message handlers (called via channel_layer.group_send)
-    # ------------------------------------------------------------------
-    async def gcal_event(self, event):
-        """Forward a calendar event/update coming from server-side code."""
-        await self.send_json(event)
-
-    # ------------------------------------------------------------------
     #   Helpers
     # ------------------------------------------------------------------
     @database_sync_to_async

@@ -103,7 +103,6 @@ export const useCalendarStore = defineStore('calendar', () => {
         fetchGcalTask()
         break
       }
-      case 'gcal_event':
       case 'gcal.events': {
         const updates = msg.data || []
         updates.forEach((ev) => {
