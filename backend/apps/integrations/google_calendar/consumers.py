@@ -2,8 +2,6 @@ from datetime import datetime, timezone as dt_tz
 import logging
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.consumer import database_sync_to_async
-import uuid
-from django.urls import reverse
 from .utils import build_calendar_service, format_event_for_fullcalendar
 from .models import GoogleCalendarCredentials
 
@@ -143,51 +141,4 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
         }
         events_result = service.events().list(**filter_params).execute()
         raw_events = events_result.get("items", [])
-        next_sync_token = events_result.get("nextSyncToken")
-        if next_sync_token:
-            creds_obj.next_sync_token = next_sync_token
-            creds_obj.last_sync_params = filter_params  # type: ignore
-
         return [format_event_for_fullcalendar(ev) for ev in raw_events]
-
-    async def _start_push_subscription(self):
-        """
-        Start a Google Calendar watch channel for this user's 'today' events.
-        """
-        try:
-            await self._sync_start_watch()
-        except Exception as e:
-            logger.error(f"Failed to start gcal push subscription: {e}", exc_info=True)
-
-    @database_sync_to_async
-    def _sync_start_watch(self):
-        # Get credentials
-        creds_obj = GoogleCalendarCredentials.objects.filter(user=self.user).first()
-        if not creds_obj:
-            return
-        creds = creds_obj.get_credentials()
-        if isinstance(creds, dict):
-            return
-        service = build_calendar_service(creds)
-        # TODO: extract service init to self.service
-        # Prepare watch request: reuse saved channel_id if present
-        channel_id = str(uuid.uuid4())
-        webhook_url = "https://tymr.online" + reverse(
-            "google_calendar:google_calendar_webhook"
-        )
-        body = {
-            "id": channel_id,
-            "type": "web_hook",
-            "address": webhook_url,
-        }
-        try:
-            service.events().watch(
-                calendarId=creds_obj.calendar_id or "primary",
-                body=body,
-            ).execute()
-            # Save channel_id back to model if new
-            if creds_obj.channel_id != channel_id:
-                creds_obj.channel_id = channel_id
-                creds_obj.save(update_fields=["channel_id"])
-        except Exception as e:
-            logger.error(f"Error registering gcal watch channel: {e}", exc_info=True)
