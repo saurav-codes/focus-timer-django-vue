@@ -25,13 +25,21 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=401)
             return
 
+        # Check if user has Google Calendar connected
+        self.has_google_calendar = await self._check_google_calendar_connection()
+        logger.info(
+            f"User {self.user.id} Google Calendar connected: {self.has_google_calendar}"
+        )
+
         # accept connection & join group
         await self.accept()
         self.group_name = f"gcal_user_{self.user.id}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)  # type: ignore
 
-        # send connected ack
-        await self.send_json({"type": "connected"})
+        # send connected ack with connection status
+        await self.send_json(
+            {"type": "connected", "google_calendar_connected": self.has_google_calendar}
+        )
 
     async def disconnect(self, code):
         if hasattr(self, "group_name"):
@@ -51,6 +59,15 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
             return
+
+        # If user is not connected to Google Calendar, return empty events array for any Google Calendar action
+        if not self.has_google_calendar:
+            logger.info(
+                f"User {self.user.id} attempted Google Calendar action without connection"
+            )
+            await self.send_json({"type": "gcal.events", "data": []})
+            return
+
         if action == "fetch_gcal_task_from_dt":
             payload = content.get("payload")
             date_str = payload.get("date_str")
@@ -81,10 +98,6 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
         await self._validate_dt(date_str)
         try:
             events = await self._fetch_events(date_str)
-            # await self._start_push_subscription()
-            # TODO: make sure we only subscribe to notification
-            # when already there not a subscription
-            # we can use cred obj to store notific related data to avoid duplicate watch
             await self.send_json({"type": "gcal.events", "data": events})
         except Exception as exc:
             logger.error(
@@ -101,11 +114,17 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
     #   Helpers
     # ------------------------------------------------------------------
     @database_sync_to_async
+    def _check_google_calendar_connection(self):
+        """Check if user has Google Calendar credentials."""
+        return GoogleCalendarCredentials.objects.filter(user=self.user).exists()
+
+    @database_sync_to_async
     def _fetch_events(self, date_str: str):
         """Synchronously fetch Google-Calendar events & return FullCalendar-ready list."""
         # Get stored credentials
         creds_obj = GoogleCalendarCredentials.objects.filter(user=self.user).first()
         if not creds_obj:
+            logger.info(f"No Google Calendar credentials for user {self.user.id}")
             return []
 
         creds = creds_obj.get_credentials()

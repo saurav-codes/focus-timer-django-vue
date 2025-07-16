@@ -72,29 +72,27 @@ function prev() {
   leftMostColDt.setHours(0,0,0,0)
   if (currentDate.value < leftMostColDt) {
     taskStore.addEarlierColumnsWs(3)
-    console.log("Added 3 more col and fetched their tasks since user clicked on date older than what's visible")
   }
-  // fetch for the normalized local date
-  if (currentDate.value) {
+  // Only fetch Google Calendar events if connected
+  if (isConnected.value && currentDate.value) {
     const dt = getDateStrFromDateObj(currentDate.value)
     calendarStore.fetchGcalTask(dt)
   }
 }
-// Navigate to next period
 function next() {
   calendarRef.value?.getApi().next()
   const rightMostColDt = taskStore.kanbanColumns[taskStore.kanbanColumns.length - 1].date
   rightMostColDt.setHours(0,0,0,0)
   if (currentDate.value > rightMostColDt) {
     taskStore.addMoreColumnsWs(3)
-    console.log("Added 3 more col and fetched their tasks since user clicked on date greater than what's visible")
   }
-  // fetch for the normalized local date
-  if (currentDate.value) {
+  // Only fetch Google Calendar events if connected
+  if (isConnected.value && currentDate.value) {
     const dt = getDateStrFromDateObj(currentDate.value)
     calendarStore.fetchGcalTask(dt)
   }
 }
+
 // Determine if the calendar's current view is today
 const isToday = computed(() => {
   if (!currentDate.value) return true
@@ -165,61 +163,52 @@ const draggableInstance = ref(null)
 // Define stopPolling in the parent scope so it's accessible in onUnmounted
 let stopPolling = () => {}
 
+// --- Connection Status Indicator for Header ---
+const showConnectPopper = ref(false)
+
+// --- onMounted: Always render calendar, only poll Google events if connected ---
 onMounted(async () => {
   isLoading.value = true
+  // Check connection status but don't block calendar rendering
   isConnected.value = await calendarStore.checkGoogleConnection()
+
+  // Only initialize Google Calendar WebSocket if connected
   if (isConnected.value) {
     calendarStore.initGcalWs()
-    console.log("current date during gcal ws initi call - ", currentDate.value)
-    // taskStore.fetchGcalTask(currentDate)
   }
 
-  // Initialize a single draggable instance for calendar integration only
-  // Use a more specific selector to avoid conflicts with vuedraggable
-  // Only target task items that are not being handled by vuedraggable
+  // Initialize draggable for task dropping (works regardless of Google connection)
   draggableInstance.value = new ThirdPartyDraggable(document.body, {
     itemSelector: '.task-item',
     mirrorSelector: '.task-item',
-    // Add event data to make dragging work properly
     eventData: function (eventEl) {
-      // Get the event data from the element's dataset
       if (eventEl.dataset.event) {
         const eventData = JSON.parse(eventEl.dataset.event)
-        // Event data available for drag operation
-        return {
-          ...eventData,
-        }
+        return { ...eventData }
       }
       return null
     },
   })
 
-  // show alert if calendarstore has error
-  watch(
-    calendarError,
-    (new_error) => {
-      if (new_error) {
-        alert(new_error)
-        calendarStore.error = null
-      }
-    },
-    { deep: true }
-  )
-
+  // Watch for calendar errors
+  watch(calendarError, (new_error) => {
+    if (new_error) {
+      alert(new_error)
+      calendarStore.error = null
+    }
+  }, { deep: true })
 
   isLoading.value = false
 
-  // Assign pause to stopPolling so it's available in onUnmounted
-  const { pause } = useIntervalFn(
-    () => {
+  // Only start polling if Google Calendar is connected
+  if (isConnected.value) {
+    const { pause } = useIntervalFn(() => {
       if (calendarRef.value) {
         calendarStore.fetchGcalTask(getDateStrFromDateObj(currentDate.value))
       }
-    },
-    5 * 60 * 1000 // 2 minutes
-  )
-  stopPolling = pause
-
+    }, 5 * 60 * 1000)
+    stopPolling = pause
+  }
 })
 
 onUnmounted(async () => {
@@ -334,7 +323,15 @@ const calendarOptions = ref({
     // Local tasks marked ON_CAL
     { events: (info, success) => success(localCalTasks.value) },
     // Google Calendar events via WebSocket
-    { events: (info, success) => success(gcalEvents.value) }
+{
+      events: (info, success) => {
+        if (isConnected.value) {
+          success(gcalEvents.value)
+        } else {
+          success([]) // Return empty array if not connected
+        }
+      }
+    },
   ],
   selectable: false,
   eventResizableFromStart: true,
@@ -368,48 +365,50 @@ const calendarOptions = ref({
           </button>
         </div>
       </div>
-      <Popper v-if="isConnected" arrow content="Disconnect Google Calendar" :show="showPopper">
-        <LucideUnlink
-          class="disconnect-button"
-          :class="{ 'disabled-div': isLoading }"
-          :size="14"
-          @mouseover="showPopper = true"
-          @mouseleave="showPopper = false"
-          @click="disconnectGoogleCalendar" />
-      </Popper>
+      <!-- Connection status controls -->
+      <div class="connection-controls">
+        <Popper v-if="isConnected" arrow content="Disconnect Google Calendar" :show="showPopper">
+          <LucideUnlink
+            class="disconnect-button"
+            :class="{ 'disabled-div': isLoading }"
+            :size="14"
+            @mouseover="showPopper = true"
+            @mouseleave="showPopper = false"
+            @click="disconnectGoogleCalendar" />
+        </Popper>
+        <Popper v-else arrow content="Connect Google Calendar" :show="showConnectPopper">
+          <LucideLink
+            class="connect-button-icon"
+            :class="{ 'disabled-div': isLoading }"
+            :size="14"
+            @mouseover="showConnectPopper = true"
+            @mouseleave="showConnectPopper = false"
+            @click="connectGoogleCalendar" />
+        </Popper>
+      </div>
     </div>
-    <div class="google-calendar-connect">
+    <div class="calendar-container">
       <div v-if="isLoading" class="loading">
         <div class="spinner" />
         <span>Loading...</span>
       </div>
-      <div v-else-if="!isConnected" class="connect-prompt">
-        <p>Sync your tasks with Google Calendar to manage your schedule more effectively.</p>
-        <button class="connect-button" :disabled="calendarStore.isLoading" @click="connectGoogleCalendar">
-          {{ calendarStore.isLoading ? 'Connecting...' : 'Connect Google Calendar' }}
-          <div v-if="!calendarStore.isLoading">
-            <LucideLink class="link-icon" size="16" />
-          </div>
-        </button>
-      </div>
-
-      <!-- Render FullCalendar component here -->
+      <!-- FullCalendar always renders -->
       <FullCalendar v-else ref="calendarRef" :options="calendarOptions" />
-
-      <TaskEditModal
-        v-if="activeTask"
-        :task="activeTask"
-        :is-open="isEditModalOpen"
-        @close-modal="closeEditModal"
-        @task-updated="handleTaskUpdated"
-        @task-archived="handleTaskArchived"
-        @task-deleted="handleTaskDeleted" />
-      <ReadOnlyModal
-        v-if="activeEvent"
-        :event="activeEvent"
-        :is-open="isReadOnlyModalOpen"
-        @close-modal="closeReadOnlyModal" />
     </div>
+    <!-- Modals -->
+    <TaskEditModal
+      v-if="activeTask"
+      :task="activeTask"
+      :is-open="isEditModalOpen"
+      @close-modal="closeEditModal"
+      @task-updated="handleTaskUpdated"
+      @task-archived="handleTaskArchived"
+      @task-deleted="handleTaskDeleted" />
+    <ReadOnlyModal
+      v-if="activeEvent"
+      :event="activeEvent"
+      :is-open="isReadOnlyModalOpen"
+      @close-modal="closeReadOnlyModal" />
   </div>
 </template>
 

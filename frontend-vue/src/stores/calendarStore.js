@@ -58,6 +58,13 @@ export const useCalendarStore = defineStore('calendar', () => {
       await authStore.axios_instance.delete('api/gcalendar/disconnect/')
       isGoogleConnected.value = false
       gcalEvents.value = []
+
+      // Clean up WebSocket connections when disconnecting
+      if (gcalWsStatus.value === 'OPEN') {
+        console.log('Closing Google Calendar WebSocket connection')
+        gcalWsClose()
+      }
+
       return true
     } catch (err) {
       error.value = err.response?.data?.error || 'Failed to disconnect Google Calendar'
@@ -87,6 +94,12 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
   // websocket methods
   function fetchGcalTask(date_str = '') {
+    // Only fetch if Google Calendar is connected
+    if (!isGoogleConnected.value) {
+      console.log('Google Calendar not connected, skipping fetch')
+      return
+    }
+
     // Accept a local date string (YYYY-MM-DD). If none provided, use today's local date.
     if (!date_str) {
       const today = new Date()
@@ -121,6 +134,12 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
   // Generic send helper
   function _sendActionToGcalWebsocket(action, payload = {}) {
+    // Only send WebSocket messages if Google Calendar is connected
+    if (!isGoogleConnected.value) {
+      console.log('Google Calendar not connected, skipping WebSocket message')
+      return
+    }
+
     if (gcalWsStatus.value === 'OPEN') {
       gcalWsSend(JSON.stringify({ action, payload }))
     } else {
@@ -143,6 +162,12 @@ export const useCalendarStore = defineStore('calendar', () => {
     }
   })
   function initGcalWs() {
+    // Only initialize WebSocket when Google Calendar is connected
+    if (!isGoogleConnected.value) {
+      console.log('Google Calendar not connected, skipping WebSocket initialization')
+      return
+    }
+
     const auth = useAuthStore()
     auth.verify_auth() // sends a fetchuserdata request to make sure user is logged in
     if (auth.isAuthenticated) {
