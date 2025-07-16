@@ -200,6 +200,7 @@ def move_old_tasks_to_backlogs_periodic():
     old_tasks = Task.objects.filter(
         updated_at__lt=fifteen_days_ago,
         is_completed=False,
+        recurrence_series__isnull=True,
     ).exclude(status=Task.ARCHIVED)
 
     count = 0
