@@ -304,6 +304,7 @@ async function handleCalendarEventUpdated(eventDropInfo) {
 
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
+  nowIndicator: true,
   initialView: props.initialView,
   headerToolbar: false,
   allDaySlot: false,
