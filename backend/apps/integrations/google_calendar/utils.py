@@ -7,18 +7,6 @@ from googleapiclient.errors import HttpError
 from django.conf import settings
 
 
-# Define the scopes needed for Google Calendar
-# Read-only is used for the initial integration
-SCOPES = [
-    "https://www.googleapis.com/auth/calendar.events",  # Manage events
-    "https://www.googleapis.com/auth/calendar.settings.readonly",
-    "https://www.googleapis.com/auth/calendar.readonly",  # Read calendar settings
-]
-
-# Full access scope for future use if needed
-# SCOPES = ['https://www.googleapis.com/auth/calendar']
-
-
 def create_flow(redirect_uri=None, state=None):
     """
     Create an OAuth2 flow for Google Calendar authorization.
@@ -42,7 +30,7 @@ def create_flow(redirect_uri=None, state=None):
 
     flow = Flow.from_client_config(
         client_config,
-        scopes=SCOPES,
+        scopes=settings.GOOGLE_AUTH_SCOPES,
         redirect_uri=redirect_uri or settings.GOOGLE_REDIRECT_URI,
         state=state,
     )
@@ -66,7 +54,7 @@ def credentials_from_dict(token_data):
         token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
         client_id=token_data.get("client_id", settings.GOOGLE_CLIENT_ID),
         client_secret=token_data.get("client_secret", settings.GOOGLE_CLIENT_SECRET),
-        scopes=token_data.get("scopes", SCOPES),
+        scopes=token_data.get("scopes", settings.GOOGLE_AUTH_SCOPES),
     )
 
 

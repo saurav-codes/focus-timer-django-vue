@@ -3,7 +3,7 @@ import logging
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.consumer import database_sync_to_async
 from .utils import build_calendar_service, format_event_for_fullcalendar
-from .models import GoogleCalendarCredentials
+from .models import GoogleCredentials
 
 import re
 
@@ -116,13 +116,13 @@ class GoogleCalendarConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def _check_google_calendar_connection(self):
         """Check if user has Google Calendar credentials."""
-        return GoogleCalendarCredentials.objects.filter(user=self.user).exists()
+        return GoogleCredentials.objects.filter(user=self.user).exists()
 
     @database_sync_to_async
     def _fetch_events(self, date_str: str):
         """Synchronously fetch Google-Calendar events & return FullCalendar-ready list."""
         # Get stored credentials
-        creds_obj = GoogleCalendarCredentials.objects.filter(user=self.user).first()
+        creds_obj = GoogleCredentials.objects.filter(user=self.user).first()
         if not creds_obj:
             logger.info(f"No Google Calendar credentials for user {self.user.id}")
             return []

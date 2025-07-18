@@ -9,7 +9,7 @@ from django.utils.dateparse import parse_datetime
 from googleapiclient.errors import HttpError
 from django.views.decorators.csrf import csrf_protect
 
-from .models import GoogleCalendarCredentials
+from .models import GoogleCredentials
 from .utils import (
     create_flow,
     can_modify_event,
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def check_google_connection(request):
     """Check if the user has connected their Google Calendar."""
     try:
-        credentials_instance = GoogleCalendarCredentials.objects.filter(
+        credentials_instance = GoogleCredentials.objects.filter(
             user=request.user
         ).first()
         if credentials_instance:
@@ -116,8 +116,13 @@ def google_auth_callback(request):
             return redirect(f"{settings.FRONTEND_URL}/login?error=auth_required")
 
         # Store or update the credentials in the database
-        credentials_obj, created = GoogleCalendarCredentials.objects.update_or_create(
-            user=request.user, defaults={"token": token_data}
+        granted_scope_set = set()
+        if credentials.scopes:
+            granted_scope_set = set(credentials.scopes)
+        credentials_obj, created = GoogleCredentials.objects.update_or_create(
+            user=request.user,
+            defaults={"token": token_data},
+            granted_scopes=granted_scope_set,
         )
 
         # If this is a new connection, get the primary calendar ID
@@ -166,9 +171,7 @@ def get_calendar_events(request):
             )
 
         # Get the credentials for the user
-        credentials_obj = GoogleCalendarCredentials.objects.filter(
-            user=request.user
-        ).first()
+        credentials_obj = GoogleCredentials.objects.filter(user=request.user).first()
         if not credentials_obj:
             return Response({"error": "Google Calendar not connected"}, status=404)
 
@@ -254,9 +257,7 @@ def disconnect_google_calendar(request):
     """Disconnect the user's Google Calendar."""
     try:
         # Delete the credentials for the user
-        deleted, _ = GoogleCalendarCredentials.objects.filter(
-            user=request.user
-        ).delete()
+        deleted, _ = GoogleCredentials.objects.filter(user=request.user).delete()
 
         if deleted:
             return Response({"message": "Google Calendar disconnected successfully"})
@@ -277,9 +278,7 @@ def update_calendar_event(request, event_id):
         event_data = request.data
 
         # Get the credentials for the user
-        credentials_obj = GoogleCalendarCredentials.objects.filter(
-            user=request.user
-        ).first()
+        credentials_obj = GoogleCredentials.objects.filter(user=request.user).first()
         if not credentials_obj:
             return Response({"error": "Google Calendar not connected"}, status=404)
 

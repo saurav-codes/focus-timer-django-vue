@@ -10,15 +10,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class GoogleCalendarCredentials(models.Model):
+class GoogleCredentials(models.Model):
     """
-    Model to store Google Calendar OAuth2 credentials for users.
+    Model to store Google OAuth2 credentials for users.
     """
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="google_calendar_credentials",
+        related_name="google_credentials",
     )
     token = models.JSONField(help_text="OAuth2 token and refresh token information")
     calendar_id = models.CharField(
@@ -26,13 +26,24 @@ class GoogleCalendarCredentials(models.Model):
     )
     connected_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    gmail_sync_enabled = models.BooleanField(default=False)
+    granted_scopes = models.JSONField(default=set, blank=True, null=True)
 
     class Meta:
-        verbose_name = "Google Calendar Credentials"
-        verbose_name_plural = "Google Calendar Credentials"
+        verbose_name = "Google Credentials"
+        verbose_name_plural = "Google Credentials"
 
     def __str__(self):
-        return f"{self.user.email}'s Google Calendar"
+        return f"{self.user.email}'s Google Creds"
+
+    def is_gmail_scope_granted(self) -> bool:
+        all_scopes: list = settings.GOOGLE_AUTH_SCOPES
+        gmail_scopes = {
+            s
+            for s in all_scopes
+            if s.startswith("https://www.googleapis.com/auth/gmail")
+        }
+        return gmail_scopes.issubset(self.granted_scopes or {})
 
     @property
     def is_expired(self):
@@ -92,7 +103,7 @@ class GoogleCalendarCredentials(models.Model):
                 )
                 self.delete()
                 return {
-                    "error": "Refresh token missing. Please reconnect your Google Calendar."
+                    "error": "Refresh token missing. Please reconnect your Google Account."
                 }
             try:
                 credentials.refresh(request=GoogleRequest())
@@ -103,7 +114,7 @@ class GoogleCalendarCredentials(models.Model):
                 )
                 self.delete()
                 return {
-                    "error": "Google Calendar authentication expired. Please reconnect."
+                    "error": "Google Account authentication expired. Please reconnect."
                 }
             # Update the stored token
             token_data = {
