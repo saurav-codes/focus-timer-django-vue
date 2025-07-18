@@ -21,7 +21,7 @@ def check_gmail_connection(request):
             credentials_data = credentials_instance.get_credentials()
             if isinstance(credentials_data, dict):  # dict instance means error dict
                 return Response(credentials_data, status=400)
-            if credentials_instance.is_gmail_scope_granted is False:
+            if credentials_instance.is_gmail_scope_granted() is False:
                 return Response({"connected": False}, status=400)
             return Response({"connected": True}, status=200)
         else:

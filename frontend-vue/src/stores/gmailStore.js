@@ -2,9 +2,8 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from './authStore'
 import { useWebSocket } from '@vueuse/core'
 import { watch, ref } from 'vue'
-import { getDateStrFromDateObj } from '../../src/utils/taskUtils'
 
-export const useCalendarStore = defineStore('calendar', () => {
+export const useGmailStore = defineStore('gmail', () => {
   const host = import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL || 'tymr.online' : 'localhost:8000'
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const wsUrl = `${protocol}://${host}/ws/gmail/`
@@ -27,14 +26,13 @@ export const useCalendarStore = defineStore('calendar', () => {
   const authStore = useAuthStore()
 
   async function checkGmailConnection() {
-    // methods using API
     try {
       isLoading.value = true
-      const response = await authStore.axios_instance.get('api/gmail/status/')
+      const response = await authStore.axios_instance.get('/api/gmail/status/')
       isGmailConnected.value = response.data.connected
       return isGmailConnected.value
     } catch (err) {
-      error.value = err.response?.data?.error || 'Error checking Google connection'
+      error.value = err.response?.data?.error || 'Error checking Gmail connection'
       isGmailConnected.value = false
       return false
     } finally {
@@ -42,83 +40,174 @@ export const useCalendarStore = defineStore('calendar', () => {
     }
   }
 
-  // websocket methods
-  function fetchEmails(date_str = '') {
-    // Only fetch if Google Calendar is connected
+  // Fetch emails from Gmail API
+  async function fetchEmails(page = 1, pageSize = 20) {
     if (!isGmailConnected.value) {
-      console.log('Google Calendar not connected, skipping fetch')
+      console.log('Gmail not connected, skipping fetch')
       return
     }
 
-    // Accept a local date string (YYYY-MM-DD). If none provided, use today's local date.
-    if (!date_str) {
-      const today = new Date()
-      date_str = getDateStrFromDateObj(today)
-      // console.log("no date passed so using today's local date -", date_str)
+    isLoading.value = true
+    try {
+      const response = await authStore.axios_instance.get('/api/gmail/emails/', {
+        params: { page, page_size: pageSize },
+      })
+      gmailEmails.value = response.data.emails || []
+      return response.data
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to fetch emails'
+      return { error: error.value }
+    } finally {
+      isLoading.value = false
     }
-    console.log('fetch gmail with date -', date_str)
-    _sendActionToGmailWebsocket('fetch_gcal_task_from_dt', { date_str: date_str })
   }
-  function routeGcalMessage(msg) {
+
+  // Handle WebSocket messages
+  function routeGmailMessage(msg) {
     switch (msg.type) {
       case 'connected': {
-        console.log('gmail ws connected successfully: ', msg)
+        console.log('Gmail WS connected successfully: ', msg)
         fetchEmails()
+        break
+      }
+      case 'email_update': {
+        console.log('Received email update: ', msg.data)
+        updateEmailInList(msg.data)
+        break
+      }
+      case 'new_email': {
+        console.log('Received new email: ', msg.data)
+        addNewEmail(msg.data)
         break
       }
       default:
         console.warn('[GMAIL WS] unhandled message type:', msg.type)
     }
   }
-  // Generic send helper
+
+  // Update an email in the list
+  function updateEmailInList(emailData) {
+    const index = gmailEmails.value.findIndex((email) => email.id === emailData.id)
+    if (index !== -1) {
+      gmailEmails.value[index] = { ...gmailEmails.value[index], ...emailData }
+    }
+  }
+
+  // Add a new email to the list
+  function addNewEmail(emailData) {
+    gmailEmails.value.unshift(emailData)
+  }
+
+  // Send action to WebSocket
   function _sendActionToGmailWebsocket(action, payload = {}) {
-    // Only send WebSocket messages if Google Calendar is connected
     if (!isGmailConnected.value) {
-      console.log('Google Calendar not connected, skipping WebSocket message')
+      console.log('Gmail not connected, skipping WebSocket message')
       return
     }
 
     if (gmailWsStatus.value === 'OPEN') {
       gmailWsSend(JSON.stringify({ action, payload }))
     } else {
-      console.info('[WS] not initialized, ws status yet:', gmailWsStatus.value)
+      console.info('[WS] not initialized, ws status:', gmailWsStatus.value)
     }
   }
 
-  // watch incoming data
+  // Watch incoming WebSocket data
   watch(gmailWsData, (raw) => {
     if (!raw) return
     let msg
     try {
       msg = JSON.parse(raw.data ?? raw)
     } catch {
-      console.error('[CalendarStore GCAL WS] invalid JSON:', raw)
+      console.error('[GmailStore WS] invalid JSON:', raw)
       return
     }
     if (msg) {
-      routeGcalMessage(msg)
+      routeGmailMessage(msg)
     }
   })
-  function initGcalWs() {
-    // Only initialize WebSocket when Google Calendar is connected
+
+  // Initialize WebSocket connection
+  function initGmailWs() {
     if (!isGmailConnected.value) {
-      console.log('Google Calendar not connected, skipping WebSocket initialization')
+      console.log('Gmail not connected, skipping WebSocket initialization')
       return
     }
 
     const auth = useAuthStore()
-    auth.verify_auth() // sends a fetchuserdata request to make sure user is logged in
+    auth.verify_auth()
     if (auth.isAuthenticated) {
-      console.info('user is authenticated opening gmail ws')
+      console.info('User is authenticated, opening Gmail WebSocket')
       gmailWsOpen()
     }
   }
 
+  // Toggle star status for an email
+  async function toggleStar(emailId) {
+    const email = gmailEmails.value.find((e) => e.id === emailId)
+    if (!email) return
+
+    const originalStarred = email.isStarred
+    // Optimistic update
+    email.isStarred = !email.isStarred
+
+    try {
+      await authStore.axios_instance.put(`/api/gmail/emails/${emailId}/star/`, {
+        starred: email.isStarred,
+      })
+      return true
+    } catch (err) {
+      // Revert on failure
+      email.isStarred = originalStarred
+      error.value = err.response?.data?.error || 'Failed to update star status'
+      return false
+    }
+  }
+
+  // Mark email as read/unread
+  async function markAsRead(emailId, read = true) {
+    const email = gmailEmails.value.find((e) => e.id === emailId)
+    if (!email) return
+
+    const originalReadStatus = email.isRead
+    // Optimistic update
+    email.isRead = read
+
+    try {
+      await authStore.axios_instance.put(`/api/gmail/emails/${emailId}/read/`, {
+        read: email.isRead,
+      })
+      return true
+    } catch (err) {
+      // Revert on failure
+      email.isRead = originalReadStatus
+      error.value = err.response?.data?.error || 'Failed to update read status'
+      return false
+    }
+  }
+
+  // Convert email to task
+  async function convertToTask(emailId, taskDetails) {
+    try {
+      await authStore.axios_instance.post(`/api/gmail/emails/${emailId}/convert-to-task/`, taskDetails)
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to convert email to task'
+      return false
+    }
+  }
+
   return {
+    isLoading,
+    isGmailConnected,
+    error,
     gmailEmails,
-    fetchEmails,
     gmailWsStatus,
-    initGcalWs,
+    fetchEmails,
+    toggleStar,
+    markAsRead,
+    convertToTask,
+    initGmailWs,
     gmailWsClose,
     checkGmailConnection,
   }

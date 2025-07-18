@@ -1,176 +1,143 @@
 <script setup>
-  import { ref } from 'vue'
-  import { Star, StarOff, Paperclip } from 'lucide-vue-next'
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  watch,
+  computed,
+} from 'vue'
+import { useGmailStore } from '../../../stores/gmailStore'
+import { useCalendarStore } from '../../../stores/calendarStore'
+import {
+  LucideCalendar,
+  LucideLink,
+  LucideUnlink,
+  LucideChevronLeft,
+  LucideChevronRight,
+} from 'lucide-vue-next'
+import Popper from 'vue3-popper'
+import { useIntervalFn } from '@vueuse/core'
 
-  // Mock email data
-  const emails = ref([
-    {
-      id: 1,
-      sender: 'John Smith',
-      email: 'john.smith@example.com',
-      subject: 'Project Update - Q3 Goals',
-      preview: 'Hi team, I wanted to share the latest updates on our Q3 goals...',
-      time: '10:23 AM',
-      isStarred: true,
-      hasAttachment: true,
-      isRead: false,
-    },
-    {
-      id: 2,
-      sender: 'Product Team',
-      email: 'product@company.com',
-      subject: 'New Feature Release',
-      preview: 'We are excited to announce the launch of our newest feature...',
-      time: 'Yesterday',
-      isStarred: false,
-      hasAttachment: false,
-      isRead: true,
-    },
-    {
-      id: 3,
-      sender: 'Sarah Johnson',
-      email: 'sarah.j@client.org',
-      subject: 'Meeting Feedback',
-      preview: 'Thank you for the presentation yesterday. I had a few thoughts...',
-      time: 'Mar 1',
-      isStarred: true,
-      hasAttachment: false,
-      isRead: true,
-    },
-  ])
+const gmailStore = useGmailStore()
+const calStore = useCalendarStore()
 
-  const toggleStar = (emailId) => {
-    const email = emails.value.find((e) => e.id === emailId)
-    if (email) {
-      email.isStarred = !email.isStarred
+const isConnected = ref(false)
+const isLoading = ref(false)
+const showPopper = ref(false)
+const gmailError = computed(() => {
+  return gmailStore.error
+})
+
+// Define stopPolling in the parent scope so it's accessible in onUnmounted
+let stopPolling = () => { }
+
+// --- Connection Status Indicator for Header ---
+const showConnectPopper = ref(false)
+
+onMounted(async () => {
+  isLoading.value = true
+  try {
+    // Check connection status
+    isConnected.value = await gmailStore.checkGmailConnection()
+
+    // Only initialize Gmail WebSocket if connected
+    if (isConnected.value) {
+      gmailStore.initGmailWs()
     }
+  } catch (error) {
+    console.error('Error checking Gmail connection:', error)
+    isConnected.value = false
   }
+
+  // Watch for Gmail errors
+  watch(gmailError, (newError) => {
+    if (newError) {
+      alert(newError)
+      gmailStore.error = null
+    }
+  }, { deep: true })
+
+  isLoading.value = false
+
+  // Only start polling if Gmail is connected
+  if (isConnected.value) {
+    const { pause } = useIntervalFn(() => {
+      gmailStore.fetchEmails()
+    }, 5 * 60 * 1000)
+    stopPolling = pause
+  }
+})
+
+onUnmounted(async () => {
+  // close gcal event ws connection
+  gmailStore.gmailWsClose()
+  stopPolling()
+})
+
+const connectGoogleCalendar = () => {
+  // Use the calendar store's auth method since Gmail uses the same OAuth flow
+  calStore.startGoogleAuth()
+}
+
+const disconnectGmail = async () => {
+  isLoading.value = true
+  // For now, we'll use the calendar store's disconnect method
+  // This will be updated when we implement Gmail-specific disconnect
+  await calStore.disconnectGoogleCalendar()
+  isConnected.value = false
+  isLoading.value = false
+}
+
 </script>
 
 <template>
   <div class="gmail-integration">
     <div class="integration-header">
-      <h3>Gmail</h3>
-      <div class="email-count">{{ emails.length }} emails</div>
-    </div>
-
-    <div class="emails-list">
-      <div v-for="email in emails" :key="email.id" class="email-card" :class="{ unread: !email.isRead }">
-        <div class="email-actions">
-          <button class="star-btn" @click="toggleStar(email.id)">
-            <Star v-if="email.isStarred" size="16" class="starred" />
-            <StarOff v-else size="16" />
-          </button>
-        </div>
-
-        <div class="email-content">
-          <div class="email-sender">
-            {{ email.sender }}
+      <div class="left-header">
+        <h3>
+          <LucideCalendar :size="14" />
+          Gmail
+        </h3>
+        <div class="date-navigation">
+          <div class="nav-controls">
+            <button class="nav-btn prev-btn">
+              <LucideChevronLeft :size="16" />
+            </button>
+            <button class="nav-btn next-btn">
+              <LucideChevronRight :size="16" />
+            </button>
           </div>
-          <div class="email-subject">
-            {{ email.subject }}
-          </div>
-          <div class="email-preview">
-            {{ email.preview }}
-          </div>
-        </div>
-
-        <div class="email-meta">
-          <div class="email-time">
-            {{ email.time }}
-          </div>
-          <Paperclip v-if="email.hasAttachment" size="14" class="attachment-icon" />
         </div>
       </div>
-
-      <div v-if="emails.length === 0" class="no-emails">Your inbox is empty</div>
+      <!-- Connection status controls -->
+      <div class="connection-controls">
+        <Popper v-if="isConnected" arrow content="Disconnect Google Account" :show="showPopper">
+          <LucideUnlink
+            class="disconnect-button"
+            :class="{ 'disabled-div': isLoading }"
+            :size="14"
+            @mouseover="showPopper = true"
+            @mouseleave="showPopper = false"
+            @click="disconnectGmail" />
+        </Popper>
+        <Popper v-else arrow content="Connect Gmail" :show="showConnectPopper">
+          <div
+            class="google-connect-button"
+            :class="{ 'disabled-div': isLoading }"
+            @mouseover="showConnectPopper = true"
+            @mouseleave="showConnectPopper = false"
+            @click="connectGoogleCalendar">
+            <span class="google-icon">Gmail</span>
+            <LucideLink :size="10" class="link-icon" />
+          </div>
+        </Popper>
+      </div>
+    </div>
+    <div class="calendar-container">
+      <div v-if="isLoading" class="loading">
+        <div class="spinner" />
+        <span>Loading...</span>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-  .gmail-integration {
-    padding: 16px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .integration-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .integration-header h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--color-text, #cdd6f4);
-  }
-
-  .email-count {
-    font-size: 14px;
-    color: var(--color-text-secondary, #a6adc8);
-  }
-
-  .emails-list {
-    flex: 1;
-  }
-
-  .email-card {
-    display: flex;
-    padding: 12px;
-    margin-bottom: 8px;
-    background-color: var(--color-background, #1e1e2e);
-    border-radius: 8px;
-    border: 1px solid var(--color-border, #313244);
-  }
-
-  .email-card.unread {
-    background-color: var(--color-background-light, #313244);
-    border-left: 3px solid var(--color-primary, #89b4fa);
-  }
-
-  .email-actions {
-    display: flex;
-    flex-direction: column;
-    margin-right: 12px;
-  }
-
-  .star-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-text-tertiary, #7f849c);
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .star-btn .starred {
-    color: var(--color-warning, #f9e2af);
-  }
-
-  .email-content {
-    flex: 1;
-    min-width: 0; /* Ensures text truncation works */
-  }
-
-  .email-sender {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .email-subject {
-    font-size: 14px;
-    font-weight: 400;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-</style>
