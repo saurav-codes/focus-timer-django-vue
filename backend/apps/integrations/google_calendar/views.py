@@ -116,13 +116,10 @@ def google_auth_callback(request):
             return redirect(f"{settings.FRONTEND_URL}/login?error=auth_required")
 
         # Store or update the credentials in the database
-        granted_scope_set = set()
-        if credentials.scopes:
-            granted_scope_set = set(credentials.scopes)
         credentials_obj, created = GoogleCredentials.objects.update_or_create(
             user=request.user,
             defaults={"token": token_data},
-            granted_scopes=granted_scope_set,
+            granted_scopes=credentials.scopes,
         )
 
         # If this is a new connection, get the primary calendar ID

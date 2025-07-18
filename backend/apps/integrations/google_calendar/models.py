@@ -43,7 +43,7 @@ class GoogleCredentials(models.Model):
             for s in all_scopes
             if s.startswith("https://www.googleapis.com/auth/gmail")
         }
-        return gmail_scopes.issubset(self.granted_scopes or {})
+        return gmail_scopes.issubset(self.granted_scopes or [])
 
     @property
     def is_expired(self):
