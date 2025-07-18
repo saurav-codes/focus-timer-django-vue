@@ -27,7 +27,7 @@ class GoogleCredentials(models.Model):
     connected_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     gmail_sync_enabled = models.BooleanField(default=False)
-    granted_scopes = models.JSONField(default=set, blank=True, null=True)
+    granted_scopes = models.JSONField(default=list, blank=True, null=True)
 
     class Meta:
         verbose_name = "Google Credentials"
