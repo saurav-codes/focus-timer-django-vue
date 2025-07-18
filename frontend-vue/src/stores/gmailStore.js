@@ -1,27 +1,19 @@
 import { defineStore } from 'pinia'
 import { useAuthStore } from './authStore'
-import { useWebSocket } from '@vueuse/core'
-import { watch, ref } from 'vue'
+import { ref } from 'vue'
 
 export const useGmailStore = defineStore('gmail', () => {
-  const host = import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL || 'tymr.online' : 'localhost:8000'
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const wsUrl = `${protocol}://${host}/ws/gmail/`
-  const {
-    status: gmailWsStatus,
-    data: gmailWsData,
-    open: gmailWsOpen,
-    close: gmailWsClose,
-    send: gmailWsSend,
-  } = useWebSocket(wsUrl, {
-    immediate: false,
-    autoReconnect: { retries: 0, delay: 5000 },
-  })
-
   const isLoading = ref(false)
   const isGmailConnected = ref(false)
+  const isSyncEnabled = ref(false)
   const error = ref(null)
   const gmailEmails = ref([])
+  const availableLabels = ref([])
+  const selectedLabels = ref(['INBOX'])
+  const pagination = ref({
+    nextPageToken: null,
+    hasMore: false,
+  })
 
   const authStore = useAuthStore()
 
@@ -30,29 +22,118 @@ export const useGmailStore = defineStore('gmail', () => {
       isLoading.value = true
       const response = await authStore.axios_instance.get('/api/gmail/status/')
       isGmailConnected.value = response.data.connected
+      isSyncEnabled.value = response.data.sync_enabled || false
+
+      if (isGmailConnected.value) {
+        // Fetch settings if connected
+        await getSettings()
+      }
+
       return isGmailConnected.value
     } catch (err) {
       error.value = err.response?.data?.error || 'Error checking Gmail connection'
       isGmailConnected.value = false
+      isSyncEnabled.value = false
       return false
     } finally {
       isLoading.value = false
     }
   }
 
-  // Fetch emails from Gmail API
-  async function fetchEmails(page = 1, pageSize = 20) {
+  // Get Gmail settings
+  async function getSettings() {
     if (!isGmailConnected.value) {
-      console.log('Gmail not connected, skipping fetch')
-      return
+      return { error: 'Gmail not connected' }
+    }
+
+    try {
+      // Get available labels
+      const labelsResponse = await authStore.axios_instance.get('/api/gmail/labels/')
+      availableLabels.value = labelsResponse.data.labels || []
+
+      // Get user settings
+      const settingsResponse = await authStore.axios_instance.get('/api/gmail/settings/')
+      isSyncEnabled.value = settingsResponse.data.gmail_sync_enabled
+      selectedLabels.value = settingsResponse.data.gmail_sync_labels || ['INBOX']
+
+      return {
+        sync_enabled: isSyncEnabled.value,
+        sync_labels: selectedLabels.value,
+        available_labels: availableLabels.value,
+      }
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to fetch Gmail settings'
+      return { error: error.value }
+    }
+  }
+
+  // Update Gmail settings
+  async function updateSettings(settings) {
+    if (!isGmailConnected.value) {
+      return { error: 'Gmail not connected' }
+    }
+
+    try {
+      const response = await authStore.axios_instance.put('/api/gmail/settings/', settings)
+      isSyncEnabled.value = response.data.gmail_sync_enabled
+      selectedLabels.value = response.data.gmail_sync_labels || ['INBOX']
+
+      // If sync was enabled, fetch emails
+      if (isSyncEnabled.value && !gmailEmails.value.length) {
+        await fetchEmails()
+      }
+
+      return response.data
+    } catch (err) {
+      error.value = err.response?.data?.error || 'Failed to update Gmail settings'
+      return { error: error.value }
+    }
+  }
+
+  // Toggle sync enabled/disabled
+  async function toggleSync(enabled) {
+    return await updateSettings({ gmail_sync_enabled: enabled })
+  }
+
+  // Update selected labels
+  async function updateLabels(labels) {
+    return await updateSettings({ gmail_sync_labels: labels })
+  }
+
+  // Fetch emails from Gmail API
+  async function fetchEmails(pageSize = 20) {
+    if (!isGmailConnected.value) {
+      return { error: 'Gmail not connected' }
+    }
+
+    if (!isSyncEnabled.value) {
+      return { error: 'Gmail sync is disabled' }
     }
 
     isLoading.value = true
     try {
-      const response = await authStore.axios_instance.get('/api/gmail/emails/', {
-        params: { page, page_size: pageSize },
-      })
-      gmailEmails.value = response.data.emails || []
+      const params = {
+        maxResults: pageSize,
+        labelIds: selectedLabels.value.join(','),
+      }
+
+      if (pagination.value.nextPageToken) {
+        params.pageToken = pagination.value.nextPageToken
+      }
+
+      const response = await authStore.axios_instance.get('/api/gmail/emails/', { params })
+
+      if (pagination.value.nextPageToken) {
+        // If we're loading more emails, append them
+        gmailEmails.value = [...gmailEmails.value, ...(response.data.emails || [])]
+      } else {
+        // Otherwise replace the list
+        gmailEmails.value = response.data.emails || []
+      }
+
+      pagination.value.nextPageToken = response.data.nextPageToken
+      pagination.value.hasMore = !!response.data.nextPageToken
+
       return response.data
     } catch (err) {
       error.value = err.response?.data?.error || 'Failed to fetch emails'
@@ -62,84 +143,19 @@ export const useGmailStore = defineStore('gmail', () => {
     }
   }
 
-  // Handle WebSocket messages
-  function routeGmailMessage(msg) {
-    switch (msg.type) {
-      case 'connected': {
-        console.log('Gmail WS connected successfully: ', msg)
-        fetchEmails()
-        break
-      }
-      case 'email_update': {
-        console.log('Received email update: ', msg.data)
-        updateEmailInList(msg.data)
-        break
-      }
-      case 'new_email': {
-        console.log('Received new email: ', msg.data)
-        addNewEmail(msg.data)
-        break
-      }
-      default:
-        console.warn('[GMAIL WS] unhandled message type:', msg.type)
+  // Load more emails (pagination)
+  async function loadMoreEmails(pageSize = 20) {
+    if (!pagination.value.hasMore) {
+      return { emails: [] }
     }
+
+    return await fetchEmails(pageSize)
   }
 
-  // Update an email in the list
-  function updateEmailInList(emailData) {
-    const index = gmailEmails.value.findIndex((email) => email.id === emailData.id)
-    if (index !== -1) {
-      gmailEmails.value[index] = { ...gmailEmails.value[index], ...emailData }
-    }
-  }
-
-  // Add a new email to the list
-  function addNewEmail(emailData) {
-    gmailEmails.value.unshift(emailData)
-  }
-
-  // Send action to WebSocket
-  function _sendActionToGmailWebsocket(action, payload = {}) {
-    if (!isGmailConnected.value) {
-      console.log('Gmail not connected, skipping WebSocket message')
-      return
-    }
-
-    if (gmailWsStatus.value === 'OPEN') {
-      gmailWsSend(JSON.stringify({ action, payload }))
-    } else {
-      console.info('[WS] not initialized, ws status:', gmailWsStatus.value)
-    }
-  }
-
-  // Watch incoming WebSocket data
-  watch(gmailWsData, (raw) => {
-    if (!raw) return
-    let msg
-    try {
-      msg = JSON.parse(raw.data ?? raw)
-    } catch {
-      console.error('[GmailStore WS] invalid JSON:', raw)
-      return
-    }
-    if (msg) {
-      routeGmailMessage(msg)
-    }
-  })
-
-  // Initialize WebSocket connection
-  function initGmailWs() {
-    if (!isGmailConnected.value) {
-      console.log('Gmail not connected, skipping WebSocket initialization')
-      return
-    }
-
-    const auth = useAuthStore()
-    auth.verify_auth()
-    if (auth.isAuthenticated) {
-      console.info('User is authenticated, opening Gmail WebSocket')
-      gmailWsOpen()
-    }
+  // Reset pagination
+  function resetPagination() {
+    pagination.value.nextPageToken = null
+    pagination.value.hasMore = false
   }
 
   // Toggle star status for an email
@@ -189,26 +205,66 @@ export const useGmailStore = defineStore('gmail', () => {
   // Convert email to task
   async function convertToTask(emailId, taskDetails) {
     try {
-      await authStore.axios_instance.post(`/api/gmail/emails/${emailId}/convert-to-task/`, taskDetails)
-      return true
+      // Ensure we have all required fields
+      if (!taskDetails.title) {
+        return { error: 'Task title is required' }
+      }
+
+      if (!taskDetails.start_date) {
+        taskDetails.start_date = new Date().toISOString()
+      }
+
+      const response = await authStore.axios_instance.post(`/api/gmail/emails/${emailId}/convert-to-task/`, taskDetails)
+
+      // If mark as read is true, update the email in our local state
+      if (taskDetails.mark_as_read) {
+        const email = gmailEmails.value.find((e) => e.id === emailId)
+        if (email) {
+          email.isRead = true
+        }
+      }
+
+      return response.data
     } catch (err) {
       error.value = err.response?.data?.error || 'Failed to convert email to task'
-      return false
+      return { error: error.value }
     }
+  }
+
+  // Update an email in the list
+  function updateEmailInList(emailData) {
+    const index = gmailEmails.value.findIndex((email) => email.id === emailData.id)
+    if (index !== -1) {
+      gmailEmails.value[index] = { ...gmailEmails.value[index], ...emailData }
+    }
+  }
+
+  // Add a new email to the list
+  function addNewEmail(emailData) {
+    gmailEmails.value.unshift(emailData)
   }
 
   return {
     isLoading,
     isGmailConnected,
+    isSyncEnabled,
     error,
     gmailEmails,
-    gmailWsStatus,
+    pagination,
+    availableLabels,
+    selectedLabels,
     fetchEmails,
+    loadMoreEmails,
+    resetPagination,
     toggleStar,
     markAsRead,
     convertToTask,
-    initGmailWs,
-    gmailWsClose,
+    updateEmailInList,
+    addNewEmail,
     checkGmailConnection,
+    getSettings,
+    updateSettings,
+    toggleSync,
+    updateLabels,
   }
 })
