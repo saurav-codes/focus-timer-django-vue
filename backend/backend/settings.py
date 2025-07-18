@@ -64,6 +64,7 @@ LOCAL_APPS = [
     "apps.core",
     "apps.authentication",
     "apps.integrations.google_calendar",
+    "apps.integrations.gmail",
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS

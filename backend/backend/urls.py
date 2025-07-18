@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/", include("apps.core.urls")),
     # integrations endpoints
     path("api/gcalendar/", include("apps.integrations.google_calendar.urls")),
+    path("api/gmail/", include("apps.integrations.gmail.urls")),
 ]
 
 if settings.DEBUG:
