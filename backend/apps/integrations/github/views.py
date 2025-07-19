@@ -82,13 +82,13 @@ def start_github_auth(request):
         return Response({"error": str(e)}, status=500)
 
 
-@api_view(["POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def github_auth_callback(request):
     """Handle the callback from GitHub OAuth2 flow."""
     try:
         # Get the state from the request and session
-        request_state = request.data.get("state")
+        request_state = request.GET.get("state")
         session_state = request.session.get("github_auth_state")
 
         # Verify the state to prevent CSRF attacks
@@ -100,7 +100,7 @@ def github_auth_callback(request):
             del request.session["github_auth_state"]
 
         # Get the authorization code
-        code = request.data.get("code")
+        code = request.GET.get("code")
         if not code:
             return Response({"error": "No authorization code provided"}, status=400)
 
