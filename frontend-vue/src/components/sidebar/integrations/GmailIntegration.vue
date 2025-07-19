@@ -25,7 +25,8 @@ import {
   LucideToggleLeft,
   LucideToggleRight,
   LucideCheck,
-  LucideShieldHalf
+  LucideShieldHalf,
+  Tag
 } from 'lucide-vue-next'
 import Popper from 'vue3-popper'
 
@@ -598,6 +599,7 @@ const handleConvertOverlayClick = (event) => {
                   class="label-item"
                   :class="{ 'selected': isLabelSelected(label.id) }"
                   @click="toggleLabel(label.id)">
+                  <Tag :size="16" />
                   <span class="label-name">{{ label.name }}</span>
                   <LucideCheck v-if="isLabelSelected(label.id)" :size="16" class="check-icon" />
                 </div>
@@ -1127,13 +1129,17 @@ const handleConvertOverlayClick = (event) => {
 
 .label-item {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 8px 12px;
   border-radius: 4px;
   background-color: var(--color-background-secondary);
   cursor: pointer;
   transition: background-color var(--transition-base);
+}
+
+.label-name {
+  margin-left: 0.4rem;
 }
 
 .label-item:hover {
