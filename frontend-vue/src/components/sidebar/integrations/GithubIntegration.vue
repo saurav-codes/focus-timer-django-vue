@@ -184,9 +184,10 @@ const closeIssueDetail = () => {
 }
 
 const showConvertToTaskModal = (issue) => {
+  const repository = issue.repository?.full_name || issue.repository || 'Unknown Repository'
   taskForm.value = {
     title: issue.title,
-    description: `GitHub Issue: ${issue.title}\n\nRepository: ${issue.repository}\nIssue #${issue.number}\n\nDescription:\n${issue.body || 'No description provided'}\n\nView on GitHub: ${issue.html_url}`,
+    description: `GitHub Issue: ${issue.title}\n\nRepository: ${repository}\nIssue #${issue.number}\n\nDescription:\n${issue.body || 'No description provided'}\n\nView on GitHub: ${issue.html_url}`,
     status: 'ON_BOARD',
   }
   showConvertModal.value = true
@@ -408,7 +409,7 @@ const getPriorityColor = (priority) => {
           <div class="issue-meta">
             <div class="repository text-xs">
               <FolderGit2 :size="12" />
-              {{ issue.repository }}
+              {{ issue.repository?.full_name || issue.repository }}
             </div>
             <div class="issue-number text-xs">
               #{{ issue.number }}
@@ -458,7 +459,7 @@ const getPriorityColor = (priority) => {
         <div class="modal-body">
           <div class="issue-info">
             <div class="issue-meta-info text-sm">
-              <div><strong>Repository:</strong> {{ selectedIssue.repository }}</div>
+              <div><strong>Repository:</strong> {{ selectedIssue.repository?.full_name || selectedIssue.repository }}</div>
               <div><strong>Issue #:</strong> {{ selectedIssue.number }}</div>
               <div><strong>Author:</strong> {{ selectedIssue.user?.login }}</div>
               <div class="issue-date text-xs">
@@ -650,103 +651,676 @@ const getPriorityColor = (priority) => {
     height: 100%;
     display: flex;
     flex-direction: column;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
+  /* Header Styles */
   .integration-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border, #313244);
+  }
+
+  .left-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .integration-header h3 {
     margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text, #cdd6f4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .refresh-control {
+    display: flex;
+    align-items: center;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--color-text-secondary, #a6adc8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .refresh-btn:hover {
+    background: var(--color-surface, #313244);
+    color: var(--color-text, #cdd6f4);
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .rotating {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Connection Controls */
+  .connection-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .settings-button,
+  .disconnect-button {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--color-text-secondary, #a6adc8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .settings-button:hover {
+    background: var(--color-surface, #313244);
+    color: var(--color-primary, #89b4fa);
+  }
+
+  .disconnect-button:hover {
+    background: var(--color-error-surface, #f38ba820);
+    color: var(--color-error, #f38ba8);
+  }
+
+  .github-connect-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-primary, #89b4fa);
+    color: var(--color-background, #1e1e2e);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .github-connect-button:hover {
+    background: var(--color-primary-hover, #74a5f5);
+    transform: translateY(-1px);
+  }
+
+  .disabled-div {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* Issues Container */
+  .issues-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* Loading State */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-surface, #313244);
+    border-top: 2px solid var(--color-primary, #89b4fa);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Not Connected State */
+  .not-connected,
+  .sync-disabled,
+  .no-issues {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--color-text-secondary, #a6adc8);
+  }
+
+  .connect-button,
+  .enable-sync-button {
+    background: var(--color-primary, #89b4fa);
+    color: var(--color-background, #1e1e2e);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .connect-button:hover,
+  .enable-sync-button:hover {
+    background: var(--color-primary-hover, #74a5f5);
+    transform: translateY(-1px);
+  }
+
+  /* Issue List */
+  .issue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .issue-item {
+    background: var(--color-surface, #313244);
+    border: 1px solid var(--color-border, #45475a);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .issue-item:hover {
+    background: var(--color-surface-hover, #45475a);
+    border-color: var(--color-primary-dim, #89b4fa40);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .issue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
+
+  .issue-title {
+    font-weight: 500;
+    color: var(--color-text, #cdd6f4);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .time {
+    color: var(--color-text-tertiary, #7f849c);
+    font-size: 11px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .issue-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .repository {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-secondary, #a6adc8);
+    background: var(--color-background, #1e1e2e);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  .issue-number {
+    color: var(--color-text-tertiary, #7f849c);
+    font-weight: 500;
+  }
+
+  .issue-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .label-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #000;
+    opacity: 0.9;
+  }
+
+  .issue-preview {
+    color: var(--color-text-secondary, #a6adc8);
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .issue-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .issue-item:hover .issue-actions {
+    opacity: 1;
+  }
+
+  .action-button {
+    background: var(--color-primary, #89b4fa);
+    color: var(--color-background, #1e1e2e);
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .action-button:hover {
+    background: var(--color-primary-hover, #74a5f5);
+    transform: scale(1.1);
+  }
+
+  /* Load More */
+  .load-more {
+    text-align: center;
+    padding: 16px;
+  }
+
+  .load-more-button {
+    background: var(--color-surface, #313244);
+    color: var(--color-text, #cdd6f4);
+    border: 1px solid var(--color-border, #45475a);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .load-more-button:hover {
+    background: var(--color-surface-hover, #45475a);
+    border-color: var(--color-primary, #89b4fa);
+  }
+
+  .load-more-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .modal-content {
+    background: var(--color-background, #1e1e2e);
+    border: 1px solid var(--color-border, #313244);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalEnter 0.2s ease-out;
+  }
+
+  .settings-modal {
+    max-width: 500px;
+  }
+
+  @keyframes modalEnter {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--color-border, #313244);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .modal-header-left {
+    flex: 1;
+  }
+
+  .modal-header h3 {
+    margin: 0 0 4px 0;
     font-size: 18px;
     font-weight: 600;
     color: var(--color-text, #cdd6f4);
   }
 
-  .repo-count {
-    font-size: 14px;
-    color: var(--color-text-secondary, #a6adc8);
+  .privacy-notice {
+    color: var(--color-success, #a6e3a1);
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
-  .repositories-list {
+  .close-button {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary, #a6adc8);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .close-button:hover {
+    background: var(--color-surface, #313244);
+    color: var(--color-text, #cdd6f4);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  /* Issue Detail Modal */
+  .issue-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .issue-meta-info {
     flex: 1;
   }
 
-  .repo-card {
-    position: relative;
-    padding: 12px;
-    margin-bottom: 8px;
-    background-color: var(--color-background, #1e1e2e);
-    border-radius: 8px;
-    border: 1px solid var(--color-border, #313244);
-  }
-
-  .repo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .issue-meta-info > div {
     margin-bottom: 8px;
   }
 
-  .repo-name {
-    font-size: 14px;
-    font-weight: 500;
+  .issue-date {
+    color: var(--color-text-tertiary, #7f849c);
   }
 
-  .repo-branch {
+  .assignees {
     display: flex;
     align-items: center;
-    font-size: 12px;
-    color: var(--color-text-secondary, #a6adc8);
-  }
-
-  .repo-branch svg {
-    margin-right: 4px;
-  }
-
-  .repo-stats {
-    display: flex;
+    gap: 8px;
     flex-wrap: wrap;
+  }
+
+  .assignee {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-surface, #313244);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .issue-actions {
+    display: flex;
     gap: 8px;
   }
 
-  .repo-stat {
+  .open-in-github {
     display: flex;
     align-items: center;
+    gap: 6px;
+    background: var(--color-surface, #313244);
+    color: var(--color-text, #cdd6f4);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
     font-size: 12px;
-    color: var(--color-text-tertiary, #7f849c);
+    transition: all 0.2s ease;
   }
 
-  .repo-stat svg {
-    margin-right: 4px;
+  .open-in-github:hover {
+    background: var(--color-surface-hover, #45475a);
+    color: var(--color-primary, #89b4fa);
   }
 
-  .repo-last-commit {
-    font-size: 12px;
-    color: var(--color-text-tertiary, #7f849c);
-    margin-top: 4px;
+  .labels-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
   }
 
-  .repo-status {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+  .issue-body {
+    margin: 20px 0;
+  }
+
+  .issue-content {
+    background: var(--color-surface, #313244);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  /* Settings Modal */
+  .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .setting-label {
+    flex: 1;
+  }
+
+  .setting-label h4 {
+    margin: 0 0 4px 0;
+    color: var(--color-text, #cdd6f4);
+  }
+
+  .text-muted {
+    color: var(--color-text-secondary, #a6adc8);
+  }
+
+  .toggle-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary, #a6adc8);
+    transition: all 0.2s ease;
+  }
+
+  .toggle-button:hover {
+    color: var(--color-text, #cdd6f4);
+  }
+
+  .toggle-button .active {
+    color: var(--color-success, #a6e3a1);
+  }
+
+  .repositories-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border, #313244);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .repository-item {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .repository-item:hover {
+    background: var(--color-surface, #313244);
+  }
+
+  .repository-item.selected {
+    background: var(--color-primary-dim, #89b4fa20);
+    color: var(--color-primary, #89b4fa);
+  }
+
+  .repo-name {
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .check-icon {
+    color: var(--color-success, #a6e3a1);
+  }
+
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--color-text, #cdd6f4);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--color-surface, #313244);
+    border: 1px solid var(--color-border, #45475a);
+    border-radius: 6px;
+    color: var(--color-text, #cdd6f4);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary, #89b4fa);
+    box-shadow: 0 0 0 2px var(--color-primary-dim, #89b4fa20);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .cancel-button {
+    background: var(--color-surface, #313244);
+    color: var(--color-text, #cdd6f4);
+    border: 1px solid var(--color-border, #45475a);
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .cancel-button:hover {
+    background: var(--color-surface-hover, #45475a);
+  }
+
+  .submit-button {
+    background: var(--color-primary, #89b4fa);
     color: var(--color-background, #1e1e2e);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
   }
 
-  .no-repos {
-    text-align: center;
-    padding: 24px;
-    color: var(--color-text-tertiary, #7f849c);
-    font-style: italic;
+  .submit-button:hover {
+    background: var(--color-primary-hover, #74a5f5);
+  }
+
+  .submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Utility Classes */
+  .text-sm {
+    font-size: 12px;
+  }
+
+  .text-xs {
+    font-size: 11px;
+  }
+
+  .text-lg {
+    font-size: 16px;
+  }
+
+  .text-base {
+    font-size: 14px;
+  }
+
+  .font-medium {
+    font-weight: 500;
+  }
+
+  .font-semibold {
+    font-weight: 600;
   }
 </style>
