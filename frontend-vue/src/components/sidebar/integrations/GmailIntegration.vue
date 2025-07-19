@@ -24,7 +24,8 @@ import {
   LucideSettings,
   LucideToggleLeft,
   LucideToggleRight,
-  LucideCheck
+  LucideCheck,
+  LucideShieldHalf
 } from 'lucide-vue-next'
 import Popper from 'vue3-popper'
 
@@ -601,9 +602,15 @@ const hideConvertPopper = () => {
     <div v-if="showSettingsModal" class="modal-overlay" @click="handleSettingsOverlayClick">
       <div class="modal-content settings-modal" @click.stop>
         <div class="modal-header">
-          <h3 class="text-lg font-medium">
-            Gmail Settings
-          </h3>
+          <div class="modal-header-left">
+            <h3 class="text-lg font-medium">
+              Gmail Settings
+            </h3>
+            <span class="text-sm text-muted privacy-notice">
+              <LucideShieldHalf :size="14" color="green" />
+              we don't Store your emails on our server.
+            </span>
+          </div>
           <button class="close-button" @click="closeSettingsModal">
             <LucideX :size="18" />
           </button>
@@ -632,6 +639,7 @@ const hideConvertPopper = () => {
                 </h4>
                 <p class="text-sm text-muted">
                   Select which Gmail labels to display
+                  ( selecting 2 or more label means sync emails which have all of selected labels. )
                 </p>
               </div>
               <div class="labels-list">
@@ -1115,6 +1123,7 @@ const hideConvertPopper = () => {
 
 .setting-item {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
   padding-bottom: 15px;
@@ -1186,5 +1195,13 @@ const hideConvertPopper = () => {
 
 .text-muted {
   color: var(--color-text-tertiary);
+}
+
+.privacy-notice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
 }
 </style>
