@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.conf import settings
+from django.http import HttpResponseRedirect
 import logging
 import requests
 import uuid
@@ -82,18 +83,23 @@ def start_github_auth(request):
         return Response({"error": str(e)}, status=500)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
 def github_auth_callback(request):
     """Handle the callback from GitHub OAuth2 flow."""
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    redirect_url = f"{frontend_url}/kanban-planner"
+
     try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(f"{redirect_url}?error=authentication_required")
+
         # Get the state from the request and session
         request_state = request.GET.get("state")
         session_state = request.session.get("github_auth_state")
 
         # Verify the state to prevent CSRF attacks
         if not request_state or request_state != session_state:
-            return Response({"error": "Invalid state parameter"}, status=400)
+            return HttpResponseRedirect(f"{redirect_url}?error=invalid_state")
 
         # Clear the state from the session
         if "github_auth_state" in request.session:
@@ -102,7 +108,7 @@ def github_auth_callback(request):
         # Get the authorization code
         code = request.GET.get("code")
         if not code:
-            return Response({"error": "No authorization code provided"}, status=400)
+            return HttpResponseRedirect(f"{redirect_url}?error=no_code")
 
         # Exchange code for access token
         client_id = getattr(settings, "GITHUB_CLIENT_ID", "")
@@ -120,19 +126,17 @@ def github_auth_callback(request):
         )
 
         if token_response.status_code != 200:
-            return Response({"error": "Failed to exchange code for token"}, status=400)
+            return HttpResponseRedirect(f"{redirect_url}?error=token_exchange_failed")
 
         token_data = token_response.json()
 
         if "error" in token_data:
-            return Response(
-                {"error": token_data.get("error_description", "OAuth error")},
-                status=400,
-            )
+            error_msg = token_data.get("error_description", "oauth_error")
+            return HttpResponseRedirect(f"{redirect_url}?error={error_msg}")
 
         access_token = token_data.get("access_token")
         if not access_token:
-            return Response({"error": "No access token received"}, status=400)
+            return HttpResponseRedirect(f"{redirect_url}?error=no_access_token")
 
         # Get user info from GitHub
         user_response = requests.get(
@@ -145,7 +149,7 @@ def github_auth_callback(request):
         )
 
         if user_response.status_code != 200:
-            return Response({"error": "Failed to get user info"}, status=400)
+            return HttpResponseRedirect(f"{redirect_url}?error=failed_to_get_user_info")
 
         user_data = user_response.json()
 
@@ -161,11 +165,16 @@ def github_auth_callback(request):
             },
         )
 
-        return Response({"success": True, "username": user_data.get("login")})
+        # Success! Redirect to kanban planner with success message
+        success_msg = f"Successfully connected to GitHub as {user_data.get('login')}"
+        logger.info(success_msg)
+        return HttpResponseRedirect(
+            f"{redirect_url}?success=github_connected&username={user_data.get('login')}"
+        )
 
     except Exception as e:
         logger.error(f"Error in GitHub auth callback: {str(e)}")
-        return Response({"error": str(e)}, status=500)
+        return HttpResponseRedirect(f"{redirect_url}?error=unexpected_error")
 
 
 @api_view(["DELETE"])
