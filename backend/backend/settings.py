@@ -65,6 +65,7 @@ LOCAL_APPS = [
     "apps.authentication",
     "apps.integrations.google_calendar",
     "apps.integrations.gmail",
+    "apps.integrations.github",
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS
@@ -232,6 +233,13 @@ GOOGLE_AUTH_SCOPES = [
     "https://www.googleapis.com/auth/calendar.readonly",
 ]
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+
+# GitHub Integration
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID", default="")
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET", default="")
+GITHUB_REDIRECT_URI = env(
+    "GITHUB_REDIRECT_URI", default="http://localhost:8000/api/github/auth/callback/"
+)
 
 if not DEBUG:
     sentry_sdk.init(
