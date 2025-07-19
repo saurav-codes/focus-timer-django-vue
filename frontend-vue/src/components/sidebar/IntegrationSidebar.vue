@@ -3,20 +3,18 @@
   import CalendarIntegration from './integrations/CalendarIntegration.vue'
   import GmailIntegration from './integrations/GmailIntegration.vue'
   import GithubIntegration from './integrations/GithubIntegration.vue'
-  import AsanaIntegration from './integrations/AsanaIntegration.vue'
   import BacklogIntegration from './integrations/BacklogIntegration.vue'
   import ArchivedTasksIntegration from './integrations/ArchivedTasksIntegration.vue'
   import { useUIStore } from '../../stores/uiStore'
 
   // Icons from Lucide
-  import { Calendar, Mail, Github, CheckSquare, Archive, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+  import { Calendar, Mail, Github, Archive, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
   // Define available integrations
   const integrations = [
     { id: 'calendar', name: 'Calendar', icon: Calendar, component: CalendarIntegration },
     { id: 'gmail', name: 'Gmail', icon: Mail, component: GmailIntegration },
     { id: 'github', name: 'GitHub', icon: Github, component: GithubIntegration },
-    { id: 'asana', name: 'Asana', icon: CheckSquare, component: AsanaIntegration },
     { id: 'backlog', name: 'Backlog', icon: Clock, component: BacklogIntegration },
     { id: 'archived', name: 'Archived', icon: Archive, component: ArchivedTasksIntegration },
   ]
