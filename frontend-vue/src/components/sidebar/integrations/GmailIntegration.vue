@@ -46,17 +46,14 @@ const taskForm = ref({
   mark_as_read: false,
 })
 
-// Popper visibility states - use separate refs for each button
-const refreshPopperVisible = ref(false)
-const disconnectPopperVisible = ref(false)
-const connectPopperVisible = ref(false)
-const settingsPopperVisible = ref(false)
-
-// Email action popper states
-const starPopperStates = ref({})
-const readPopperStates = ref({})
-const convertPopperStates = ref({})
-const openPopperVisible = ref(false)
+// Simple popper visibility states
+const showPopper = ref(false)
+const showConnectPopper = ref(false)
+const showSettingPopper = ref(false)
+const showRefreshPopper = ref(false)
+const showConvertToTaskPopper = ref(false)
+const showToggleStarPopper = ref(false)
+const showMarkAsReadPopper = ref(false)
 
 // Format date to local timezone
 const formatLocalTime = (timestamp) => {
@@ -67,15 +64,15 @@ const formatLocalTime = (timestamp) => {
   // Today's date for comparison
   const today = new Date()
   const isToday = date.getDate() === today.getDate() &&
-                 date.getMonth() === today.getMonth() &&
-                 date.getFullYear() === today.getFullYear()
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
 
   // Yesterday's date for comparison
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   const isYesterday = date.getDate() === yesterday.getDate() &&
-                     date.getMonth() === yesterday.getMonth() &&
-                     date.getFullYear() === yesterday.getFullYear()
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
 
   // Format based on how recent the email is
   if (isToday) {
@@ -106,7 +103,7 @@ const formatFullDateTime = (timestamp) => {
 }
 
 // Auto-refresh emails every 5 minutes
-let stopPolling = () => {}
+let stopPolling = () => { }
 
 onMounted(async () => {
   isLoading.value = true
@@ -300,30 +297,6 @@ const handleConvertOverlayClick = (event) => {
   }
 }
 
-// Helper functions for popper visibility
-const showStarPopper = (emailId) => {
-  starPopperStates.value = { [emailId]: true }
-}
-
-const hideStarPopper = () => {
-  starPopperStates.value = {}
-}
-
-const showReadPopper = (emailId) => {
-  readPopperStates.value = { [emailId]: true }
-}
-
-const hideReadPopper = () => {
-  readPopperStates.value = {}
-}
-
-const showConvertPopper = (emailId) => {
-  convertPopperStates.value = { [emailId]: true }
-}
-
-const hideConvertPopper = () => {
-  convertPopperStates.value = {}
-}
 </script>
 
 <template>
@@ -335,13 +308,13 @@ const hideConvertPopper = () => {
           Gmail
         </h3>
         <div v-if="isConnected && isSyncEnabled" class="refresh-control">
-          <Popper arrow content="Refresh emails" :show="refreshPopperVisible">
+          <Popper arrow content="Refresh emails" :show="showRefreshPopper">
             <button
               class="refresh-btn"
               :disabled="isLoading"
-              @click="refreshEmails"
-              @mouseover="refreshPopperVisible = true"
-              @mouseleave="refreshPopperVisible = false">
+              @mouseenter="showRefreshPopper = true"
+              @mouseleave="showRefreshPopper = false"
+              @click="refreshEmails">
               <LucideRefreshCw :size="14" :class="{ 'rotating': isLoading }" />
             </button>
           </Popper>
@@ -349,34 +322,33 @@ const hideConvertPopper = () => {
       </div>
       <!-- Connection status controls -->
       <div class="connection-controls">
-        <Popper v-if="isConnected" arrow content="Settings" :show="settingsPopperVisible">
+        <Popper v-if="isConnected" arrow content="Settings" :show="showSettingPopper">
           <button
             class="settings-button"
             :class="{ 'disabled-div': isLoading }"
-            @click="openSettingsModal"
-            @mouseover="settingsPopperVisible = true"
-            @mouseleave="settingsPopperVisible = false">
+            @mouseenter="showSettingPopper = true"
+            @mouseleave="showSettingPopper = false"
+            @click="openSettingsModal">
             <LucideSettings :size="14" />
           </button>
         </Popper>
 
-        <Popper v-if="isConnected" arrow content="Disconnect Google Account" :show="disconnectPopperVisible">
-          <button
+        <Popper v-if="isConnected" arrow content="Disconnect Google Account" :show="showPopper">
+          <LucideUnlink
             class="disconnect-button"
             :class="{ 'disabled-div': isLoading }"
-            @click="disconnectGmail"
-            @mouseover="disconnectPopperVisible = true"
-            @mouseleave="disconnectPopperVisible = false">
-            <LucideUnlink :size="14" />
-          </button>
+            :size="14"
+            @mouseover="showPopper = true"
+            @mouseleave="showPopper = false"
+            @click="disconnectGmail" />
         </Popper>
 
-        <Popper v-else arrow content="Connect Gmail" :show="connectPopperVisible">
+        <Popper v-else arrow content="Connect Gmail" :show="showConnectPopper">
           <div
             class="google-connect-button"
             :class="{ 'disabled-div': isLoading }"
-            @mouseover="connectPopperVisible = true"
-            @mouseleave="connectPopperVisible = false"
+            @mouseover="showConnectPopper = true"
+            @mouseleave="showConnectPopper = false"
             @click="connectGoogleCalendar">
             <span class="google-icon">Gmail</span>
             <LucideLink :size="10" class="link-icon" />
@@ -437,35 +409,27 @@ const hideConvertPopper = () => {
             {{ email.preview }}
           </div>
           <div class="email-actions" @click.stop>
-            <Popper arrow content="Toggle star" :show="starPopperStates[email.id]">
+            <Popper arrow content="Toggle star" :show="showToggleStarPopper">
               <button
                 class="action-button"
                 :class="{ 'starred': email.isStarred }"
-                @click="toggleEmailStar(email.id)"
-                @mouseover="showStarPopper(email.id)"
-                @mouseleave="hideStarPopper">
+                @mouseenter="showToggleStarPopper = true"
+                @mouseleave="showToggleStarPopper = false"
+                @click="toggleEmailStar(email.id)">
                 <LucideStar v-if="email.isStarred" :size="14" />
                 <LucideStarOff v-else :size="14" />
               </button>
             </Popper>
 
-            <Popper arrow :content="email.isRead ? 'Mark as unread' : 'Mark as read'" :show="readPopperStates[email.id]">
-              <button
-                class="action-button"
-                @click="toggleEmailRead(email.id, email.isRead)"
-                @mouseover="showReadPopper(email.id)"
-                @mouseleave="hideReadPopper">
+            <Popper arrow :content="email.isRead ? 'Mark as unread' : 'Mark as read'" :show="showMarkAsReadPopper">
+              <button class="action-button" @mouseenter="showMarkAsReadPopper = true" @mouseleave="showMarkAsReadPopper = false" @click="toggleEmailRead(email.id, email.isRead)">
                 <LucideMailOpen v-if="email.isRead" :size="14" />
                 <LucideMail v-else :size="14" />
               </button>
             </Popper>
 
-            <Popper arrow content="Convert to task" :show="convertPopperStates[email.id]">
-              <button
-                class="action-button"
-                @click="showConvertToTaskModal(email)"
-                @mouseover="showConvertPopper(email.id)"
-                @mouseleave="hideConvertPopper">
+            <Popper arrow content="Convert to task" :show="showConvertToTaskPopper">
+              <button class="action-button" @mouseenter="showConvertToTaskPopper = true" @mouseleave="showConvertToTaskPopper = false" @click="showConvertToTaskModal(email)">
                 <LucideCheckSquare :size="14" />
               </button>
             </Popper>
@@ -501,46 +465,31 @@ const hideConvertPopper = () => {
               </div>
             </div>
             <div class="email-actions">
-              <Popper arrow content="Toggle star" :show="starPopperStates['detail']">
+              <Popper arrow content="Toggle star">
                 <button
                   class="action-button"
                   :class="{ 'starred': selectedEmail.isStarred }"
-                  @click="toggleEmailStar(selectedEmail.id)"
-                  @mouseover="showStarPopper('detail')"
-                  @mouseleave="hideStarPopper">
+                  @click="toggleEmailStar(selectedEmail.id)">
                   <LucideStar v-if="selectedEmail.isStarred" :size="14" />
                   <LucideStarOff v-else :size="14" />
                 </button>
               </Popper>
 
-              <Popper arrow :content="selectedEmail.isRead ? 'Mark as unread' : 'Mark as read'" :show="readPopperStates['detail']">
-                <button
-                  class="action-button"
-                  @click="toggleEmailRead(selectedEmail.id, selectedEmail.isRead)"
-                  @mouseover="showReadPopper('detail')"
-                  @mouseleave="hideReadPopper">
+              <Popper arrow :content="selectedEmail.isRead ? 'Mark as unread' : 'Mark as read'">
+                <button class="action-button" @click="toggleEmailRead(selectedEmail.id, selectedEmail.isRead)">
                   <LucideMailOpen v-if="selectedEmail.isRead" :size="14" />
                   <LucideMail v-else :size="14" />
                 </button>
               </Popper>
 
-              <Popper arrow content="Convert to task" :show="convertPopperStates['detail']">
-                <button
-                  class="action-button"
-                  @click="showConvertToTaskModal(selectedEmail)"
-                  @mouseover="showConvertPopper('detail')"
-                  @mouseleave="hideConvertPopper">
+              <Popper arrow content="Convert to task">
+                <button class="action-button" @click="showConvertToTaskModal(selectedEmail)">
                   <LucideCheckSquare :size="14" />
                 </button>
               </Popper>
 
-              <Popper arrow content="Open in Gmail" :show="openPopperVisible">
-                <a
-                  :href="selectedEmail.link"
-                  target="_blank"
-                  class="open-in-gmail"
-                  @mouseover="openPopperVisible = true"
-                  @mouseleave="openPopperVisible = false">
+              <Popper arrow content="Open in Gmail">
+                <a :href="selectedEmail.link" target="_blank" class="open-in-gmail">
                   <LucideExternalLink :size="14" />
                   Open in Gmail
                 </a>
@@ -696,7 +645,9 @@ const hideConvertPopper = () => {
   margin-left: 10px;
 }
 
-.refresh-btn, .settings-button, .disconnect-button {
+.refresh-btn,
+.settings-button,
+.disconnect-button {
   background: none;
   border: none;
   cursor: pointer;
@@ -705,7 +656,8 @@ const hideConvertPopper = () => {
   color: var(--color-text-secondary);
 }
 
-.refresh-btn:hover, .settings-button:hover {
+.refresh-btn:hover,
+.settings-button:hover {
   background-color: var(--color-background-secondary);
   color: var(--color-text-primary);
 }
@@ -785,13 +737,16 @@ const hideConvertPopper = () => {
   }
 }
 
-.not-connected, .sync-disabled, .no-emails {
+.not-connected,
+.sync-disabled,
+.no-emails {
   text-align: center;
   padding: 20px;
   color: var(--color-text-secondary);
 }
 
-.connect-button, .enable-sync-button {
+.connect-button,
+.enable-sync-button {
   background-color: var(--color-primary);
   color: var(--color-text-selected);
   border: none;
@@ -802,7 +757,8 @@ const hideConvertPopper = () => {
   font-size: var(--font-size-sm);
 }
 
-.connect-button:hover, .enable-sync-button:hover {
+.connect-button:hover,
+.enable-sync-button:hover {
   background-color: var(--color-primary-light);
 }
 
