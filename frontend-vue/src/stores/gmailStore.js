@@ -209,11 +209,6 @@ export const useGmailStore = defineStore('gmail', () => {
       if (!taskDetails.title) {
         return { error: 'Task title is required' }
       }
-
-      if (!taskDetails.start_date) {
-        taskDetails.start_date = new Date().toISOString()
-      }
-
       const response = await authStore.axios_instance.post(`/api/gmail/emails/${emailId}/convert-to-task/`, taskDetails)
 
       // If mark as read is true, update the email in our local state

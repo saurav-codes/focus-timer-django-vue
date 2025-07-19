@@ -7,7 +7,7 @@ import {
 } from 'vue'
 import { useGmailStore } from '../../../stores/gmailStore'
 import { useCalendarStore } from '../../../stores/calendarStore'
-import { useTaskStoreApi } from '../../../stores/taskStoreApi'
+import { useTaskStoreWs } from '../../../stores/taskStoreWs'
 import { useIntervalFn } from '@vueuse/core'
 import {
   LucideInbox,
@@ -31,7 +31,7 @@ import Popper from 'vue3-popper'
 
 const gmailStore = useGmailStore()
 const calStore = useCalendarStore()
-const taskStore = useTaskStoreApi()
+const taskStore = useTaskStoreWs()
 
 const isConnected = ref(false)
 const isSyncEnabled = ref(false)
@@ -43,7 +43,7 @@ const taskForm = ref({
   title: '',
   description: '',
   status: 'ON_BOARD',
-  start_date: new Date().toISOString(),
+  mark_as_read: false,
 })
 
 // Popper visibility states - use separate refs for each button
@@ -201,7 +201,6 @@ const showConvertToTaskModal = (email) => {
     title: email.subject,
     description: `From: ${email.sender} (${email.senderEmail})\n\n${email.preview}\n\nView in Gmail: ${email.link}`,
     status: 'ON_BOARD',
-    start_date: new Date().toISOString(),
   }
   showConvertModal.value = true
   selectedEmail.value = email
@@ -245,6 +244,7 @@ const toggleLabel = async (labelId) => {
 
   isLoading.value = true
   await gmailStore.updateLabels(currentLabels)
+  await gmailStore.fetchEmails()
   isLoading.value = false
 }
 
@@ -265,7 +265,7 @@ const convertEmailToTask = async () => {
     }
 
     // Refresh tasks if conversion was successful
-    await taskStore.fetchTasks()
+    taskStore.fetchTasksWs()
 
     // Close modals
     closeConvertModal()

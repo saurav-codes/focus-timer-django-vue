@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
@@ -6,6 +7,8 @@ from datetime import datetime
 import re
 from apps.integrations.google_calendar.models import GoogleCredentials
 from apps.core.models import Task
+from django.utils import timezone
+from apps.core.serializers import TaskSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -306,65 +309,29 @@ def mark_as_read(user, message_id, read=True):
 
 def convert_to_task(user, message_id, task_data):
     """Convert an email to a task."""
-    credentials_obj = GoogleCredentials.objects.filter(user=user).first()
-    if not credentials_obj:
-        return {"error": "Google account not connected"}
+    # Create task from email
+    request = HttpRequest()
+    request.user = user  # type: ignore
+    task_serializer = TaskSerializer(
+        data={
+            "user": user,
+            "title": task_data.get("title", "No title - task from gmail"),
+            "description": task_data.get("description"),
+            "status": Task.ON_BOARD,
+            "start_at": timezone.now(),
+        },
+        context={"request": request},
+    )
+    if task_serializer.is_valid():
+        task = task_serializer.save()
+    else:
+        return {"error": task_serializer.errors}
 
-    # Check if Gmail scope is granted
-    if not credentials_obj.is_gmail_scope_granted():
-        return {"error": "Gmail permissions not granted"}
+    # Mark email as read if requested
+    if task_data.get("mark_as_read", False):
+        mark_as_read(user, message_id, True)
 
-    # Get credentials
-    credentials = credentials_obj.get_credentials()
-    if isinstance(credentials, dict) and "error" in credentials:
-        return credentials
-
-    try:
-        service = build_gmail_service(credentials)
-
-        # Get email details
-        msg = service.users().messages().get(userId="me", id=message_id).execute()
-        email_data = format_email_for_frontend(msg)
-
-        # Create task from email
-        task = Task.objects.create(
-            user=user,
-            title=task_data.get("title", email_data["subject"]),
-            description=task_data.get(
-                "description",
-                f"From: {email_data['sender']} ({email_data['senderEmail']})\n\n{email_data['preview']}\n\nView in Gmail: {email_data['link']}",
-            ),
-            status=task_data.get("status", "TODO"),
-            column_date=task_data.get("column_date"),
-            start_at=task_data.get("start_at"),
-            end_at=task_data.get("end_at"),
-            project=task_data.get("project", ""),
-        )
-
-        # Mark email as read if requested
-        if task_data.get("mark_as_read", False):
-            mark_as_read(user, message_id, True)
-
-        return {
-            "success": True,
-            "task_id": task.id,
-            "task": {
-                "id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "status": task.status,
-                "column_date": task.column_date,
-                "start_at": task.start_at,
-                "end_at": task.end_at,
-                "project": task.project,
-            },
-        }
-    except HttpError as error:
-        logger.error(f"Gmail API error: {str(error)}")
-        return {"error": f"Gmail API error: {str(error)}"}
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        return {"error": f"Unexpected error: {str(e)}"}
+    return TaskSerializer(task).data
 
 
 def get_gmail_labels(user):

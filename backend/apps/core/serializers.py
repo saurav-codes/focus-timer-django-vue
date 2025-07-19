@@ -43,7 +43,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(TaggitSerializer, WritableNestedModelSerializer):
-    tags = TagListSerializerField()
+    tags = TagListSerializerField(required=False)
     duration_display = serializers.SerializerMethodField()
     project = ProjectSerializer(read_only=True)
     project_id = serializers.PrimaryKeyRelatedField(

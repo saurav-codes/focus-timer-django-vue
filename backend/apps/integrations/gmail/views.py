@@ -126,7 +126,7 @@ def convert_email_to_task(request, email_id):
         result = convert_to_task(request.user, email_id, task_data)
 
         if "error" in result:
-            return Response({"error": result["error"]}, status=400)
+            return Response({"error": result}, status=400)
 
         return Response(result)
     except Exception as e:
