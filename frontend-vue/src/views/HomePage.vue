@@ -4,13 +4,17 @@ import { LucideArrowDownRight, LucideGift } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+// Import images
+import screenshotLight from '@/assets/screenshot-light.png'
+import screenshotDark from '@/assets/screenshot-dark.png'
+
 // --- State for sticky nav ---
 const isSticky = ref(false)
 
 // --- Ultra-smooth demo animation state ---
 const demoImages = [
-  '/src/assets/screenshot-light.png',
-  '/src/assets/screenshot-dark.png'
+  screenshotLight,
+  screenshotDark
 ]
 const isLoaded = ref(false)
 const animationPhase = ref(0) // 0-7 for 8 different movement patterns
