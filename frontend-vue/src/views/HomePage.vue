@@ -6,10 +6,13 @@ import { useRouter } from 'vue-router'
 // --- State for sticky nav ---
 const isSticky = ref(false)
 
-// --- Demo video state ---
-const demoVideoSrc = '/src/assets/demo.mp4'
-const fallbackImage = '/src/assets/og-image.png'
-const videoLoaded = ref(false)
+// --- Ultra-smooth demo animation state ---
+const demoImages = [
+  '/src/assets/screenshot-light.png',
+  '/src/assets/screenshot-dark.png'
+]
+const isLoaded = ref(false)
+const animationPhase = ref(0) // 0-7 for 8 different movement patterns
 
 
 // --- Features data ---
@@ -90,12 +93,26 @@ function goToRegister() {
   router.push('/register')
 }
 
-// --- Video loading handlers ---
-function handleVideoLoad() {
-  videoLoaded.value = true
-}
-function handleVideoError() {
-  videoLoaded.value = false
+
+
+
+
+// --- Ultra-smooth 120fps-like animation logic ---
+function startUltraSmoothAnimation() {
+  let startTime = Date.now()
+
+  function animate() {
+    const elapsed = Date.now() - startTime
+    const cycle = elapsed / 8000 // 8 second full cycle
+
+    // Calculate current phase (0-7) for different movement patterns
+    animationPhase.value = Math.floor((cycle % 1) * 8)
+
+    // Continue animation
+    animationFrame = requestAnimationFrame(animate)
+  }
+
+  animate()
 }
 
 
@@ -105,6 +122,16 @@ onMounted(() => {
   window.addEventListener('scroll', () => {
     isSticky.value = window.scrollY > 32
   })
+
+  // Initial load animation
+  setTimeout(() => {
+    isLoaded.value = true
+  }, 100)
+
+  // Start the ultra-smooth demo animation after initial load
+  setTimeout(() => {
+    startUltraSmoothAnimation()
+  }, 1000)
 })
 </script>
 
@@ -126,19 +153,14 @@ onMounted(() => {
           <h1
             tabindex="0"
             role="button"
-            aria-label="Tymr Online - Go to homepage"
+            aria-label="LazyPlanner.com - Go to homepage"
             @click="$router.push('/')"
             @keydown.enter="$router.push('/')"
-            @keydown.space.prevent="$router.push('/')"
-          >
-            Tymr <span class="logo-accent">Online</span>
+            @keydown.space.prevent="$router.push('/')">
+            Lazy<span class="logo-accent">Planner</span>
           </h1>
         </div>
-        <button
-          class="nav-cta-button"
-          @click="scrollToSignup"
-          aria-label="Get free access - scroll to signup section"
-        >
+        <button class="nav-cta-button" aria-label="Get free access - scroll to signup section" @click="scrollToSignup">
           Get Free Access
         </button>
       </div>
@@ -150,21 +172,38 @@ onMounted(() => {
         <div class="hero-container">
           <div class="hero-content">
             <h1 id="hero-heading" class="hero-headline">
-              <span class="accent-text" tabindex="0" role="text" aria-label="Simple - emphasized word">Simple</span>, <span class="accent-text" tabindex="0" role="text" aria-label="calm - emphasized word">calm</span> productivity for <span class="accent-text" tabindex="0" role="text" aria-label="solo creators - emphasized phrase">solo creators</span>
+              <span class="accent-text" tabindex="0" role="text" aria-label="Simple - emphasized word">Simple</span>,
+              <span class="accent-text" tabindex="0" role="text" aria-label="calm - emphasized word">calm</span>
+              productivity for <span
+                class="accent-text"
+                tabindex="0"
+                role="text"
+                aria-label="solo creators - emphasized phrase">solo creators</span>
             </h1>
             <p class="hero-subtitle">
-              Plan your day, block your time, and focus—without the clutter or overwhelm. Tymr Online is a forever-free
+              Plan your day, block your time, and focus—without the clutter or overwhelm. LazyPlanner.com is a
+              forever-free
               web app for thoughtful solo work.
             </p>
             <div class="hero-cta">
               <button
                 class="primary-cta-button"
-                @click="scrollToSignup"
                 aria-label="Try free beta - scroll to signup section"
-              >
+                @click="scrollToSignup">
                 <span class="icon play-icon" aria-hidden="true">
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="2" />
                     <polygon points="10,8 16,12 10,16" fill="currentColor" />
                   </svg>
                 </span>
@@ -176,29 +215,53 @@ onMounted(() => {
             </div>
           </div>
           <div class="hero-demo">
-            <div class="product-demo-card">
-              <video
-                ref="demoVideo"
-                :src="demoVideoSrc"
-                autoplay
-                loop
-                muted
-                playsinline
-                class="demo-video"
-                tabindex="0"
-                aria-label="Product demo video showing Tymr Online interface and features"
-                aria-describedby="demo-description"
-                @canplay="handleVideoLoad"
-                @error="handleVideoError"
-              />
-              <div id="demo-description" class="sr-only">
-                Video demonstration of Tymr Online's task management interface, showing drag and drop functionality and calendar integration
+            <div class="ultra-smooth-demo-container" :class="{ 'loaded': isLoaded }">
+              <!-- Ultra-smooth infinite animation canvas -->
+              <div class="infinite-animation-canvas">
+                <!-- Continuous flowing background effects -->
+                <div class="flowing-gradient-bg" />
+
+                <!-- Multiple image layers for ultra-smooth transitions -->
+                <div class="image-carousel-track" :style="{ '--phase': animationPhase }">
+                  <!-- Light theme screenshots in continuous loop -->
+                  <div v-for="n in 4" :key="`light-${n}`" class="image-slide light-theme">
+                    <img :src="demoImages[0]" alt="LazyPlanner.com Light Theme Interface" class="demo-screenshot">
+                  </div>
+
+                  <!-- Dark theme screenshots in continuous loop -->
+                  <div v-for="n in 4" :key="`dark-${n}`" class="image-slide dark-theme">
+                    <img :src="demoImages[1]" alt="LazyPlanner.com Dark Theme Interface" class="demo-screenshot">
+                  </div>
+                </div>
+
+                <!-- Ultra-smooth particle system -->
+                <div class="ultra-particles">
+                  <div
+                    v-for="n in 20"
+                    :key="n"
+                    class="ultra-particle"
+                    :style="{
+                      '--index': n,
+                      '--phase': animationPhase
+                    }" />
+                </div>
+
+                <!-- Flowing light rays -->
+                <div class="light-rays">
+                  <div v-for="n in 8" :key="n" class="light-ray" :style="{ '--ray-index': n }" />
+                </div>
+
+                <!-- Dynamic theme indicator -->
+                <div class="dynamic-theme-indicator">
+                  <div
+                    class="theme-pulse"
+                    :class="{ 'light-active': animationPhase < 4, 'dark-active': animationPhase >= 4 }" />
+                </div>
               </div>
-              <div v-if="!videoLoaded" class="demo-placeholder">
-                <img
-                  :src="fallbackImage"
-                  alt="Tymr Online Interface Preview - Screenshot showing the main dashboard with task columns and calendar view"
-                >
+
+              <div id="demo-description" class="sr-only">
+                Ultra-smooth animated demonstration of LazyPlanner.com's interface continuously flowing between light
+                and dark themes with dynamic particle effects
               </div>
             </div>
           </div>
@@ -210,27 +273,35 @@ onMounted(() => {
     <section class="beta-banner" aria-label="Beta status">
       <div class="banner-container">
         <div class="banner-icon" tabindex="0" role="img" aria-label="Lightning bolt icon indicating beta status">
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <svg
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+            role="img"
+            aria-hidden="true">
             <path
-              d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
               stroke-linejoin="round" />
           </svg>
         </div>
         <div class="banner-content">
           <h3>Beta: Honest, simple, and evolving</h3>
           <p>
-            Tymr Online is in open beta. You might find a bug or two, but your feedback helps shape a tool built for
+            LazyPlanner.com is in open beta. You might find a bug or two, but your feedback helps shape a tool built for
             real solo work. Free during beta—always focused on simplicity.
           </p>
         </div>
       </div>
     </section>
-
     <!-- Feature Showcase -->
     <section class="features-section" aria-labelledby="features-title">
       <div class="features-container">
         <h2 id="features-title" class="section-title" tabindex="0">
-          Why you'll love Tymr Online
+          Why you'll love LazyPlanner.com
         </h2>
         <div class="features-grid">
           <div
@@ -240,46 +311,104 @@ onMounted(() => {
             tabindex="0"
             role="article"
             :aria-labelledby="`feature-title-${feature.id}`"
-            :aria-describedby="`feature-desc-${feature.id}`"
-          >
+            :aria-describedby="`feature-desc-${feature.id}`">
             <div class="feature-icon">
               <span v-if="feature.icon === 'Brain'" role="img" :aria-label="`${feature.title} icon`">
-                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
                   <path
                     d="M15 4a3 3 0 0 1 3 3v1a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3v1a3 3 0 0 1-3 3M9 4a3 3 0 0 0-3 3v1a3 3 0 0 0-3 3v1a3 3 0 0 0 3 3v1a3 3 0 0 0 3 3"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
                 </svg>
               </span>
               <span v-else-if="feature.icon === 'Clock'" role="img" :aria-label="`${feature.title} icon`">
-                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="2" />
                   <path
-                    d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    d="M12 6v6l4 2"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </span>
               <span v-else-if="feature.icon === 'Zap'" role="img" :aria-label="`${feature.title} icon`">
-                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
                   <path
-                    d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" />
+                    d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
                 </svg>
               </span>
               <span v-else-if="feature.icon === 'BarChart2'" role="img" :aria-label="`${feature.title} icon`">
-                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
                   <path
-                    d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    d="M3 3v18h18"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
                     stroke-linejoin="round" />
-                  <rect x="7" y="13" width="3" height="5" rx="1" fill="currentColor" />
-                  <rect x="12" y="9" width="3" height="9" rx="1" fill="currentColor" />
-                  <rect x="17" y="5" width="3" height="13" rx="1" fill="currentColor" />
+                  <rect
+                    x="7"
+                    y="13"
+                    width="3"
+                    height="5"
+                    rx="1"
+                    fill="currentColor" />
+                  <rect
+                    x="12"
+                    y="9"
+                    width="3"
+                    height="9"
+                    rx="1"
+                    fill="currentColor" />
+                  <rect
+                    x="17"
+                    y="5"
+                    width="3"
+                    height="13"
+                    rx="1"
+                    fill="currentColor" />
                 </svg>
               </span>
             </div>
-            <h3 class="feature-title" :id="`feature-title-${feature.id}`">
+            <h3 :id="`feature-title-${feature.id}`" class="feature-title">
               {{ feature.title }}
             </h3>
-            <p class="feature-description" :id="`feature-desc-${feature.id}`">
+            <p :id="`feature-desc-${feature.id}`" class="feature-description">
               {{ feature.description }}
             </p>
           </div>
@@ -291,7 +420,7 @@ onMounted(() => {
     <section class="roadmap-section" aria-labelledby="roadmap-title">
       <div class="roadmap-container">
         <h2 id="roadmap-title" class="section-title" tabindex="0">
-          What's next for Tymr Online?
+          What's next for LazyPlanner.com?
         </h2>
         <div class="roadmap-timeline">
           <div
@@ -301,22 +430,20 @@ onMounted(() => {
             tabindex="0"
             role="article"
             :aria-labelledby="`roadmap-title-${phase.id}`"
-            :aria-describedby="`roadmap-desc-${phase.id} roadmap-status-${phase.id}`"
-          >
-            <div
-              class="timeline-marker"
-              :class="phase.status"
-              role="img"
-              :aria-label="`Status: ${phase.status}`"
-            >
+            :aria-describedby="`roadmap-desc-${phase.id} roadmap-status-${phase.id}`">
+            <div class="timeline-marker" :class="phase.status" role="img" :aria-label="`Status: ${phase.status}`">
               <!-- Visual indicators for status beyond just color -->
               <span v-if="phase.status === 'current'" class="status-indicator" aria-hidden="true">●</span>
               <span v-else-if="phase.status === 'upcoming'" class="status-indicator" aria-hidden="true">◐</span>
               <span v-else class="status-indicator" aria-hidden="true">○</span>
             </div>
             <div class="timeline-content">
-              <h3 :id="`roadmap-title-${phase.id}`">{{ phase.title }}</h3>
-              <p :id="`roadmap-desc-${phase.id}`">{{ phase.description }}</p>
+              <h3 :id="`roadmap-title-${phase.id}`">
+                {{ phase.title }}
+              </h3>
+              <p :id="`roadmap-desc-${phase.id}`">
+                {{ phase.description }}
+              </p>
               <span :id="`roadmap-status-${phase.id}`" class="sr-only">Status: {{ phase.status }}</span>
             </div>
           </div>
@@ -335,13 +462,21 @@ onMounted(() => {
         </p>
         <button
           class="large-cta-button"
-          @click="goToRegister"
           aria-label="Get free beta access - go to registration page"
-        >
+          @click="goToRegister">
           <span class="icon arrow-icon" aria-hidden="true">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              role="img"
+              aria-hidden="true">
               <path
-                d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                d="M5 12h14M13 6l6 6-6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
                 stroke-linejoin="round" />
             </svg>
           </span>
@@ -356,7 +491,7 @@ onMounted(() => {
     <!-- Simple Footer -->
     <footer class="simple-footer" aria-label="Footer">
       <div class="footer-container">
-        <span>&copy; {{ new Date().getFullYear() }} Tymr Online. All rights reserved.</span>
+        <span>&copy; {{ new Date().getFullYear() }} LazyPlanner.com. All rights reserved.</span>
         <nav class="footer-links" role="navigation" aria-label="Footer navigation">
           <a href="/privacy-policy" class="footer-link">Privacy Policy</a>
           <a href="/terms-and-conditions" class="footer-link">Terms</a>
@@ -376,26 +511,38 @@ onMounted(() => {
   --dark-bg-footer: #0A0A0A;
 
   /* Text color hierarchy - WCAG AA compliant contrast ratios */
-  --dark-text-primary: #FFFFFF;        /* 21:1 contrast ratio on black */
-  --dark-text-secondary: #B3B3B3;      /* 7.5:1 contrast ratio on black - improved from #A0A0A0 */
-  --dark-text-tertiary: #808080;       /* 4.6:1 contrast ratio on black - improved from #666666 */
-  --dark-text-muted: #999999;          /* 5.7:1 contrast ratio on black */
+  --dark-text-primary: #FFFFFF;
+  /* 21:1 contrast ratio on black */
+  --dark-text-secondary: #B3B3B3;
+  /* 7.5:1 contrast ratio on black - improved from #A0A0A0 */
+  --dark-text-tertiary: #808080;
+  /* 4.6:1 contrast ratio on black - improved from #666666 */
+  --dark-text-muted: #999999;
+  /* 5.7:1 contrast ratio on black */
 
   /* Accent colors - Enhanced for better contrast */
-  --dark-accent-primary: #4AEAE0;      /* Brighter teal for better contrast - 12.8:1 on black */
-  --dark-accent-hover: #3DD4C7;        /* Hover state with good contrast */
-  --dark-accent-variant: #2DD4BF;      /* Variant color */
-  --dark-accent-focus: #5BFFF5;        /* High contrast focus color */
+  --dark-accent-primary: #4AEAE0;
+  /* Brighter teal for better contrast - 12.8:1 on black */
+  --dark-accent-hover: #3DD4C7;
+  /* Hover state with good contrast */
+  --dark-accent-variant: #2DD4BF;
+  /* Variant color */
+  --dark-accent-focus: #5BFFF5;
+  /* High contrast focus color */
 
   /* Border colors */
   --dark-border-subtle: #333333;
   --dark-border-muted: #222222;
-  --dark-border-focus: #4AEAE0;        /* Focus border color */
+  --dark-border-focus: #4AEAE0;
+  /* Focus border color */
 
   /* Status colors for roadmap - accessible variants */
-  --dark-status-current: #4AEAE0;      /* Current items - high contrast */
-  --dark-status-upcoming: #2DD4BF;     /* Upcoming items */
-  --dark-status-planned: #999999;      /* Planned items - muted but readable */
+  --dark-status-current: #4AEAE0;
+  /* Current items - high contrast */
+  --dark-status-upcoming: #2DD4BF;
+  /* Upcoming items */
+  --dark-status-planned: #999999;
+  /* Planned items - muted but readable */
 
   /* Animation and transition properties */
   --transition-duration: 0.2s;
@@ -532,7 +679,8 @@ onMounted(() => {
 }
 
 .hero-headline {
-  font-size: 4.5rem; /* 72px */
+  font-size: 4.5rem;
+  /* 72px */
   font-weight: 300;
   margin-bottom: 1rem;
   color: var(--dark-text-primary);
@@ -559,7 +707,8 @@ onMounted(() => {
 }
 
 .hero-subtitle {
-  font-size: 1.25rem; /* 20px */
+  font-size: 1.25rem;
+  /* 20px */
   color: var(--dark-text-secondary);
   margin-bottom: 2rem;
 }
@@ -623,58 +772,253 @@ onMounted(() => {
   justify-content: center;
 }
 
-.product-demo-card {
+
+
+/* Ultra-Smooth Demo Animation System */
+.ultra-smooth-demo-container {
   width: 100%;
-  max-width: 420px;
-  border-radius: 1.25rem;
+  max-width: 480px;
+  height: 320px;
+  border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  background: var(--dark-bg-secondary);
   position: relative;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-duration) var(--transition-easing);
+  background: var(--dark-bg-secondary);
+  border: 2px solid var(--dark-border-subtle);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(74, 234, 224, 0.1);
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.product-demo-card:hover {
-  transform: var(--lift-transform-small);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+.ultra-smooth-demo-container.loaded {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
-.demo-video {
+.ultra-smooth-demo-container:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 35px 70px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 2px var(--dark-accent-primary);
+  border-color: var(--dark-accent-primary);
+}
+
+/* Infinite Animation Canvas */
+.infinite-animation-canvas {
+  position: relative;
   width: 100%;
-  height: 260px;
-  object-fit: cover;
-  display: block;
-  background: var(--dark-bg-tertiary);
-  border-radius: 1rem;
-  transition: transform var(--transition-duration) var(--transition-easing);
+  height: 100%;
+  overflow: hidden;
+  border-radius: 1.25rem;
 }
 
-.product-demo-card:hover .demo-video {
-  transform: scale(1.02);
+/* Continuous Flowing Background */
+.flowing-gradient-bg {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg,
+      rgba(74, 234, 224, 0.1) 0deg,
+      rgba(45, 212, 191, 0.15) 90deg,
+      rgba(74, 234, 224, 0.1) 180deg,
+      rgba(45, 212, 191, 0.05) 270deg,
+      rgba(74, 234, 224, 0.1) 360deg);
+  animation: rotateGradient 20s linear infinite;
+  z-index: 1;
 }
 
-.demo-placeholder {
+@keyframes rotateGradient {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Ultra-Smooth Image Carousel */
+.image-carousel-track {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--dark-bg-tertiary);
-  border-radius: 1rem;
-}
-
-.demo-placeholder img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  z-index: 2;
+}
+
+.image-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: scale(1.1) rotate(0deg);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, opacity;
+}
+
+/* Dynamic positioning based on animation phase */
+.image-slide.light-theme {
+  opacity: calc(1 - (var(--phase) / 4));
+  transform:
+    scale(calc(1 + (var(--phase) * 0.02))) translateX(calc(var(--phase) * -10px)) translateY(calc(sin(var(--phase) * 0.5) * 5px)) rotate(calc(var(--phase) * 1deg));
+  filter:
+    brightness(calc(1.1 - (var(--phase) * 0.1))) saturate(calc(1.2 - (var(--phase) * 0.2)));
+}
+
+.image-slide.dark-theme {
+  opacity: calc(var(--phase) / 4);
+  transform:
+    scale(calc(1 + ((8 - var(--phase)) * 0.02))) translateX(calc((8 - var(--phase)) * 10px)) translateY(calc(cos(var(--phase) * 0.5) * -5px)) rotate(calc((8 - var(--phase)) * -1deg));
+  filter:
+    brightness(calc(0.9 + (var(--phase) * 0.1))) saturate(calc(1 + (var(--phase) * 0.2)));
+}
+
+.demo-screenshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1rem;
+  display: block;
+}
+
+/* Ultra-Smooth Particle System */
+.ultra-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.ultra-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--dark-accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--dark-accent-primary);
+
+  /* Dynamic positioning based on index and phase */
+  left: calc(5% + (var(--index) * 4.5%));
+  top: calc(10% + (var(--index) * 4%));
+
+  /* Ultra-smooth continuous movement */
+  transform:
+    translateX(calc(sin(var(--phase) + var(--index)) * 30px)) translateY(calc(cos(var(--phase) + var(--index)) * 20px)) scale(calc(0.5 + sin(var(--phase) * 2 + var(--index)) * 0.5));
+
+  opacity: calc(0.3 + sin(var(--phase) + var(--index)) * 0.4);
+
+  transition: all 0.1s linear;
+  will-change: transform, opacity;
+}
+
+/* Flowing Light Rays */
+.light-rays {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.light-ray {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(74, 234, 224, 0.3) 50%,
+      transparent 100%);
+
+  left: calc(10% + (var(--ray-index) * 10%));
+
+  transform:
+    translateX(calc(sin(var(--ray-index) * 0.5) * 20px)) scaleY(calc(0.5 + sin(var(--ray-index)) * 0.5));
+
+  animation: flowRay calc(3s + var(--ray-index) * 0.5s) ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes flowRay {
+
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateX(0) scaleY(0.5);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: translateX(10px) scaleY(1);
+  }
+}
+
+/* Dynamic Theme Indicator */
+.dynamic-theme-indicator {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  z-index: 5;
+}
+
+.theme-pulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--dark-accent-primary);
+  box-shadow: 0 0 20px var(--dark-accent-primary);
+  transition: all 0.3s ease;
+}
+
+.theme-pulse.light-active {
+  background: #fbbf24;
+  box-shadow: 0 0 20px #fbbf24;
+  animation: pulseBright 2s ease-in-out infinite;
+}
+
+.theme-pulse.dark-active {
+  background: #8b5cf6;
+  box-shadow: 0 0 20px #8b5cf6;
+  animation: pulseDark 2s ease-in-out infinite;
+}
+
+@keyframes pulseBright {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulseDark {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 /* Beta Status Banner - dark theme */
@@ -869,12 +1213,10 @@ onMounted(() => {
   top: 1.5rem;
   bottom: 1.5rem;
   width: 2px;
-  background: linear-gradient(
-    to bottom,
-    var(--dark-accent-primary) 0%,
-    var(--dark-accent-variant) 40%,
-    var(--dark-text-tertiary) 100%
-  );
+  background: linear-gradient(to bottom,
+      var(--dark-accent-primary) 0%,
+      var(--dark-accent-variant) 40%,
+      var(--dark-text-tertiary) 100%);
   z-index: 1;
 }
 
@@ -941,13 +1283,15 @@ onMounted(() => {
 
 .timeline-marker.planned {
   background: var(--dark-status-planned);
-  opacity: 0.8; /* Improved from 0.6 for better visibility */
+  opacity: 0.8;
+  /* Improved from 0.6 for better visibility */
   box-shadow: 0 0 0 2px var(--dark-bg-primary);
 }
 
 .timeline-marker.planned:hover {
   transform: scale(1.1);
-  opacity: 1; /* Full opacity on hover for better accessibility */
+  opacity: 1;
+  /* Full opacity on hover for better accessibility */
 }
 
 /* Status indicators for accessibility - not relying on color alone */
@@ -998,7 +1342,8 @@ onMounted(() => {
 }
 
 .timeline-item:has(.timeline-marker.planned) .timeline-content p {
-  color: var(--dark-text-muted); /* Better contrast than tertiary */
+  color: var(--dark-text-muted);
+  /* Better contrast than tertiary */
 }
 
 /* Final CTA Section - dark secondary bg */
@@ -1092,13 +1437,15 @@ onMounted(() => {
 
 /* Footer - Dark theme with clear page termination */
 .simple-footer {
-  background: var(--dark-bg-footer); /* #0A0A0A - darkest secondary background */
+  background: var(--dark-bg-footer);
+  /* #0A0A0A - darkest secondary background */
   color: var(--dark-text-tertiary);
   padding: 2rem 1rem 1rem 1rem;
   display: flex;
   justify-content: center;
   border-top: 1px solid var(--dark-border-muted);
-  margin-top: auto; /* Push footer to bottom */
+  margin-top: auto;
+  /* Push footer to bottom */
 }
 
 .footer-container {
@@ -1111,7 +1458,8 @@ onMounted(() => {
 }
 
 .footer-container span {
-  color: var(--dark-text-muted); /* Better contrast than tertiary */
+  color: var(--dark-text-muted);
+  /* Better contrast than tertiary */
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
 }
@@ -1123,7 +1471,8 @@ onMounted(() => {
 }
 
 .footer-link {
-  color: var(--dark-accent-primary); /* Teal color for links */
+  color: var(--dark-accent-primary);
+  /* Teal color for links */
   text-decoration: none;
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-base);
@@ -1134,7 +1483,8 @@ onMounted(() => {
 }
 
 .footer-link:hover {
-  color: var(--dark-accent-hover); /* Teal hover state */
+  color: var(--dark-accent-hover);
+  /* Teal hover state */
   transform: var(--lift-transform-small);
   background: rgba(64, 224, 208, 0.1);
 }
@@ -1221,6 +1571,7 @@ a {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1238,6 +1589,22 @@ a {
   .nav-cta-button:hover {
     transform: none !important;
   }
+
+  /* Disable ultra-smooth animations for reduced motion */
+  .ultra-particle,
+  .light-ray,
+  .flowing-gradient-bg {
+    display: none;
+  }
+
+  .image-slide {
+    transition: opacity 0.5s ease !important;
+    transform: none !important;
+  }
+
+  .theme-pulse {
+    animation: none !important;
+  }
 }
 
 /* Responsive Design */
@@ -1251,7 +1618,8 @@ a {
   }
 
   .hero-headline {
-    font-size: 3.5rem; /* Medium size for tablets */
+    font-size: 3.5rem;
+    /* Medium size for tablets */
   }
 }
 
@@ -1268,7 +1636,8 @@ a {
   }
 
   .hero-headline {
-    font-size: 2.5rem; /* Smaller on mobile */
+    font-size: 2.5rem;
+    /* Smaller on mobile */
   }
 
   .features-grid {
@@ -1285,9 +1654,9 @@ a {
     padding: 2rem 0.25rem 1rem 0.25rem;
   }
 
-  .product-demo-card,
-  .demo-video {
-    height: 180px;
+  .ultra-smooth-demo-container {
+    height: 240px;
+    max-width: 100%;
   }
 
   /* Responsive roadmap timeline adjustments */
