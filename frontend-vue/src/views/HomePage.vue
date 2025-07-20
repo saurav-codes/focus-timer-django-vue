@@ -13,7 +13,7 @@ const demoImages = [
 ]
 const isLoaded = ref(false)
 const animationPhase = ref(0) // 0-7 for 8 different movement patterns
-
+const animationFrame = ref()
 
 // --- Features data ---
 const features = [
@@ -103,13 +103,13 @@ function startUltraSmoothAnimation() {
 
   function animate() {
     const elapsed = Date.now() - startTime
-    const cycle = elapsed / 8000 // 8 second full cycle
+    const cycle = elapsed / 12000 // 12 second full cycle for smoother mirror effect
 
-    // Calculate current phase (0-7) for different movement patterns
-    animationPhase.value = Math.floor((cycle % 1) * 8)
+    // Ultra-smooth continuous phase calculation (0 to 2π for smooth sine waves)
+    animationPhase.value = (cycle % 1) * Math.PI * 2
 
-    // Continue animation
-    animationFrame = requestAnimationFrame(animate)
+    // Continue animation at maximum smoothness
+    animationFrame.value = requestAnimationFrame(animate)
   }
 
   animate()
@@ -221,17 +221,20 @@ onMounted(() => {
                 <!-- Continuous flowing background effects -->
                 <div class="flowing-gradient-bg" />
 
-                <!-- Multiple image layers for ultra-smooth transitions -->
-                <div class="image-carousel-track" :style="{ '--phase': animationPhase }">
-                  <!-- Light theme screenshots in continuous loop -->
-                  <div v-for="n in 4" :key="`light-${n}`" class="image-slide light-theme">
-                    <img :src="demoImages[0]" alt="LazyPlanner.com Light Theme Interface" class="demo-screenshot">
+                <!-- Mirror Effect Image System -->
+                <div class="mirror-effect-container" :style="{ '--phase': animationPhase }">
+                  <!-- Primary Image (Dark Theme - Front Layer) -->
+                  <div class="primary-image-layer">
+                    <img :src="demoImages[1]" alt="LazyPlanner.com Dark Theme Interface" class="primary-screenshot">
                   </div>
 
-                  <!-- Dark theme screenshots in continuous loop -->
-                  <div v-for="n in 4" :key="`dark-${n}`" class="image-slide dark-theme">
-                    <img :src="demoImages[1]" alt="LazyPlanner.com Dark Theme Interface" class="demo-screenshot">
+                  <!-- Mirror Image (Light Theme - Back Layer) -->
+                  <div class="mirror-image-layer">
+                    <img :src="demoImages[0]" alt="LazyPlanner.com Light Theme Interface" class="mirror-screenshot">
                   </div>
+
+                  <!-- Reflection Overlay -->
+                  <div class="reflection-overlay" />
                 </div>
 
                 <!-- Ultra-smooth particle system -->
@@ -255,7 +258,10 @@ onMounted(() => {
                 <div class="dynamic-theme-indicator">
                   <div
                     class="theme-pulse"
-                    :class="{ 'light-active': animationPhase < 4, 'dark-active': animationPhase >= 4 }" />
+                    :class="{
+                      'dark-active': Math.sin(animationPhase) > 0,
+                      'light-active': Math.sin(animationPhase) <= 0
+                    }" />
                 </div>
               </div>
 
@@ -779,17 +785,14 @@ onMounted(() => {
   width: 100%;
   max-width: 480px;
   height: 320px;
-  border-radius: 1.5rem;
-  overflow: hidden;
   position: relative;
   background: var(--dark-bg-secondary);
-  border: 2px solid var(--dark-border-subtle);
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(74, 234, 224, 0.1);
   opacity: 0;
   transform: translateY(30px) scale(0.9);
   transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Clean modern shadow without borders */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
 }
 
 .ultra-smooth-demo-container.loaded {
@@ -799,10 +802,7 @@ onMounted(() => {
 
 .ultra-smooth-demo-container:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow:
-    0 35px 70px -12px rgba(0, 0, 0, 0.5),
-    0 0 0 2px var(--dark-accent-primary);
-  border-color: var(--dark-accent-primary);
+  box-shadow: 0 35px 70px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* Infinite Animation Canvas */
@@ -811,7 +811,35 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 1.25rem;
+}
+
+/* Ultra-soft edge fade overlay - matching hero section colors */
+.infinite-animation-canvas::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  background:
+    /* Horizontal fade - using hero section background color */
+    linear-gradient(to right,
+      var(--dark-bg-primary) 0%,
+      rgba(0, 0, 0, 0.5) 8%,
+      transparent 20%,
+      transparent 80%,
+      rgba(0, 0, 0, 0.5) 92%,
+      var(--dark-bg-primary) 100%),
+    /* Vertical fade - using hero section background color */
+    linear-gradient(to bottom,
+      var(--dark-bg-primary) 0%,
+      rgba(0, 0, 0, 0.5) 8%,
+      transparent 20%,
+      transparent 80%,
+      rgba(0, 0, 0, 0.5) 92%,
+      var(--dark-bg-primary) 100%);
 }
 
 /* Continuous Flowing Background */
@@ -841,51 +869,91 @@ onMounted(() => {
   }
 }
 
-/* Ultra-Smooth Image Carousel */
-.image-carousel-track {
+/* Ultra-Smooth Mirror Effect System */
+.mirror-effect-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   z-index: 2;
+  perspective: 1000px;
 }
 
-.image-slide {
+/* Primary Image Layer (Dark Theme - Front) */
+.primary-image-layer {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0;
-  transform: scale(1.1) rotate(0deg);
-  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 3;
   will-change: transform, opacity;
-}
 
-/* Dynamic positioning based on animation phase */
-.image-slide.light-theme {
-  opacity: calc(1 - (var(--phase) / 4));
+  /* Much further distance for proper interchanging */
   transform:
-    scale(calc(1 + (var(--phase) * 0.02))) translateX(calc(var(--phase) * -10px)) translateY(calc(sin(var(--phase) * 0.5) * 5px)) rotate(calc(var(--phase) * 1deg));
-  filter:
-    brightness(calc(1.1 - (var(--phase) * 0.1))) saturate(calc(1.2 - (var(--phase) * 0.2)));
+    translateZ(calc(sin(var(--phase)) * 120px)) rotateY(calc(sin(var(--phase)) * 8deg)) scale(calc(1 + sin(var(--phase)) * 0.08));
+
+  opacity: calc(0.9 + sin(var(--phase)) * 0.1);
+
+  transition: all 0.016s linear;
 }
 
-.image-slide.dark-theme {
-  opacity: calc(var(--phase) / 4);
+/* Mirror Image Layer (Light Theme - Back) */
+.mirror-image-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  will-change: transform, opacity;
+
+  /* Opposite animation with much further distance */
   transform:
-    scale(calc(1 + ((8 - var(--phase)) * 0.02))) translateX(calc((8 - var(--phase)) * 10px)) translateY(calc(cos(var(--phase) * 0.5) * -5px)) rotate(calc((8 - var(--phase)) * -1deg));
-  filter:
-    brightness(calc(0.9 + (var(--phase) * 0.1))) saturate(calc(1 + (var(--phase) * 0.2)));
+    translateZ(calc(sin(var(--phase) + 3.14159) * 100px)) rotateY(calc(sin(var(--phase) + 3.14159) * 6deg)) scale(calc(1 + sin(var(--phase) + 3.14159) * 0.06));
+
+  opacity: calc(0.8 + sin(var(--phase) + 3.14159) * 0.2);
+
+  transition: all 0.016s linear;
 }
 
-.demo-screenshot {
+/* Screenshot styling */
+.primary-screenshot,
+.mirror-screenshot {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 1rem;
   display: block;
+  will-change: transform;
+}
+
+/* Clean mirror screenshot without vintage effects */
+.mirror-screenshot {
+  filter: brightness(0.95) saturate(1.05);
+}
+
+/* Clean reflection overlay - modern accent colors */
+.reflection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg,
+      rgba(74, 234, 224, 0.08) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(74, 234, 224, 0.04) 100%);
+
+  /* Subtle animation that follows the primary layer */
+  opacity: calc(0.4 + sin(var(--phase)) * 0.3);
+  transform: translateZ(calc(sin(var(--phase)) * 60px));
+
+  transition: all 0.016s linear;
 }
 
 /* Ultra-Smooth Particle System */
