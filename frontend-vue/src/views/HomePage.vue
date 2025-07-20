@@ -1,5 +1,6 @@
 <script setup>
 // Import Vue core
+import { LucideArrowDownRight, LucideGift } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -41,38 +42,68 @@ const features = [
     title: 'Simplicity First',
     description: 'No clutter, no distractions—just what you need to get things done.',
   },
+  {
+    id: 5,
+    icon: 'AppWindow',
+    title: '3rd Party Integrations',
+    description: 'Connect with Google Calendar, Gmail, GitHub, and more (if enough users request).',
+  },
+  {
+    id: 6,
+    icon: 'Repeat',
+    title: 'Recurring Tasks & Reminders',
+    description: 'Set tasks to repeat and get gentle reminders for what matters.',
+  },
+  {
+    id: 7,
+    icon: 'Carry',
+    title: 'Auto-Carry Over Tasks',
+    description: 'Tasks that were not completed from the previous day are carried over to the next day.',
+  },
+  {
+    id: 8,
+    icon: 'Archive',
+    title: 'Auto Archive Tasks after 30 days',
+    description: 'Tasks with 30 days of inactivity are automatically archived.',
+  },
 ]
 
 // --- Roadmap data ---
 const roadmapPhases = [
   {
     id: 1,
-    title: 'Recurring Tasks & Reminders',
-    description: 'Set tasks to repeat and get gentle reminders for what matters.',
+    title: 'Themes',
+    description: 'Dark, light, and other themes for your preference.',
     status: 'current',
   },
   {
     id: 2,
+    title: 'AI assisted labels & project assignment',
+    description: 'AI will help you label and assign projects to tasks.',
+    status: 'upcoming',
+  },
+  {
+    id: 3,
     title: 'More Calendar Views',
     description: 'Week and month views for better planning flexibility.',
     status: 'upcoming',
   },
   {
-    id: 3,
+    id: 4,
     title: 'Advanced Keyboard Shortcuts',
     description: 'Work even faster with more keyboard-driven actions.',
     status: 'planned',
   },
   {
-    id: 4,
-    title: 'Performance & Offline Improvements',
+    id: 5,
+    title: 'Performance & Offline Support',
     description: 'Faster load times and basic offline support for peace of mind.',
     status: 'planned',
   },
   {
-    id: 5,
-    title: 'Integrations',
-    description: 'Connect with Google Calendar, Notion, and more (if enough users request).',
+    id: 6,
+    title: '3rd Party Integrations',
+    description: 'Connect with Outlook, Notion, Todoist, and more (if enough users request).',
     status: 'planned',
   },
 ]
@@ -162,6 +193,7 @@ onMounted(() => {
         </div>
         <button class="nav-cta-button" aria-label="Get free access - scroll to signup section" @click="scrollToSignup">
           Get Free Access
+          <LucideGift :size="16" />
         </button>
       </div>
     </header>
@@ -181,9 +213,10 @@ onMounted(() => {
                 aria-label="solo creators - emphasized phrase">solo creators</span>
             </h1>
             <p class="hero-subtitle">
-              Plan your day, block your time, and focus—without the clutter or overwhelm. LazyPlanner.com is a
-              forever-free
-              web app for thoughtful solo work.
+              Plan your day/week, block your time, and focus without the clutter or overwhelm.
+            </p>
+            <p>
+              A Daily Planner web app for thoughtful solo work.
             </p>
             <div class="hero-cta">
               <button
@@ -207,7 +240,8 @@ onMounted(() => {
                     <polygon points="10,8 16,12 10,16" fill="currentColor" />
                   </svg>
                 </span>
-                Try Free Beta
+                Plan My Day
+                <LucideArrowDownRight :size="16" />
               </button>
               <p class="cta-subtext">
                 No credit card. No spam. Just productivity.
@@ -297,8 +331,8 @@ onMounted(() => {
         <div class="banner-content">
           <h3>Beta: Honest, simple, and evolving</h3>
           <p>
-            LazyPlanner.com is in open beta. You might find a bug or two, but your feedback helps shape a tool built for
-            real solo work. Free during beta—always focused on simplicity.
+            LazyPlanner is in beta. You might find a bug or two, but your feedback helps shape a tool built for
+            real solo work. Free during beta & always focused on simplicity.
           </p>
         </div>
       </div>
@@ -307,7 +341,7 @@ onMounted(() => {
     <section class="features-section" aria-labelledby="features-title">
       <div class="features-container">
         <h2 id="features-title" class="section-title" tabindex="0">
-          Why you'll love LazyPlanner.com
+          Why you'll love LazyPlanner
         </h2>
         <div class="features-grid">
           <div
@@ -410,6 +444,70 @@ onMounted(() => {
                     fill="currentColor" />
                 </svg>
               </span>
+              <span v-else-if="feature.icon === 'AppWindow'" role="img" :aria-label="`${feature.title} icon`">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
+                  <path
+                    d="M3 12h18M3 6h18M3 18h18"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span v-else-if="feature.icon === 'Archive'" role="img" :aria-label="`${feature.title} icon`">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span v-else-if="feature.icon === 'Repeat'" role="img" :aria-label="`${feature.title} icon`">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
+                  <path
+                    d="M12 6v6l4 2"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span v-else-if="feature.icon === 'Carry'" role="img" :aria-label="`${feature.title} icon`">
+                <svg
+                  width="32"
+                  height="32"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-hidden="true">
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
             </div>
             <h3 :id="`feature-title-${feature.id}`" class="feature-title">
               {{ feature.title }}
@@ -426,7 +524,7 @@ onMounted(() => {
     <section class="roadmap-section" aria-labelledby="roadmap-title">
       <div class="roadmap-container">
         <h2 id="roadmap-title" class="section-title" tabindex="0">
-          What's next for LazyPlanner.com?
+          What's next for LazyPlanner.?
         </h2>
         <div class="roadmap-timeline">
           <div
@@ -486,7 +584,7 @@ onMounted(() => {
                 stroke-linejoin="round" />
             </svg>
           </span>
-          Get Free Beta Access
+          Plan today ( Fully free during Beta )
         </button>
         <p class="cta-disclaimer">
           Free during beta • No credit card required • No mobile app, just a fast web experience
@@ -499,8 +597,11 @@ onMounted(() => {
       <div class="footer-container">
         <span>&copy; {{ new Date().getFullYear() }} LazyPlanner.com. All rights reserved.</span>
         <nav class="footer-links" role="navigation" aria-label="Footer navigation">
-          <a href="/privacy-policy" class="footer-link">Privacy Policy</a>
-          <a href="/terms-and-conditions" class="footer-link">Terms</a>
+          <a href="/privacy-policy" target="_blank" class="footer-link">Privacy Policy</a>
+          <a href="/terms-and-conditions" target="_blank" class="footer-link">Terms</a>
+          <a href="https://x.com/saurav__codes" target="_blank" class="footer-link">Contact</a>
+          <!-- made by saurav__codes -->
+          <a href="https://sorv.dev" target="_blank" class="footer-link">Made by @SauravSharma</a>
         </nav>
       </div>
     </footer>
