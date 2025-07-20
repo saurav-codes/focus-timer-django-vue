@@ -6,7 +6,7 @@
     <p>Last updated: January 1, 2025</p>
 
     <p>
-      Tymr Online (“we”, “our”, or “us”) is committed to protecting your privacy. This Privacy Policy explains how we
+      LazyPlanner.com (“we”, “our”, or “us”) is committed to protecting your privacy. This Privacy Policy explains how we
       collect, use, disclose, and safeguard your information when you use our web application (“Service”).
     </p>
 

@@ -6,7 +6,7 @@
 
     <h2>1. Acceptance of Terms</h2>
     <p>
-      By accessing and using Tymr Online (“Service”), you agree to be bound by these Terms & Conditions (“Terms”). If
+      By accessing and using LazyPlanner.com ("Service"), you agree to be bound by these Terms & Conditions ("Terms"). If
       you do not agree, you must not use the Service.
     </p>
 
@@ -31,7 +31,7 @@
     <h2>4. Intellectual Property</h2>
     <p>
       All content, features, and functionality (including code, design, text, graphics, and logos) are the exclusive
-      property of Tymr Online or its licensors and are protected by copyright, trademark, and other intellectual
+      property of LazyPlanner.com or its licensors and are protected by copyright, trademark, and other intellectual
       property laws.
     </p>
 
@@ -58,13 +58,13 @@
 
     <h2>8. Disclaimer of Warranties</h2>
     <p>
-      The Service is provided “as is” and “as available” without warranties of any kind. We disclaim all warranties,
+      The Service is provided "as is" and "as available" without warranties of any kind. We disclaim all warranties,
       express or implied, including merchantability, fitness for a particular purpose, and non-infringement.
     </p>
 
     <h2>9. Limitation of Liability</h2>
     <p>
-      To the maximum extent permitted by law, Tymr Online and its affiliates will not be liable for any indirect,
+      To the maximum extent permitted by law, LazyPlanner.com and its affiliates will not be liable for any indirect,
       incidental, special, consequential, or punitive damages arising from your use of the Service.
     </p>
 
