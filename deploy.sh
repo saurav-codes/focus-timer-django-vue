@@ -13,22 +13,22 @@ for arg in "$@"; do
       ;;
   esac
 done
-echo "Installing backend requirements..."
+echo "🐍 Installing backend requirements..."
 .venv/bin/uv pip install -r backend/requirements.txt
 
-echo "Applying database migrations..."
+echo "📀 Applying database migrations..."
 .venv/bin/python backend/manage.py migrate --noinput
 
-echo "Collecting static files..."
+echo "📦 Collecting static files..."
 .venv/bin/python backend/manage.py collectstatic --noinput
 if [ "$SKIP_FRONTEND" = false ]; then
-  echo "Building frontend..."
+  echo "🎨 Building frontend..."
   ( cd frontend-vue && npm ci && npm run build )
 else
   echo "Skipping frontend build due to --skip-frontend option"
 fi
 
-echo "Reloading systemd daemon..."
+echo "🔄 Reloading systemd daemon to apply changes..."
 sudo systemctl daemon-reload
 
 services=(
@@ -41,17 +41,22 @@ services=(
 )
 
 for service in "${services[@]}"; do
-  echo "Restarting $service..."
+  echo "🔄 Restarting $service..."
   sudo systemctl restart "$service"
 done
 
-echo "Waiting for services to settle..."
+echo "🔄 Waiting for services to settle..."
 sleep 2
 
-echo "Services status:"
+echo "🔄 Services status:"
 for service in "${services[@]}"; do
-  echo "===== $service ====="
+  echo "==== 🔄 $service ====="
   sudo systemctl status "$service" --no-pager
 done
 
-echo "All services restarted."
+echo "🔄 All services restarted."
+
+echo "💾 Backing up database..."
+./db_backup.sh
+
+echo "✅ Deployed successfully 🚀"
