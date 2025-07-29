@@ -5,20 +5,17 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 // Import images
-import screenshotLight from '@/assets/screenshot-light.png'
-import screenshotDark from '@/assets/screenshot-dark.png'
+import screenshotLight from '@/assets/screenshot-light.avif'
+import screenshotDark from '@/assets/screenshot-dark.avif'
 
 // --- State for sticky nav ---
 const isSticky = ref(false)
 
-// --- Ultra-smooth demo animation state ---
+// --- Demo images state ---
 const demoImages = [
   screenshotLight,
   screenshotDark
 ]
-const isLoaded = ref(false)
-const animationPhase = ref(0) // 0-7 for 8 different movement patterns
-const animationFrame = ref()
 
 // --- Features data ---
 const features = [
@@ -132,41 +129,11 @@ function goToRegister() {
 
 
 
-// --- Ultra-smooth 120fps-like animation logic ---
-function startUltraSmoothAnimation() {
-  let startTime = Date.now()
-
-  function animate() {
-    const elapsed = Date.now() - startTime
-    const cycle = elapsed / 12000 // 12 second full cycle for smoother mirror effect
-
-    // Ultra-smooth continuous phase calculation (0 to 2π for smooth sine waves)
-    animationPhase.value = (cycle % 1) * Math.PI * 2
-
-    // Continue animation at maximum smoothness
-    animationFrame.value = requestAnimationFrame(animate)
-  }
-
-  animate()
-}
-
-
-
 // --- Sticky nav on scroll ---
 onMounted(() => {
   window.addEventListener('scroll', () => {
     isSticky.value = window.scrollY > 32
   })
-
-  // Initial load animation
-  setTimeout(() => {
-    isLoaded.value = true
-  }, 100)
-
-  // Start the ultra-smooth demo animation after initial load
-  setTimeout(() => {
-    startUltraSmoothAnimation()
-  }, 1000)
 })
 </script>
 
@@ -252,63 +219,11 @@ onMounted(() => {
               </p>
             </div>
           </div>
-          <div class="hero-demo">
-            <div class="ultra-smooth-demo-container" :class="{ 'loaded': isLoaded }">
-              <!-- Ultra-smooth infinite animation canvas -->
-              <div class="infinite-animation-canvas">
-                <!-- Continuous flowing background effects -->
-                <div class="flowing-gradient-bg" />
-
-                <!-- Mirror Effect Image System -->
-                <div class="mirror-effect-container" :style="{ '--phase': animationPhase }">
-                  <!-- Primary Image (Dark Theme - Front Layer) -->
-                  <div class="primary-image-layer">
-                    <img :src="demoImages[1]" alt="LazyPlanner.com Dark Theme Interface" class="primary-screenshot">
-                  </div>
-
-                  <!-- Mirror Image (Light Theme - Back Layer) -->
-                  <div class="mirror-image-layer">
-                    <img :src="demoImages[0]" alt="LazyPlanner.com Light Theme Interface" class="mirror-screenshot">
-                  </div>
-
-                  <!-- Reflection Overlay -->
-                  <div class="reflection-overlay" />
-                </div>
-
-                <!-- Ultra-smooth particle system -->
-                <div class="ultra-particles">
-                  <div
-                    v-for="n in 20"
-                    :key="n"
-                    class="ultra-particle"
-                    :style="{
-                      '--index': n,
-                      '--phase': animationPhase
-                    }" />
-                </div>
-
-                <!-- Flowing light rays -->
-                <div class="light-rays">
-                  <div v-for="n in 8" :key="n" class="light-ray" :style="{ '--ray-index': n }" />
-                </div>
-
-                <!-- Dynamic theme indicator -->
-                <div class="dynamic-theme-indicator">
-                  <div
-                    class="theme-pulse"
-                    :class="{
-                      'dark-active': Math.sin(animationPhase) > 0,
-                      'light-active': Math.sin(animationPhase) <= 0
-                    }" />
-                </div>
-              </div>
-
-              <div id="demo-description" class="sr-only">
-                Ultra-smooth animated demonstration of LazyPlanner.com's interface continuously flowing between light
-                and dark themes with dynamic particle effects
-              </div>
-            </div>
-          </div>
+      <!-- Static Images below the hero heading -->
+      <div class="hero-images">
+        <img :src="demoImages[1]" alt="LazyPlanner.com Dark Theme Interface" class="hero-image">
+        <img :src="demoImages[0]" alt="LazyPlanner.com Light Theme Interface" class="hero-image">
+      </div>
         </div>
       </div>
     </section>
@@ -876,16 +791,32 @@ onMounted(() => {
   font-size: var(--font-size-sm);
 }
 
-.hero-demo {
-  flex: 1 1 350px;
-  min-width: 300px;
+/* Hero Images Section - Static images below hero content */
+.hero-images {
+  flex: 1 1 600px;
+  min-width: 400px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem 0;
 }
 
+.hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+  transition: all var(--transition-duration) var(--transition-easing);
+  border: 1px solid var(--dark-border-subtle);
+}
 
+.hero-image:hover {
+  transform: var(--lift-transform-small);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-color: var(--dark-accent-primary);
+}
 
-/* Ultra-Smooth Demo Animation System */
+/* Ultra-Smooth Demo Animation System - Legacy (will be removed) */
 .ultra-smooth-demo-container {
   width: 100%;
   max-width: 480px;
@@ -1804,13 +1735,19 @@ a {
   }
 
   .hero-content,
-  .hero-demo {
+  .hero-images {
     min-width: 0;
   }
 
   .hero-headline {
     font-size: 2.5rem;
     /* Smaller on mobile */
+  }
+
+  .hero-images {
+    min-width: 300px;
+    gap: 1.5rem;
+    padding: 1rem 0;
   }
 
   .features-grid {
